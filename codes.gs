@@ -420,6 +420,10 @@ function getPubDate(root) {
 
   var pubDateElement = getElementsByTagName(root, 'PubDate')[0];
   var year = getElementValue(pubDateElement, 'Year');
+  if (!year) {
+    var elements = getElementsByTagName(root, 'PubMedPubDate').filter(function(el) { return /pubmed/.test(el.getAttribute("PubStatus")) });
+    year = getElementValue(elements[0], 'Year');
+  }
   var month = getElementValue(pubDateElement, 'Month');
   if (!month) {
     var elements = getElementsByTagName(root, 'PubMedPubDate').filter(function(el) { return /pubmed/.test(el.getAttribute("PubStatus")) });
