@@ -401,8 +401,12 @@ function getTitle(root) {
 function getJournal(root) {
   // データから題名を取得して指定の書式で返す
   var pubDateElement = getElementsByTagName(root, 'PubDate')[0];
-  var year = getElementValue(pubDateElement, 'Year');
-  var month = getElementValue(pubDateElement, 'Month');
+  var year = getPubElement(pubDateElement, root, 'Year');
+  var month = getPubElement(pubDateElement, root, 'Month');
+  if (/\d/.test(parseInt(month, 10))) {
+    var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    month = monthNames[parseInt(month, 10) - 1];
+  }
 
   var title = getElementValue(root, 'ISOAbbreviation');
   var volume = getElementValue(root, 'Volume');
@@ -416,28 +420,24 @@ function getJournal(root) {
 }
 
 function getPubDate(root) {
-  var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
   var pubDateElement = getElementsByTagName(root, 'PubDate')[0];
-  var year = getElementValue(pubDateElement, 'Year');
-  if (!year) {
-    var elements = getElementsByTagName(root, 'PubMedPubDate').filter(function(el) { return /pubmed/.test(el.getAttribute("PubStatus")) });
-    year = getElementValue(elements[0], 'Year');
-  }
-  var month = getElementValue(pubDateElement, 'Month');
-  if (!month) {
-    var elements = getElementsByTagName(root, 'PubMedPubDate').filter(function(el) { return /pubmed/.test(el.getAttribute("PubStatus")) });
-    month = getElementValue(elements[0], 'Month');
-  }
+  var year = getPubElement(pubDateElement, root, 'Year');
+  var month = getPubElement(pubDateElement, root, 'Month');
   if (/[A-Za-z]/.test(month)) {
+    var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     month = monthNames.indexOf(month) + 1;
   }
-  var date = getElementValue(pubDateElement, 'Day');
-  if (!date) {
-    var elements = getElementsByTagName(root, 'PubMedPubDate').filter(function(el) { return /pubmed/.test(el.getAttribute("PubStatus")) });
-    date = getElementValue(elements[0], 'Day');
-  }
+  var date = getPubElement(pubDateElement, root, 'Day');
   return year + '/' + month + '/' + date;
+}
+
+function getPubElement(pubDateElement, root, type) {
+  var targetElement = getElementValue(pubDateElement, type);
+  if (!targetElement) {
+    var elements = getElementsByTagName(root, 'PubMedPubDate').filter(function(el) { return /pubmed/.test(el.getAttribute("PubStatus")) });
+    targetElement = getElementValue(elements[0], type);
+  }
+  return targetElement;
 }
 
 function getElementValue(target, name) {
