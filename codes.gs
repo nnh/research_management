@@ -317,7 +317,7 @@ function fillPublication() {
 
   // UMINデータの準備
   var registerdUminIds = getRegisterdUminIds();
-  var uminIds = getUminIds(publicationValues, 6);
+  var uminIds = getUminIds(publicationValues, 7);
   getUnregisteredData(registerdUminIds, uminIds);
 
   // fromHtmlシートからデータを取得する
@@ -367,7 +367,7 @@ function fillPublication() {
     }
   }
 
-  //　番号を振る
+  // 番号を振る
   for (var i = 1; i < publicationValues.length; i++) {
     if (publicationValues[i][0]) {
       publicationSheet.getRange(1 + i, 2).setValue(i);
