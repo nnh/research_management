@@ -19,11 +19,12 @@ function generateForm2() {
   var number = 1;
   var role = "";
   var protocol_ids = [];
+  var limit_date = new Date(2015, 9, 1);
 
   for (var i = 0; i < items.length; i++) {
-    if (items[i][5].indexOf("特定臨床") != -1 && items[i][5].indexOf("治験") == -1 && items[i][9] != "") {
+    if (items[i][7].indexOf("特定臨床") != -1 && items[i][7].indexOf("治験") == -1 && items[i][10] != "" && items[i][10] >= limit_date) {
       role = (items[i][3].indexOf("名古屋医療センター") != -1) ? "１，２" : "２" ;
-      study[number] = [number, items[i][1], items[i][2], items[i][3], items[i][9], items[i][8], role, items[i][0], "", ""];
+      study[number] = [number, items[i][1], items[i][2], items[i][3], items[i][10], items[i][9], role, items[i][0], "", ""];
                     // number, study_name, pi, pi_facility, irb_date, ctr, role, protocol_ID, intervention
       protocol_ids.push(items[i][0]);
       number++;
@@ -31,7 +32,7 @@ function generateForm2() {
   }
 
   for (var j = 0; j < items2.length; j++) {
-    if (items2[j][5].indexOf("特定臨床") != -1 && items2[j][5].indexOf("治験") == -1 && items2[j][7] != "" && protocol_ids.indexOf(items2[j][0]) == -1) {
+    if (items2[j][5].indexOf("特定臨床") != -1 && items2[j][5].indexOf("治験") == -1 && items2[j][7] != "" && items2[j][7] >= limit_date && protocol_ids.indexOf(items2[j][0]) == -1) {
       role = "１";
       study[number] = [number, items2[j][1], items2[j][2], items2[j][3], items2[j][7], items2[j][6], role, items2[j][0], "", ""];
                     // number, study_name, pi, pi_facility, irb_date, ctr, role, protocol_ID, intervention
@@ -198,16 +199,17 @@ function generateForm3() {
   var study = [];
   var number = 1;
   var role = "";
+  var limit_date = new Date(2015, 9, 1);
 
   for (var i = 0; i < items.length; i++) {
-    if (items[i][5].indexOf("特定臨床") != -1 && items[i][5].indexOf("治験") == -1 && items[i][9] != "") {
+    if (items[i][7].indexOf("特定臨床") != -1 && items[i][7].indexOf("治験") == -1 && items[i][10] != "" && items[i][10] >= limit_date) {
       role = (items[i][3].indexOf("名古屋医療センター") != -1) ? "１，２" : "２" ;
       roleDetail = "当該試験は";
       roleDetail += (items[i][3].indexOf("名古屋医療センター") != -1) ? roleDetails[0][1] :
                     (items[i][6] == "JPLSG") ?       roleDetails[1][1] :
                     (items[i][6] == "NHOネットワーク") ? roleDetails[2][1] :
                                                      roleDetails[3][1] ;
-      study[number] = [number, items[i][1], items[i][2], items[i][9], items[i][8], role, items[i][0], roleDetail];
+      study[number] = [number, items[i][1], items[i][2], items[i][10], items[i][9], role, items[i][0], roleDetail];
                     // number, study_name, pi, irb_date, ctr, role, protocol_ID, explanation
       number++;
     }
@@ -234,14 +236,16 @@ function generateForm4() {
   var i = 0;
   var number = 1;
   var role = "";
+  var limit_date = new Date(2015, 9, 1);
+
   for (var i = 0; i < items.length; i++) {
-    if ((""+ items[i][5]).indexOf("特定臨床") != -1 && items[i][9] != "") {
+    if ((""+ items[i][7]).indexOf("特定臨床") != -1 && items[i][10] != "" && items[i][10] >= limit_date) {
       // sitesシートの数が1の時は対象外なので挿入しないようにする
       for (var j = 1; j < siteValues.length; j++) {
         if (items[i][0] == siteValues[j][0] && siteValues[j][1] != 1) {
           role = "プロトコール作成支援、データマネジメント、中央モニタリング";
           sites = (items[i][6] == "JPLSG") ? "名古屋医療センター、東京大学医学部附属病院、他145施設" : "" ;
-          study[number] = [number, items[i][8], items[i][1], sites, role, items[i][0], ""];
+          study[number] = [number, items[i][9], items[i][1], sites, role, items[i][0], ""];
           // number, ctr,         study_name,  sites, role, protocol_ID, intervention
           number++;
           break;
