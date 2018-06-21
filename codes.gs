@@ -321,7 +321,7 @@ function fillPublication() {
 
   // UMINデータの準備
   var registerdUminIds = getRegisterdUminIds();
-  var uminIds = getUminIds(publicationValues, 7);
+  var uminIds = getUminIds(publicationValues, 6);
   getUnregisteredData(registerdUminIds, uminIds);
 
   // fromHtmlシートからデータを取得する
@@ -360,16 +360,6 @@ function fillPublication() {
 
   // PubDateを基準にソートする
   publicationSheet.getRange(2, 1, publicationSheet.getLastRow() - 1, publicationSheet.getLastColumn()).sort({column: 19, ascending: false});
-  // PubDateがないデータを上にもってくる
-  publicationValues = publicationSheet.getDataRange().getValues();
-  for (var i = 1; i < publicationValues.length; i++) {
-    var pubDate = publicationValues[i][18];
-    if (!pubDate && publicationValues[i][0]) {
-      publicationSheet.insertRowBefore(2);
-      publicationSheet.getRange(1 + i + 1, 1, 1, publicationSheet.getLastColumn()).moveTo(publicationSheet.getRange(2, 1, 1, publicationSheet.getLastColumn()));
-      publicationSheet.deleteRow(1 + i + 1);
-    }
-  }
 
   // 番号を振る
   for (var i = 1; i < publicationValues.length; i++) {
