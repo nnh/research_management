@@ -359,8 +359,7 @@ function fillPublication() {
   }
 
   // PubDateを基準にソートする
-  publicationSheet.getRange(2, 1, publicationSheet.getLastRow() - 1, publicationSheet.getLastColumn()).sort({column: 19, ascending: false});
-
+  publicationSheet.getRange(2, 1, publicationSheet.getLastRow() - 1, publicationSheet.getLastColumn()).sort([{column: 19, ascending: false}, {column: 20, ascending: true}]);
   // 番号を振る
   for (var i = 1; i < publicationValues.length; i++) {
     if (publicationValues[i][0]) {
