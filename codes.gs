@@ -4,6 +4,7 @@ function onOpen() {
     {name: "様式第３、別添３作成", functionName: "generateForm3"},
     {name: "様式第４", functionName: "generateForm4"},
     {name: "Publication", functionName: "fillPublication"},
+    {name: "ARO支援一覧test", functionName: "exportSupports"},
   ];
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   spreadsheet.addMenu("様式作成", arr);
@@ -14,7 +15,7 @@ function generateForm2() {
   var items = sheetDatacenter.getDataRange().getValues();
   var sheetIrb = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("IRB");
   var items2 = sheetIrb.getDataRange().getValues();
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form2")
+  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form2印刷")
   var study = [];
   var number = 1;
   var role = "";
@@ -182,7 +183,7 @@ function getXmlRootElement(data) {
 
 function getElementsByTagName(element, tagName) {
   var data = [], descendants = element.getDescendants();
-  for(var i in descendants) {
+  for(var i = 0; i < descendants.length; i++) {
     var elem = descendants[i].asElement();
     if ( elem != null && elem.getName() == tagName) data.push(elem);
   }
@@ -193,7 +194,7 @@ function generateForm3() {
 //  var startTime = new Date();
   var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter");
   var items = sheetDatacenter.getDataRange().getValues();
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form3")
+  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form3印刷")
   var explanationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("explanation")
   var roleDetails = explanationSheet.getDataRange().getValues();
   var study = [];
@@ -230,7 +231,7 @@ function generateForm4() {
   var items = sheetDatacenter.getDataRange().getValues();
   var sheetSites = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('sites');
   var siteValues = sheetSites.getDataRange().getValues();
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form4")
+  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form4印刷")
   var study = [];
   var sites = "";
   var i = 0;
