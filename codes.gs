@@ -20,7 +20,7 @@ function generateForm2() {
   var number = 1;
   var role = "";
   var protocol_ids = [];
-  var limit_date = new Date(2015, 9, 1);
+  var limit_date = new Date(2016, 12, 1);
 
   for (var i = 0; i < items.length; i++) {
     if (items[i][7].indexOf("特定臨床") != -1 && items[i][7].indexOf("治験") == -1 && items[i][10] != "" && items[i][10] >= limit_date) {
@@ -200,7 +200,7 @@ function generateForm3() {
   var study = [];
   var number = 1;
   var role = "";
-  var limit_date = new Date(2015, 9, 1);
+  var limit_date = new Date(2016, 12, 1);
 
   for (var i = 0; i < items.length; i++) {
     if (items[i][7].indexOf("特定臨床") != -1 && items[i][7].indexOf("治験") == -1 && items[i][10] != "" && items[i][10] >= limit_date) {
@@ -237,7 +237,7 @@ function generateForm4() {
   var i = 0;
   var number = 1;
   var role = "";
-  var limit_date = new Date(2015, 9, 1);
+  var limit_date = new Date(2016, 12, 1);
 
   for (var i = 0; i < items.length; i++) {
     if ((""+ items[i][7]).indexOf("特定臨床") != -1 && items[i][10] != "" && items[i][10] >= limit_date) {
