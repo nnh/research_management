@@ -1,13 +1,4 @@
-function readValues(values) {
-  headers = values[0]
-  const withoutHeaders = values.filter(function(_a, index){ return index !== 0; });
-  return withoutHeaders.map(function (a) {
-    return a.reduce(function(obj, v, index){
-      obj[headers[index]] = v;
-      return obj;
-    }, {});
-  });
-}
+import { readValues } from './utils'
 
 function logHead(key, array) {
   const obj = {};
