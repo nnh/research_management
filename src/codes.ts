@@ -309,7 +309,7 @@ function fillPublication() {
   const publications = readValues(publicationValues)
 
   // UMINデータの準備
-  var registerdUminIds = getRegisterdUminIds();
+  const registerdUminIds = getRegisterdUminIds();
   const uminIds = publications.
     map((row) => row['CTR']).
     reduce((res: string[], item: any) => res.concat(getUminId(item)), [])
