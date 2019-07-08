@@ -331,6 +331,7 @@ function fillPublication() {
     //医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等をセットする
     for (let j = 1; j < htmlValues.length; j++) {
       if (publications[i]['CTR'] === htmlValues[j][0]) { // TODO: UMINID が複数のケースでバグる
+        // 14: 医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等
         const str = '本試験の対象は' + htmlValues[j][1].replace(/\r?\n/g, "、") + 'である。また「' + htmlValues[j][2].replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
         publicationSheet.getRange(i + 1, 14).setValue(str);
         break;
