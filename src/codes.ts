@@ -1,3 +1,5 @@
+import { getUminIds } from './ctr-utils'
+
 function onOpen() {
   var arr = [
     {name: "様式第２、別添２作成", functionName: "generateForm2"},
@@ -93,21 +95,6 @@ function getRegisterdUminIds() {
   }
 
   return registerdUminIds;
-}
-
-function getUminIds(targetSheetValues, column) {
-  // targetSheet内に記載されているUMINIDを取得する
-  var uminIds = [];
-
-  for (var i = 1; i < targetSheetValues.length; i++) {
-    var ids = targetSheetValues[i][column].split(',');
-    for (var j = 0; j < ids.length; j++) {
-      if (/(UMIN|C)\d{9}/.test(ids[j])) { uminIds.push(ids[j]); }
-      // if (ids[j].indexOf('UMIN') != -1) { uminIds.push(ids[j]); }
-    }
-  }
-
-  return uminIds;
 }
 
 function getUnregisteredData(registerdUminIds, sheetUminIds) {
@@ -351,10 +338,10 @@ function fillPublication() {
     // Pubmedデータの題名、雑誌名、要旨、PubDateをセットする
     for (var k = 1; k < pubmedValues.length; k++) {
       if (publicationValues[i][8] == pubmedValues[k][0]) {
-        publicationSheet.getRange(i+1, 12).setValue(pubmedValues[k][1]);
-        publicationSheet.getRange(i+1, 13).setValue(pubmedValues[k][2]);
-        publicationSheet.getRange(i+1, 16).setValue(pubmedValues[k][3]);
-        publicationSheet.getRange(i+1, 19).setValue(pubmedValues[k][4]);
+        publicationSheet.getRange(i+1, 12).setValue(pubmedValues[k][1]); // 12: 題名
+        publicationSheet.getRange(i+1, 13).setValue(pubmedValues[k][2]); // 13: 雑誌名
+        publicationSheet.getRange(i+1, 16).setValue(pubmedValues[k][3]); // 16: 要旨
+        publicationSheet.getRange(i+1, 19).setValue(pubmedValues[k][4]); // 19: PubDate
       }
     }
   }
