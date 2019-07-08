@@ -323,7 +323,8 @@ function fillPublication() {
 
   // Pubmedデータの準備
   var registerdPubmedIds = getRegisterdPubmedIds();
-  var pubmedIds = getPubmedIds(publicationValues, 8);
+
+  var pubmedIds = publications.map((row) => row['PMID']).filter((id) => id)
   getUnregisteredPubmedData(registerdPubmedIds, pubmedIds);
 
   // pubmedDataシートからデータを取得する
@@ -449,17 +450,6 @@ function getRegisterdPubmedIds() {
   }
 
   return registerdPubmedIds;
-}
-
-function getPubmedIds(targetSheetValues, column) {
-  // targetSheet内に記載されているPMIDを取得する
-  var pubmedIds = [];
-
-  for (var i = 1; i < targetSheetValues.length; i++) {
-    if (targetSheetValues[i][column]) pubmedIds.push(targetSheetValues[i][column]);
-  }
-
-  return pubmedIds;
 }
 
 function getUnregisteredPubmedData(registerdPubmedIds, sheetPubmedIds) {
