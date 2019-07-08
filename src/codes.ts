@@ -78,24 +78,22 @@ function generateForm2() {
   }
 }
 
-function getRegisterdUminIds() {
-  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
-  var registerdUminIds = [];
-
-  if (htmlSheet === null) {
+function getRegisterdUminIds(): string[] {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+  if (sheet === null) {
     // シートが存在しない場合、「医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明」のためにシートを用意する
     SpreadsheetApp.getActiveSpreadsheet().insertSheet('fromHtml');
-    htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+    const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
     var column = new Array(1);
     column[0] = ['UMINID', '対象疾患名/Condition', '介入1/Interventions/Control_1'];
     htmlSheet.getRange(1, 1, 1, 3).setValues(column);
+    return []
   } else {
     // すでに記載されているUMINID
-    var htmlItems = htmlSheet.getDataRange().getValues();
-    for (var i = 1; i < htmlItems.length; i++) { registerdUminIds.push(htmlItems[i][0]); }
+    const htmlItems = sheet.getDataRange().getValues();
+    const objs = readValues(htmlItems)
+    return objs.map((row) => row['UMINID'] as string)
   }
-
-  return registerdUminIds;
 }
 
 function getUnregisteredData(registerdUminIds, sheetUminIds) {
