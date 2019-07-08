@@ -301,8 +301,8 @@ function generateForm4() {
 }
 
 function fillPublication() {
-  var publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication');
-  var publicationValues = publicationSheet.getDataRange().getValues();
+  const publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication');
+  const publicationValues = publicationSheet.getDataRange().getValues();
 
   const publications = readValues(publicationValues)
 
