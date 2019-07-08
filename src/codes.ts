@@ -1,4 +1,5 @@
-import { getUminIds } from './ctr-utils'
+import { readValues } from './utils'
+import { getUminIds, getUminId } from './ctr-utils'
 
 function onOpen() {
   var arr = [
@@ -307,9 +308,13 @@ function fillPublication() {
   var publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication');
   var publicationValues = publicationSheet.getDataRange().getValues();
 
+  const publications = readValues(publicationValues)
+
   // UMINデータの準備
   var registerdUminIds = getRegisterdUminIds();
-  var uminIds = getUminIds(publicationValues, 6);
+  const uminIds = publications.
+    map((row) => row['CTR']).
+    reduce((res: string[], item: any) => res.concat(getUminId(item)), [])
   getUnregisteredData(registerdUminIds, uminIds);
 
   // fromHtmlシートからデータを取得する
