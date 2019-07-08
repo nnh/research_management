@@ -326,6 +326,7 @@ function fillPublication() {
   // pubmedDataシートからデータを取得する
   const pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData");
   const pubmedValues = pubmedSheet.getDataRange().getValues();
+  const pubmeds = readValues(pubmedValues)
 
   for (let i = 1; i < publications.length; i++) {
     //医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等をセットする
@@ -339,12 +340,13 @@ function fillPublication() {
     }
 
     // Pubmedデータの題名、雑誌名、要旨、PubDateをセットする
-    for (let k = 1; k < pubmedValues.length; k++) {
-      if (publications[i]['PMID'] == pubmedValues[k][0]) {
-        publicationSheet.getRange(i+1, 12).setValue(pubmedValues[k][1]); // 12: 題名
-        publicationSheet.getRange(i+1, 13).setValue(pubmedValues[k][2]); // 13: 雑誌名
-        publicationSheet.getRange(i+1, 16).setValue(pubmedValues[k][3]); // 16: 要旨
-        publicationSheet.getRange(i+1, 19).setValue(pubmedValues[k][4]); // 19: PubDate
+    for (let k = 1; k < pubmeds.length; k++) {
+      if (publications[i]['PMID'] == pubmeds[k]['PMID']) {
+        publicationSheet.getRange(i + 1, 12).setValue(pubmeds[k]['題名'])
+        publicationSheet.getRange(i + 1, 13).setValue(pubmeds[k]['雑誌名'])
+        publicationSheet.getRange(i + 1, 16).setValue(pubmeds[k]['要旨'])
+        publicationSheet.getRange(i + 1, 19).setValue(pubmeds[k]['PubDate'])
+        break
       }
     }
   }
