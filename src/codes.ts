@@ -316,6 +316,7 @@ function fillPublication() {
   // fromHtmlシートからデータを取得する
   const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
   const htmlValues = htmlSheet.getDataRange().getValues();
+  const fromHtmls = readValues(htmlValues)
 
   // Pubmedデータの準備
   const registerdPubmedIds = getRegisterdPubmedIds();
@@ -330,11 +331,13 @@ function fillPublication() {
 
   for (let i = 1; i < publications.length; i++) {
     //医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等をセットする
-    for (let j = 1; j < htmlValues.length; j++) {
-      if (publications[i]['CTR'] === htmlValues[j][0]) { // TODO: UMINID が複数のケースでバグる
+    for (let j = 1; j < fromHtmls.length; j++) {
+      if (publications[i]['CTR'] === fromHtmls[j]['UMINID']) { // TODO: UMINID が複数のケースでバグる
         // 14: 医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等
-        const str = '本試験の対象は' + htmlValues[j][1].replace(/\r?\n/g, "、") + 'である。また「' + htmlValues[j][2].replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
-        publicationSheet.getRange(i + 1, 14).setValue(str);
+        const condition = fromHtmls[j]['対象疾患名/Condition']
+        const interventions = fromHtmls[j]['介入1/Interventions/Control_1']
+        const str = '本試験の対象は' + condition.replace(/\r?\n/g, "、") + 'である。また「' + interventions.replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
+        publicationSheet.getRange(i + 1, 14).setValue(str)
         break;
       }
     }
