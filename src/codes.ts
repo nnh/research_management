@@ -331,19 +331,19 @@ function fillPublication() {
   var pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData");
   var pubmedValues = pubmedSheet.getDataRange().getValues();
 
-  for (var i = 1; i < publicationValues.length; i++) {
+  for (var i = 1; i < publications.length; i++) {
     //医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等をセットする
     for (var j = 1; j < htmlValues.length; j++) {
-      if (publicationValues[i][6] == htmlValues[j][0]) {
-        var string = '本試験の対象は' + htmlValues[j][1].replace(/\r?\n/g, "、") + 'である。また「' + htmlValues[j][2].replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
-        publicationSheet.getRange(i+1, 14).setValue(string);
+      if (publications[i]['CTR'] === htmlValues[j][0]) {
+        const str = '本試験の対象は' + htmlValues[j][1].replace(/\r?\n/g, "、") + 'である。また「' + htmlValues[j][2].replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
+        publicationSheet.getRange(i + 1, 14).setValue(str);
         break;
       }
     }
 
     // Pubmedデータの題名、雑誌名、要旨、PubDateをセットする
     for (var k = 1; k < pubmedValues.length; k++) {
-      if (publicationValues[i][8] == pubmedValues[k][0]) {
+      if (publications[i]['PMID'] == pubmedValues[k][0]) {
         publicationSheet.getRange(i+1, 12).setValue(pubmedValues[k][1]); // 12: 題名
         publicationSheet.getRange(i+1, 13).setValue(pubmedValues[k][2]); // 13: 雑誌名
         publicationSheet.getRange(i+1, 16).setValue(pubmedValues[k][3]); // 16: 要旨
@@ -355,8 +355,8 @@ function fillPublication() {
   // PubDateを基準にソートする
   publicationSheet.getRange(2, 1, publicationSheet.getLastRow() - 1, publicationSheet.getLastColumn()).sort([{column: 19, ascending: false}, {column: 20, ascending: true}, {column: 12, ascending: false}]);
   // 番号を振る
-  for (var i = 1; i < publicationValues.length; i++) {
-    if (publicationValues[i][0]) {
+  for (var i = 1; i < publications.length; i++) {
+    if (publications[i]['プロトコルID']) {
       publicationSheet.getRange(1 + i, 2).setValue(i);
     }
   }
