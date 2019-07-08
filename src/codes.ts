@@ -314,18 +314,18 @@ function fillPublication() {
   getUnregisteredData(registerdUminIds, uminIds);
 
   // fromHtmlシートからデータを取得する
-  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
-  var htmlValues = htmlSheet.getDataRange().getValues();
+  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+  const htmlValues = htmlSheet.getDataRange().getValues();
 
   // Pubmedデータの準備
-  var registerdPubmedIds = getRegisterdPubmedIds();
+  const registerdPubmedIds = getRegisterdPubmedIds();
 
-  var pubmedIds = publications.map((row) => row['PMID']).filter((id) => id)
+  const pubmedIds = publications.map((row) => row['PMID']).filter((id) => id)
   getUnregisteredPubmedData(registerdPubmedIds, pubmedIds);
 
   // pubmedDataシートからデータを取得する
-  var pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData");
-  var pubmedValues = pubmedSheet.getDataRange().getValues();
+  const pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData");
+  const pubmedValues = pubmedSheet.getDataRange().getValues();
 
   for (var i = 1; i < publications.length; i++) {
     //医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等をセットする
