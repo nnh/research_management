@@ -9,3 +9,7 @@ export function readValues(values: any[][]): TableType[] {
       return {...obj, ...{[key]: v}};
     }, {}))
 }
+
+export function arrayUniq<T>(array: T[]): T[] {
+  return array.filter((x, i, self) => self.indexOf(x) === i)
+}

@@ -1,4 +1,4 @@
-import { readValues } from './utils'
+import { readValues, arrayUniq } from './utils'
 import { getUminIds, getUminId } from './ctr-utils'
 
 function onOpen() {
@@ -96,17 +96,15 @@ function getRegisterdUminIds(): string[] {
   }
 }
 
-function getUnregisteredData(registerdUminIds, sheetUminIds) {
-  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[]) {
+  const  htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
   // fromHtmlシートに重複記載を防ぐため、重複しているUMINIDを取り除く
-  var uminIds = sheetUminIds.filter(function (x, i, self) {
-    return self.indexOf(x) === i;
-  });
+  const uminIds = arrayUniq(sheetUminIds)
 
-  for (var i = 0; i < uminIds.length; i++) {
+  for (let i = 0; i < uminIds.length; i++) {
      // まだ記載されていないUMINIDを使用してデータを取得する
     if (registerdUminIds.indexOf(uminIds[i]) == -1) {
-      var recptNo = getRecptNo(uminIds[i]);
+      const recptNo = getRecptNo(uminIds[i]);
       if (recptNo != 0) {
         // データをシートにセットする
         var data = getData(recptNo);
