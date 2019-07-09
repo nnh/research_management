@@ -202,8 +202,7 @@ function generateForm4() {
   const sheetSites = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('sites');
   const siteValues = sheetSites.getDataRange().getValues();
   const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form4印刷")
-  const study = [];
-  let num = 1;
+  const study = [["番号", "登録ID等", "治験・臨床研究名", "支援対象機関", "研究支援の種類", "プロトコル番号", "医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明"]];
   const limitDate = new Date(2016, 12, 1);
 
   for (let i = 0; i < items.length; i++) {
@@ -213,15 +212,13 @@ function generateForm4() {
         if (items[i][0] == siteValues[j][0] && siteValues[j][1] != 1) {
           const role = "プロトコール作成支援、データマネジメント、中央モニタリング";
           const sites = (items[i][6] == "JPLSG") ? "名古屋医療センター、東京大学医学部附属病院、他145施設" : "" ;
-          study[num] = [num, items[i][9], items[i][1], sites, role, items[i][0], ""];
+          study.push([study.length, items[i][9], items[i][1], sites, role, items[i][0], ""])
           // number, ctr,         study_name,  sites, role, protocol_ID, intervention
-          num++;
           break;
         }
       }
     }
   }
-  study[0] = ["番号", "登録ID等", "治験・臨床研究名", "支援対象機関", "研究支援の種類", "プロトコル番号", "医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明"];
   targetSheet.getRange("A1:I500").clear();
   targetSheet.getRange(1, 1, study.length, study[0].length).setValues(study);
 
