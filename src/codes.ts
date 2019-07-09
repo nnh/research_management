@@ -230,12 +230,12 @@ function generateForm4() {
 
   // 番号と支援対象機関の挿入
   var form4Values = targetSheet.getDataRange().getValues();
-  var no = 0;
+  let no = 0;
 
   for (var i = 1; i < form4Values.length; i++) {
     // 番号を挿入する
     for (var j = 1; j < siteValues.length; j++) {
-      if (form4Values[i][5] == siteValues[j][0]) {
+      if (form4Values[i][5] == siteValues[j][0] && siteValues[j][1]) {
         var noString = no + 1;
         if (siteValues[j][1] != 1) {
           noString = noString + '〜' + (noString + siteValues[j][1] - 1);
@@ -243,6 +243,8 @@ function generateForm4() {
         no += siteValues[j][1];
         targetSheet.getRange(i+1, 1).setValue(noString);
         break;
+      } else {
+        targetSheet.getRange(i+1, 1).setValue('sites に' +  form4Values[i][5] + ' 該当なし');
       }
     }
 
