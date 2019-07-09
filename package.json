@@ -23,6 +23,6 @@
   },
   "scripts": {
     "start": "clasp push -w",
-    "test": "ts-mocha test/*.test.ts"
+    "test": "ts-mocha tests/*.test.ts"
   }
 }
