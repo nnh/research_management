@@ -13,3 +13,14 @@ export function readValues(values: any[][]): TableType[] {
 export function arrayUniq<T>(array: T[]): T[] {
   return array.filter((x, i, self) => self.indexOf(x) === i)
 }
+
+export function arrayFind<T>(list: Array<T>, predicate: (elm: T, index: number, array: Array<T>) => any): T | undefined{
+  var length = list.length
+  for (var i = 0, value; i < length; i++) {
+    value = list[i]
+    if (predicate(value, i, list)) {
+      return value;
+    }
+  }
+  return undefined;
+}
