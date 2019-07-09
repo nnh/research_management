@@ -342,7 +342,7 @@ function fillPublication() {
     }
 
     // Pubmedデータの題名、雑誌名、要旨、PubDateをセットする
-    for (let k = 1; k < pubmeds.length; k++) {
+    for (let k = 0; k < pubmeds.length; k++) {
       if (publications[i]['PMID'] == pubmeds[k]['PMID']) {
         publicationSheet.getRange(row, 12).setValue(pubmeds[k]['題名'])
         publicationSheet.getRange(row, 13).setValue(pubmeds[k]['雑誌名'])
