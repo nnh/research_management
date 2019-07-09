@@ -1,5 +1,6 @@
 import { readValues, arrayUniq, arrayFind } from './utils'
 import { getUminIds, getUminId } from './ctr-utils'
+import { getElementsByTagName, getElementValue } from './xml'
 
 function onOpen() {
   var arr = [
@@ -159,19 +160,10 @@ function getData(recptNo) {
 }
 
 function getXmlRootElement(data) {
-  var doc = Xml.parse(data, true);
-  var body = doc.html.body.toXmlString();
-  doc = XmlService.parse(body);
+  const docXml = Xml.parse(data, true);
+  const body = docXml.html.body.toXmlString();
+  const doc = XmlService.parse(body);
   return doc.getRootElement();
-}
-
-function getElementsByTagName(element, tagName) {
-  var data = [], descendants = element.getDescendants();
-  for(var i = 0; i < descendants.length; i++) {
-    var elem = descendants[i].asElement();
-    if ( elem != null && elem.getName() == tagName) data.push(elem);
-  }
-  return data;
 }
 
 function generateForm3() {
@@ -426,11 +418,6 @@ function getPubElement(pubDateElement, root, type) {
     targetElement = getElementValue(elements[0], type);
   }
   return targetElement;
-}
-
-function getElementValue(target, name) {
-  var element = getElementsByTagName(target, name);
-  return element.length ? element[0].getValue() : '';
 }
 
 function getRegisterdPubmedIds() {
