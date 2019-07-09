@@ -1,6 +1,7 @@
 import { readValues, arrayUniq, arrayFind } from './utils'
-import { getUminIds, getUminId } from './ctr-utils'
-import { getElementsByTagName, getElementValue } from './xml'
+import { getUminIds, getUminId, getJrctId } from './ctr-utils'
+import { getXmlRootElement, getElementsByTagName, getElementValue } from './xml'
+import { getDescriptionByJRCTID } from './jrct'
 
 function onOpen() {
   var arr = [
@@ -157,13 +158,6 @@ function getData(recptNo) {
     }
   }
   return data;
-}
-
-function getXmlRootElement(data) {
-  const docXml = Xml.parse(data, true);
-  const body = docXml.html.body.toXmlString();
-  const doc = XmlService.parse(body);
-  return doc.getRootElement();
 }
 
 function generateForm3() {
@@ -331,6 +325,19 @@ function fillPublication() {
       const interventions = fromHtml['介入1/Interventions/Control_1']
       const str = '本試験の対象は' + condition.replace(/\r?\n/g, "、") + 'である。また「' + interventions.replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
       publicationSheet.getRange(i + 1, 14).setValue(str)
+    } else {
+      const jrctIds = getJrctId(publications[i]['CTR'])
+      if (jrctIds.length > 0) {
+        for(let j = 0; j < jrctIds.length; ++j) {
+          const id = jrctIds[j]
+          const { condition, interventions } = getDescriptionByJRCTID(id)
+          if (condition !== '' || interventions !== '') {
+            const str = '本試験の対象は' + condition.replace(/\r?\n/g, "、") + 'である。また「' + interventions.replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
+            publicationSheet.getRange(i + 1, 14).setValue(str)
+            break
+          }
+        }
+      }
     }
 
     // Pubmedデータの題名、雑誌名、要旨、PubDateをセットする
