@@ -232,16 +232,19 @@ function generateForm4() {
   for (let i = 1; i < form4Values.length; i++) {
     // 番号を挿入する
     for (let j = 1; j < siteValues.length; j++) {
-      if (form4Values[i][5] == siteValues[j][0] && siteValues[j][1]) {
-        let noString = no + 1;
-        if (siteValues[j][1] != 1) {
-          noString = noString + '〜' + (noString + siteValues[j][1] - 1);
+      if (form4Values[i][5] == siteValues[j][0]) {
+        let noString = undefined
+        if (siteValues[j][1]) {
+          const count = siteValues[j][1] || 1
+          const fromCount = no + 1
+          const toCount = no + count
+          no += count;
+          noString = (fromCount === toCount) ? ('' + fromCount) : ([fromCount, toCount].join('〜'))
+        } else {
+          noString = 'sites に' +  form4Values[i][5] + ' 該当なし'
         }
-        no += siteValues[j][1];
         targetSheet.getRange(i+1, 1).setValue(noString);
         break;
-      } else {
-        targetSheet.getRange(i+1, 1).setValue('sites に' +  form4Values[i][5] + ' 該当なし');
       }
     }
 
