@@ -1,3 +1,8 @@
+import { readValues, arrayUniq, arrayFind } from './utils'
+import { getUminIds, getUminId, getJrctId } from './ctr-utils'
+import { getXmlRootElement, getElementsByTagName, getElementValue } from './xml'
+import { getDescriptionByJRCTID } from './jrct'
+
 function onOpen() {
   var arr = [
     {name: "様式第２、別添２作成", functionName: "generateForm2"},
@@ -75,52 +80,33 @@ function generateForm2() {
   }
 }
 
-function getRegisterdUminIds() {
-  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
-  var registerdUminIds = [];
-
-  if (htmlSheet === null) {
+function getRegisterdUminIds(): string[] {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+  if (sheet === null) {
     // シートが存在しない場合、「医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明」のためにシートを用意する
     SpreadsheetApp.getActiveSpreadsheet().insertSheet('fromHtml');
-    htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+    const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
     var column = new Array(1);
     column[0] = ['UMINID', '対象疾患名/Condition', '介入1/Interventions/Control_1'];
     htmlSheet.getRange(1, 1, 1, 3).setValues(column);
+    return []
   } else {
     // すでに記載されているUMINID
-    var htmlItems = htmlSheet.getDataRange().getValues();
-    for (var i = 1; i < htmlItems.length; i++) { registerdUminIds.push(htmlItems[i][0]); }
+    const htmlItems = sheet.getDataRange().getValues();
+    const objs = readValues(htmlItems)
+    return objs.map((row) => row['UMINID'] as string)
   }
-
-  return registerdUminIds;
 }
 
-function getUminIds(targetSheetValues, column) {
-  // targetSheet内に記載されているUMINIDを取得する
-  var uminIds = [];
-
-  for (var i = 1; i < targetSheetValues.length; i++) {
-    var ids = targetSheetValues[i][column].split(',');
-    for (var j = 0; j < ids.length; j++) {
-      if (/(UMIN|C)\d{9}/.test(ids[j])) { uminIds.push(ids[j]); }
-      // if (ids[j].indexOf('UMIN') != -1) { uminIds.push(ids[j]); }
-    }
-  }
-
-  return uminIds;
-}
-
-function getUnregisteredData(registerdUminIds, sheetUminIds) {
-  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[]) {
+  const  htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
   // fromHtmlシートに重複記載を防ぐため、重複しているUMINIDを取り除く
-  var uminIds = sheetUminIds.filter(function (x, i, self) {
-    return self.indexOf(x) === i;
-  });
+  const uminIds = arrayUniq(sheetUminIds)
 
-  for (var i = 0; i < uminIds.length; i++) {
+  for (let i = 0; i < uminIds.length; i++) {
      // まだ記載されていないUMINIDを使用してデータを取得する
     if (registerdUminIds.indexOf(uminIds[i]) == -1) {
-      var recptNo = getRecptNo(uminIds[i]);
+      const recptNo = getRecptNo(uminIds[i]);
       if (recptNo != 0) {
         // データをシートにセットする
         var data = getData(recptNo);
@@ -170,22 +156,6 @@ function getData(recptNo) {
       data.intervention = tds[i+1].getValue();
       break;
     }
-  }
-  return data;
-}
-
-function getXmlRootElement(data) {
-  var doc = Xml.parse(data, true);
-  var body = doc.html.body.toXmlString();
-  doc = XmlService.parse(body);
-  return doc.getRootElement();
-}
-
-function getElementsByTagName(element, tagName) {
-  var data = [], descendants = element.getDescendants();
-  for(var i = 0; i < descendants.length; i++) {
-    var elem = descendants[i].asElement();
-    if ( elem != null && elem.getName() == tagName) data.push(elem);
   }
   return data;
 }
@@ -317,44 +287,67 @@ function generateForm4() {
 }
 
 function fillPublication() {
-  var publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication');
-  var publicationValues = publicationSheet.getDataRange().getValues();
+  const publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication');
+  const publicationValues = publicationSheet.getDataRange().getValues();
+
+  const publications = readValues(publicationValues)
 
   // UMINデータの準備
-  var registerdUminIds = getRegisterdUminIds();
-  var uminIds = getUminIds(publicationValues, 6);
+  const registerdUminIds = getRegisterdUminIds();
+  const uminIds = publications.
+    map((row) => row['CTR']).
+    reduce((res: string[], item: any) => res.concat(getUminId(item)), [])
   getUnregisteredData(registerdUminIds, uminIds);
 
   // fromHtmlシートからデータを取得する
-  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
-  var htmlValues = htmlSheet.getDataRange().getValues();
+  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+  const htmlValues = htmlSheet.getDataRange().getValues();
+  const fromHtmls = readValues(htmlValues)
 
   // Pubmedデータの準備
-  var registerdPubmedIds = getRegisterdPubmedIds();
-  var pubmedIds = getPubmedIds(publicationValues, 8);
+  const registerdPubmedIds = getRegisterdPubmedIds();
+
+  const pubmedIds = publications.map((row) => row['PMID']).filter((id) => id)
   getUnregisteredPubmedData(registerdPubmedIds, pubmedIds);
 
   // pubmedDataシートからデータを取得する
-  var pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData");
-  var pubmedValues = pubmedSheet.getDataRange().getValues();
+  const pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData");
+  const pubmedValues = pubmedSheet.getDataRange().getValues();
+  const pubmeds = readValues(pubmedValues)
 
-  for (var i = 1; i < publicationValues.length; i++) {
+  for (let i = 1; i < publications.length; i++) {
     //医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等をセットする
-    for (var j = 1; j < htmlValues.length; j++) {
-      if (publicationValues[i][6] == htmlValues[j][0]) {
-        var string = '本試験の対象は' + htmlValues[j][1].replace(/\r?\n/g, "、") + 'である。また「' + htmlValues[j][2].replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
-        publicationSheet.getRange(i+1, 14).setValue(string);
-        break;
+    const uminIds = getUminId(publications[i]['CTR'])
+    const fromHtml = arrayFind(fromHtmls, (row) => uminIds.indexOf(row['UMINID']) !== -1)
+    if (fromHtml !== undefined){
+      // 14: 医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等
+      const condition = fromHtml['対象疾患名/Condition']
+      const interventions = fromHtml['介入1/Interventions/Control_1']
+      const str = '本試験の対象は' + condition.replace(/\r?\n/g, "、") + 'である。また「' + interventions.replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
+      publicationSheet.getRange(i + 1, 14).setValue(str)
+    } else {
+      const jrctIds = getJrctId(publications[i]['CTR'])
+      if (jrctIds.length > 0) {
+        for(let j = 0; j < jrctIds.length; ++j) {
+          const id = jrctIds[j]
+          const { condition, interventions } = getDescriptionByJRCTID(id)
+          if (condition !== '' || interventions !== '') {
+            const str = '本試験の対象は' + condition.replace(/\r?\n/g, "、") + 'である。また「' + interventions.replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
+            publicationSheet.getRange(i + 1, 14).setValue(str)
+            break
+          }
+        }
       }
     }
 
     // Pubmedデータの題名、雑誌名、要旨、PubDateをセットする
-    for (var k = 1; k < pubmedValues.length; k++) {
-      if (publicationValues[i][8] == pubmedValues[k][0]) {
-        publicationSheet.getRange(i+1, 12).setValue(pubmedValues[k][1]);
-        publicationSheet.getRange(i+1, 13).setValue(pubmedValues[k][2]);
-        publicationSheet.getRange(i+1, 16).setValue(pubmedValues[k][3]);
-        publicationSheet.getRange(i+1, 19).setValue(pubmedValues[k][4]);
+    for (let k = 1; k < pubmeds.length; k++) {
+      if (publications[i]['PMID'] == pubmeds[k]['PMID']) {
+        publicationSheet.getRange(i + 1, 12).setValue(pubmeds[k]['題名'])
+        publicationSheet.getRange(i + 1, 13).setValue(pubmeds[k]['雑誌名'])
+        publicationSheet.getRange(i + 1, 16).setValue(pubmeds[k]['要旨'])
+        publicationSheet.getRange(i + 1, 19).setValue(pubmeds[k]['PubDate'])
+        break
       }
     }
   }
@@ -362,8 +355,8 @@ function fillPublication() {
   // PubDateを基準にソートする
   publicationSheet.getRange(2, 1, publicationSheet.getLastRow() - 1, publicationSheet.getLastColumn()).sort([{column: 19, ascending: false}, {column: 20, ascending: true}, {column: 12, ascending: false}]);
   // 番号を振る
-  for (var i = 1; i < publicationValues.length; i++) {
-    if (publicationValues[i][0]) {
+  for (let i = 1; i < publications.length; i++) {
+    if (publications[i]['プロトコルID']) {
       publicationSheet.getRange(1 + i, 2).setValue(i);
     }
   }
@@ -434,11 +427,6 @@ function getPubElement(pubDateElement, root, type) {
   return targetElement;
 }
 
-function getElementValue(target, name) {
-  var element = getElementsByTagName(target, name);
-  return element.length ? element[0].getValue() : '';
-}
-
 function getRegisterdPubmedIds() {
   var pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('pubmedData');
   var registerdPubmedIds = [];
@@ -457,17 +445,6 @@ function getRegisterdPubmedIds() {
   }
 
   return registerdPubmedIds;
-}
-
-function getPubmedIds(targetSheetValues, column) {
-  // targetSheet内に記載されているPMIDを取得する
-  var pubmedIds = [];
-
-  for (var i = 1; i < targetSheetValues.length; i++) {
-    if (targetSheetValues[i][column]) pubmedIds.push(targetSheetValues[i][column]);
-  }
-
-  return pubmedIds;
 }
 
 function getUnregisteredPubmedData(registerdPubmedIds, sheetPubmedIds) {
