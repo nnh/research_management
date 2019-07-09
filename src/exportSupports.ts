@@ -1,4 +1,4 @@
-import { readValues } from './utils'
+import { readValues, arrayFind } from './utils'
 
 function logHead(key, array) {
   const obj = {};
@@ -14,25 +14,6 @@ function unique(array) {
   return array.filter(function(x, i) { return array.indexOf(x) === i; });
 }
 
-Array.prototype.find = function(predicate) {
-  const list = this;
-  var length = list.length;
-  if (length === 0) {
-    return undefined;
-  }
-  var thisArg;
-  if (arguments.length > 0) {
-    thisArg = arguments[1];
-  }
-  for (var i = 0, value; i < length; i++) {
-    value = list[i];
-    if (predicate.apply(thisArg, [value, i, list])) {
-      return value;
-    }
-  }
-  return undefined;
-}
-
 function mergeDcAndStat(datacenter, stat) {
   const trials =
         unique(
@@ -44,8 +25,8 @@ function mergeDcAndStat(datacenter, stat) {
   const heads = ['プロトコルID', '試験名', 'PI', 'PI所属機関', '研究主宰者', '研究種別', 'サポート範囲', 'DC', 'STAT'];
 
   const contents = trials.map(function(tn) {
-    const dc = datacenter.find(function(o) { return o['プロトコルID'] === tn; });
-    const st = stat.find(function(o) { return o['プロトコルID'] === tn; });
+    const dc = arrayFind(datacenter, function(o) { return o['プロトコルID'] === tn; });
+    const st = arrayFind(stat, function(o) { return o['プロトコルID'] === tn; });
     return heads.map(function(h) {
       switch(h) {
       case 'DC':
