@@ -7,7 +7,7 @@ export function getUminId(ctr: any): string[] {
 }
 
 export function isUminId(id: string): boolean{
-  return /(UMIN|C)\d{9}/.test(id)
+  return /(UMIN|C)\d{9}/.test(id.trim())
 }
 
 export function getUminIds(targetSheetValues: any[][], column: number): string[] {
