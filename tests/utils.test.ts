@@ -1,5 +1,5 @@
 import { assert } from "chai"
-import { readValues, arrayUniq } from "../src/utils.ts"
+import { readValues, arrayUniq, arrayFind } from "../src/utils.ts"
 
 describe("readValues", () => {
   context('with normal table', () => {
@@ -25,3 +25,21 @@ describe("arrayUniq", () => {
     })
   })
 })
+
+describe("arrayFind", () => {
+  const array = [1, 2, 3]
+  context('with contained value', () => {
+    const search = (e: number) => e === 2
+    it("returns value", () => {
+      assert.equal(arrayFind(array, search), 2)
+    })
+  })
+  context('without contained value', () => {
+    const search = (e: number) => e === 0
+    it("returns undefined", () => {
+      assert.equal(arrayFind(array, search), undefined)
+    })
+  })
+})
+
+
