@@ -73,12 +73,6 @@ function exportSupportsBySpreadsheet(spreadsheet) {
   range.setValues(merged);
 }
 
-function test() {
-  const spreadsheet = SpreadsheetApp.openById('1GZW1Tl8Au1iuFSbGr1xuRoN1z_o8KyfMHHSbl6Vue_8');
-  exportSupportsBySpreadsheet(spreadsheet);
-}
-
 function exportSupports() {
-  console.log('hello gas');
   exportSupportsBySpreadsheet(SpreadsheetApp.getActiveSpreadsheet());
 }
