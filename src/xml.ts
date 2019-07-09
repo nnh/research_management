@@ -15,7 +15,7 @@ export function getElementValue(target: XML_Service.Element, name: string) {
 }
 
 export function filterElements(element: XML_Service.Element, predicate: (elm: XML_Service.Element) => any): XML_Service.Element[] {
-  const res = predicate(element) ? [element] : []
+  const res = []
   const descendants = element.getDescendants()
   for (let i = 0; i < descendants.length; ++i) {
     if (descendants[i].getType() === XML_Service.ContentType.ELEMENT) {
