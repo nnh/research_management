@@ -315,7 +315,8 @@ function fillPublication() {
   const pubmedValues = pubmedSheet.getDataRange().getValues();
   const pubmeds = readValues(pubmedValues)
 
-  for (let i = 1; i < publications.length; i++) {
+  for (let i = 0; i < publications.length; i++) {
+    const row = i + 2
     //医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明等をセットする
     const uminIds = getUminId(publications[i]['CTR'])
     const fromHtml = arrayFind(fromHtmls, (row) => uminIds.indexOf(row['UMINID']) !== -1)
@@ -324,7 +325,7 @@ function fillPublication() {
       const condition = fromHtml['対象疾患名/Condition']
       const interventions = fromHtml['介入1/Interventions/Control_1']
       const str = '本試験の対象は' + condition.replace(/\r?\n/g, "、") + 'である。また「' + interventions.replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
-      publicationSheet.getRange(i + 1, 14).setValue(str)
+      publicationSheet.getRange(row, 14).setValue(str)
     } else {
       const jrctIds = getJrctId(publications[i]['CTR'])
       if (jrctIds.length > 0) {
@@ -333,7 +334,7 @@ function fillPublication() {
           const { condition, interventions } = getDescriptionByJRCTID(id)
           if (condition !== '' || interventions !== '') {
             const str = '本試験の対象は' + condition.replace(/\r?\n/g, "、") + 'である。また「' + interventions.replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
-            publicationSheet.getRange(i + 1, 14).setValue(str)
+            publicationSheet.getRange(row, 14).setValue(str)
             break
           }
         }
@@ -343,10 +344,10 @@ function fillPublication() {
     // Pubmedデータの題名、雑誌名、要旨、PubDateをセットする
     for (let k = 1; k < pubmeds.length; k++) {
       if (publications[i]['PMID'] == pubmeds[k]['PMID']) {
-        publicationSheet.getRange(i + 1, 12).setValue(pubmeds[k]['題名'])
-        publicationSheet.getRange(i + 1, 13).setValue(pubmeds[k]['雑誌名'])
-        publicationSheet.getRange(i + 1, 16).setValue(pubmeds[k]['要旨'])
-        publicationSheet.getRange(i + 1, 19).setValue(pubmeds[k]['PubDate'])
+        publicationSheet.getRange(row, 12).setValue(pubmeds[k]['題名'])
+        publicationSheet.getRange(row, 13).setValue(pubmeds[k]['雑誌名'])
+        publicationSheet.getRange(row, 16).setValue(pubmeds[k]['要旨'])
+        publicationSheet.getRange(row, 19).setValue(pubmeds[k]['PubDate'])
         break
       }
     }
