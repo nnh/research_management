@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const GasPlugin = require('gas-webpack-plugin')
 
 const entry = fs.readdirSync("src").filter(s => s.match(/\.ts$/)).reduce((obj, str) => ({...obj, ...{[path.basename(str, '.ts')]: './src/' + str}}), {})
 
@@ -22,5 +23,7 @@ module.exports = {
       { test: /\.tsx?$/, loader: "ts-loader" },
     ],
   },
-  plugins: [],
+  plugins: [
+    new GasPlugin()
+  ],
 };
