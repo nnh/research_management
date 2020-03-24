@@ -5,24 +5,24 @@
 // https://teratail.com/questions/21724
 // https://jjnurburg.com/onedit2/
 
-function onEdit(e){
+function onEdit(e: GoogleAppsScript.Events.SheetsOnEdit){
   // Set a comment on the edited cell to indicate when it was changed.
   const targetsheetname = "Base"
   var targetrange = e.range.getValues(); // 複数セル編集時対応
   var sheet = e.source;
   var sheetname = sheet.getActiveSheet().getName();
   var range;
-  var oldvalue = e.range.oldValue;　　// 複数セルの場合oldvalueは取得不可
+  var oldvalue = e.oldValue;　　// 複数セルの場合oldvalueは取得不可
   var msgstrings = "";
   var erow;
   var ecol;
-  
+
   // シート名「Base」のA列のみ対象とする
   if (sheetname == targetsheetname) {
     for (var i = 0; i < targetrange.length; i++) {
-      erow = e.range.getRow() + i;  
+      erow = e.range.getRow() + i;
       for (var j = 0; j < targetrange[0].length; j++) {
-        ecol = e.range.getColumn()+ j;    
+        ecol = e.range.getColumn()+ j;
         if (ecol == 1) {
           range = e.source.getSheetByName(targetsheetname).getRange(erow, ecol)
           msgstrings = msgstrings + "セル:" + range.getA1Notation() + "　変更後の値:" + range.getValue()　+ "\\n"
