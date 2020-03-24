@@ -22,7 +22,7 @@
     "ts-mocha": "*",
     "typescript": "*",
     "typescript-language-server": "*",
-    "webpack": "^4.42.1"
+    "webpack": "*"
   },
   "scripts": {
     "start": "clasp push -w",
