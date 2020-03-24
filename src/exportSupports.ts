@@ -1,20 +1,20 @@
-import { readValues, arrayFind } from './utils'
+import { readValues, arrayFind, TableType } from './utils'
 
-function logHead(key, array) {
-  const obj = {};
+function logHead<T>(key: string, array: T[]) {
+  const obj: any = {};
   obj[key] = array.filter(function(_a, index) { return index < 3; });
   console.log(obj);
 }
 
-function readValuesBySheetName(spreadsheet, sheetName) {
-  return readValues(spreadsheet.getSheetByName(sheetName).getDataRange().getValues());
+function readValuesBySheetName(spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet, sheetName: string) {
+  return readValues((spreadsheet.getSheetByName(sheetName) as GoogleAppsScript.Spreadsheet.Sheet).getDataRange().getValues());
 }
 
-function unique(array) {
+function unique<T>(array: T[]) {
   return array.filter(function(x, i) { return array.indexOf(x) === i; });
 }
 
-function mergeDcAndStat(datacenter, stat) {
+function mergeDcAndStat(datacenter: TableType[], stat: TableType[]) {
   const trials =
         unique(
           datacenter.map(function(o) { return o['プロトコルID']; }).concat(
@@ -41,15 +41,14 @@ function mergeDcAndStat(datacenter, stat) {
   return [heads].concat(contents);
 }
 
-function exportSupportsBySpreadsheet(spreadsheet) {
+function exportSupportsBySpreadsheet(spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) {
   console.log('hello gas');
   const datacenter = readValuesBySheetName(spreadsheet, "Datacenter");
   const stat = readValuesBySheetName(spreadsheet, "Stat");
 
   const merged = mergeDcAndStat(datacenter, stat);
   logHead('merged', merged);
-  const range = spreadsheet
-        .getSheetByName('ARO支援一覧test')
+  const range = (spreadsheet.getSheetByName('ARO支援一覧test') as GoogleAppsScript.Spreadsheet.Sheet)
         .getRange(1, 1, merged.length, merged[0].length);
   range.setValues(merged);
 }
