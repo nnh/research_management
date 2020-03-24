@@ -5,23 +5,23 @@
   "license": "Private",
   "dependencies": {
     "@google/clasp": "*",
-    "node-html-parser": "^1.2.13"
+    "node-html-parser": "*"
   },
   "devDependencies": {
-    "@types/chai": "^4.1.7",
-    "@types/google-apps-script": "^0.0.53",
-    "@types/mocha": "^5.2.7",
-    "@typescript-eslint/eslint-plugin": "^1.10.2",
-    "@typescript-eslint/parser": "^1.10.2",
-    "chai": "^4.2.0",
-    "eslint": "^5.16.0",
-    "eslint-config-prettier": "^5.0.0",
-    "eslint-plugin-prettier": "^3.1.0",
-    "mocha": "^6.1.4",
-    "prettier": "^1.18.2",
-    "ts-mocha": "^6.0.0",
-    "typescript": "^3.5.2",
-    "typescript-language-server": "^0.3.8"
+    "@types/chai": "*",
+    "@types/google-apps-script": "*",
+    "@types/mocha": "*",
+    "@typescript-eslint/eslint-plugin": "*",
+    "@typescript-eslint/parser": "*",
+    "chai": "*",
+    "eslint": "*",
+    "eslint-config-prettier": "*",
+    "eslint-plugin-prettier": "*",
+    "mocha": "*",
+    "prettier": "*",
+    "ts-mocha": "*",
+    "typescript": "*",
+    "typescript-language-server": "*"
   },
   "scripts": {
     "start": "clasp push -w",
