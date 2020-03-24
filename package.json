@@ -17,14 +17,15 @@
     "eslint": "*",
     "eslint-config-prettier": "*",
     "eslint-plugin-prettier": "*",
+    "gas-webpack-plugin": "*",
     "mocha": "*",
     "prettier": "*",
-    "ts-loader": "^6.2.2",
+    "ts-loader": "*",
     "ts-mocha": "*",
     "typescript": "*",
     "typescript-language-server": "*",
     "webpack": "*",
-    "webpack-cli": "^3.3.11"
+    "webpack-cli": "*"
   },
   "scripts": {
     "start": "clasp push -w",
