@@ -2,7 +2,6 @@ const fs = require('fs')
 const path = require('path')
 
 const entry = fs.readdirSync("src").filter(s => s.match(/\.ts$/)).reduce((obj, str) => ({...obj, ...{[path.basename(str, '.ts')]: './src/' + str}}), {})
-console.log({entry})
 
 module.exports = {
   mode: "development",
