@@ -16,11 +16,11 @@ function onOpen() {
 }
 
 function generateForm2() {
-  var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter");
+  var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
   var items = sheetDatacenter.getDataRange().getValues();
-  var sheetIrb = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("IRB");
+  var sheetIrb = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("IRB") as GoogleAppsScript.Spreadsheet.Sheet;
   var items2 = sheetIrb.getDataRange().getValues();
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form2印刷")
+  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form2印刷") as GoogleAppsScript.Spreadsheet.Sheet
   var study = [];
   var number = 1;
   var role = "";
@@ -64,7 +64,7 @@ function generateForm2() {
   getUnregisteredData(registerdUminIds, uminIds);
 
   // fromHtmlシートからデータを取得してForm2に挿入する
-  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml") as GoogleAppsScript.Spreadsheet.Sheet;
   var htmlValues = htmlSheet.getDataRange().getValues();
   for (var i = 1; i < form2Values.length; i++) {
     for (var j = 1; j < htmlValues.length; j++) {
@@ -85,7 +85,7 @@ function getRegisterdUminIds(): string[] {
   if (sheet === null) {
     // シートが存在しない場合、「医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明」のためにシートを用意する
     SpreadsheetApp.getActiveSpreadsheet().insertSheet('fromHtml');
-    const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+    const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml") as GoogleAppsScript.Spreadsheet.Sheet;
     var column = new Array(1);
     column[0] = ['UMINID', '対象疾患名/Condition', '介入1/Interventions/Control_1'];
     htmlSheet.getRange(1, 1, 1, 3).setValues(column);
@@ -99,7 +99,7 @@ function getRegisterdUminIds(): string[] {
 }
 
 function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[]) {
-  const  htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml") as GoogleAppsScript.Spreadsheet.Sheet;
   // fromHtmlシートに重複記載を防ぐため、重複しているUMINIDを取り除く
   const uminIds = arrayUniq(sheetUminIds)
 
@@ -107,7 +107,7 @@ function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[])
      // まだ記載されていないUMINIDを使用してデータを取得する
     if (registerdUminIds.indexOf(uminIds[i]) == -1) {
       const recptNo = getRecptNo(uminIds[i]);
-      if (recptNo != 0) {
+      if (recptNo !== undefined) {
         // データをシートにセットする
         var data = getData(recptNo);
         var rowData = new Array(1);
@@ -118,9 +118,9 @@ function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[])
   }
 }
 
-function getRecptNo(uminId) {
+function getRecptNo(uminId: string): string | undefined {
   // UMINIDからrecptnoを取得する
-  var options = {
+  var options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'post',
     payload: {
       sort: '03',
@@ -131,7 +131,7 @@ function getRecptNo(uminId) {
   var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/index.cgi', options).getContentText('UTF-8');
   var root = getXmlRootElement(response);
   var linkArray = getElementsByTagName(root, 'a');
-  var recptNo = 0;
+  var recptNo: string | undefined;
   for (var i = 0; i < linkArray.length; i++) {
     var value = linkArray[i].getAttribute('href').getValue();
     if (value.indexOf('recptno=') != -1) {
@@ -142,12 +142,17 @@ function getRecptNo(uminId) {
   return recptNo;
 }
 
-function getData(recptNo) {
+interface GetDataType {
+  target?: string
+  intervention? :string
+}
+
+function getData(recptNo: string) {
   // HTMLページから目的のデータを取得する
   var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/ctr_view.cgi?recptno=' + recptNo).getContentText('UTF-8');
   var root = getXmlRootElement(response);
   var tds = getElementsByTagName(root, 'td');
-  var data = {};
+  var data: GetDataType = {};
   for (var i = 0; i < tds.length; i++) {
     if (tds[i].getValue().indexOf('対象疾患名/Condition') != -1) {
       data.target = tds[i+1].getValue();
@@ -162,10 +167,10 @@ function getData(recptNo) {
 
 function generateForm3() {
 //  var startTime = new Date();
-  var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter");
+  var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
   var items = sheetDatacenter.getDataRange().getValues();
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form3印刷")
-  var explanationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("explanation")
+  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form3印刷") as GoogleAppsScript.Spreadsheet.Sheet;
+  var explanationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("explanation") as GoogleAppsScript.Spreadsheet.Sheet;
   var roleDetails = explanationSheet.getDataRange().getValues();
   var study = [];
   var number = 1;
@@ -175,7 +180,7 @@ function generateForm3() {
   for (var i = 0; i < items.length; i++) {
     if (items[i][7].indexOf("特定臨床") != -1 && items[i][7].indexOf("治験") == -1 && items[i][10] != "" && items[i][10] >= limit_date) {
       role = (items[i][3].indexOf("名古屋医療センター") != -1) ? "１，２" : "２" ;
-      roleDetail = "当該試験は";
+      let roleDetail = "当該試験は";
       roleDetail += (items[i][3].indexOf("名古屋医療センター") != -1) ? roleDetails[0][1] :
                     (items[i][6] == "JPLSG") ?       roleDetails[1][1] :
                     (items[i][6] == "NHOネットワーク") ? roleDetails[2][1] :
@@ -197,11 +202,11 @@ function generateForm3() {
 }
 
 function generateForm4() {
-  const sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter");
+  const sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
   const items = sheetDatacenter.getDataRange().getValues();
-  const sheetSites = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('sites');
+  const sheetSites = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('sites') as GoogleAppsScript.Spreadsheet.Sheet;
   const siteValues = sheetSites.getDataRange().getValues();
-  const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form4印刷")
+  const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form4印刷") as GoogleAppsScript.Spreadsheet.Sheet;
   const study = [["番号", "登録ID等", "治験・臨床研究名", "支援対象機関", "研究支援の種類", "プロトコル番号", "医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明"]];
   const limitDate = new Date(2016, 12, 1);
 
@@ -272,7 +277,7 @@ function generateForm4() {
   getUnregisteredData(registerdUminIds, uminIds);
 
   // fromHtmlシートからデータを取得してForm４に挿入する
-  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml") as GoogleAppsScript.Spreadsheet.Sheet;
   const htmlValues = htmlSheet.getDataRange().getValues();
   for (let i = 1; i < form4Values.length; i++) {
     for (let j = 1; j < htmlValues.length; j++) {
@@ -286,7 +291,7 @@ function generateForm4() {
 }
 
 function fillPublication() {
-  const publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication');
+  const publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication') as GoogleAppsScript.Spreadsheet.Sheet;
   const publicationValues = publicationSheet.getDataRange().getValues();
 
   const publications = readValues(publicationValues)
@@ -299,7 +304,7 @@ function fillPublication() {
   getUnregisteredData(registerdUminIds, uminIds);
 
   // fromHtmlシートからデータを取得する
-  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml") as GoogleAppsScript.Spreadsheet.Sheet;
   const htmlValues = htmlSheet.getDataRange().getValues();
   const fromHtmls = readValues(htmlValues)
 
@@ -310,7 +315,7 @@ function fillPublication() {
   getUnregisteredPubmedData(registerdPubmedIds, pubmedIds);
 
   // pubmedDataシートからデータを取得する
-  const pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData");
+  const pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData") as GoogleAppsScript.Spreadsheet.Sheet;
   const pubmedValues = pubmedSheet.getDataRange().getValues();
   const pubmeds = readValues(pubmedValues)
 
@@ -362,14 +367,14 @@ function fillPublication() {
   }
 }
 
-function getPubmedXmlRoot(pmid) {
+function getPubmedXmlRoot(pmid: string) {
   // PMIDからデータを取得する
   var response = UrlFetchApp.fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=' + pmid).getContentText('UTF-8');
   var xml = XmlService.parse(response);
   return xml.getRootElement();
 }
 
-function getAbstractText(root) {
+function getAbstractText(root: GoogleAppsScript.XML_Service.Element) {
   // データから要旨を取得する
   var array = getElementsByTagName(root, 'AbstractText');
   var abstractText = '';
@@ -380,17 +385,17 @@ function getAbstractText(root) {
   return abstractText;
 }
 
-function getTitle(root) {
+function getTitle(root: GoogleAppsScript.XML_Service.Element) {
   // データから題名を取得する
   return getElementValue(root, 'ArticleTitle');
 }
 
-function getJournal(root) {
+function getJournal(root: GoogleAppsScript.XML_Service.Element) {
   // データから題名を取得して指定の書式で返す
   var pubDateElement = getElementsByTagName(root, 'PubDate')[0];
   var year = getPubElement(pubDateElement, root, 'Year');
-  var month = getPubElement(pubDateElement, root, 'Month');
-  if (/\d/.test(parseInt(month, 10))) {
+  var month: string = getPubElement(pubDateElement, root, 'Month');
+  if (/\d/.test(parseInt(month, 10).toString())) {
     var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     month = monthNames[parseInt(month, 10) - 1];
   }
@@ -406,10 +411,10 @@ function getJournal(root) {
   return vancouver;
 }
 
-function getPubDate(root) {
+function getPubDate(root: GoogleAppsScript.XML_Service.Element) {
   var pubDateElement = getElementsByTagName(root, 'PubDate')[0];
   var year = getPubElement(pubDateElement, root, 'Year');
-  var month = getPubElement(pubDateElement, root, 'Month');
+  var month: string | number = getPubElement(pubDateElement, root, 'Month');
   if (/[A-Za-z]/.test(month)) {
     var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     month = monthNames.indexOf(month) + 1;
@@ -418,10 +423,12 @@ function getPubDate(root) {
   return year + '/' + month + '/' + date;
 }
 
-function getPubElement(pubDateElement, root, type) {
+function getPubElement(pubDateElement: GoogleAppsScript.XML_Service.Element, root: GoogleAppsScript.XML_Service.Element, type) {
   var targetElement = getElementValue(pubDateElement, type);
   if (!targetElement) {
-    var elements = getElementsByTagName(root, 'PubMedPubDate').filter(function(el) { return /pubmed/.test(el.getAttribute("PubStatus")) });
+    var elements = getElementsByTagName(root, 'PubMedPubDate').filter(function(el) {
+      return /pubmed/.test((el.getAttribute("PubStatus")) as any);// FIXME
+    });
     targetElement = getElementValue(elements[0], type);
   }
   return targetElement;
@@ -434,7 +441,7 @@ function getRegisterdPubmedIds() {
   if (pubmedSheet === null) {
     // シートが存在しない場合、Pubmedデータのためにシートを用意する
     SpreadsheetApp.getActiveSpreadsheet().insertSheet('pubmedData');
-    pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('pubmedData');
+    pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('pubmedData') as GoogleAppsScript.Spreadsheet.Sheet;
     var column = new Array(1);
     column[0] = ['PMID', '題名', '雑誌名', '要旨', 'PubDate'];
     pubmedSheet.getRange(1, 1, 1, 5).setValues(column);
@@ -447,8 +454,8 @@ function getRegisterdPubmedIds() {
   return registerdPubmedIds;
 }
 
-function getUnregisteredPubmedData(registerdPubmedIds, sheetPubmedIds) {
-  var pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData");
+function getUnregisteredPubmedData(registerdPubmedIds: any[], sheetPubmedIds: any[]) {
+  var pubmedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pubmedData") as GoogleAppsScript.Spreadsheet.Sheet;
   // pubmedDataシートに重複記載を防ぐため、重複しているPMIDを取り除く
   var pubmedIds = sheetPubmedIds.filter(function (x, i, self) {
     return self.indexOf(x) === i;
