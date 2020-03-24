@@ -1,4 +1,4 @@
 /.clasp.json
 /node_modules
 /yarn-error.log
-/src/*.js
+/dist/*.js
