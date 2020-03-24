@@ -423,7 +423,7 @@ function getPubDate(root: GoogleAppsScript.XML_Service.Element) {
   return year + '/' + month + '/' + date;
 }
 
-function getPubElement(pubDateElement: GoogleAppsScript.XML_Service.Element, root: GoogleAppsScript.XML_Service.Element, type) {
+function getPubElement(pubDateElement: GoogleAppsScript.XML_Service.Element, root: GoogleAppsScript.XML_Service.Element, type: string) {
   var targetElement = getElementValue(pubDateElement, type);
   if (!targetElement) {
     var elements = getElementsByTagName(root, 'PubMedPubDate').filter(function(el) {
