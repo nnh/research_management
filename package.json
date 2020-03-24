@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "Private",
   "dependencies": {
+    "@google/clasp": "*",
     "node-html-parser": "^1.2.13"
   },
   "devDependencies": {
@@ -13,7 +14,6 @@
     "@typescript-eslint/eslint-plugin": "^1.10.2",
     "@typescript-eslint/parser": "^1.10.2",
     "chai": "^4.2.0",
-    "clasp": "^1.0.0",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^5.0.0",
     "eslint-plugin-prettier": "^3.1.0",
