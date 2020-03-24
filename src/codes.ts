@@ -197,89 +197,88 @@ function generateForm3() {
 }
 
 function generateForm4() {
-  var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter");
-  var items = sheetDatacenter.getDataRange().getValues();
-  var sheetSites = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('sites');
-  var siteValues = sheetSites.getDataRange().getValues();
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form4印刷")
-  var study = [];
-  var sites = "";
-  var i = 0;
-  var number = 1;
-  var role = "";
-  var limit_date = new Date(2016, 12, 1);
+  const sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter");
+  const items = sheetDatacenter.getDataRange().getValues();
+  const sheetSites = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('sites');
+  const siteValues = sheetSites.getDataRange().getValues();
+  const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form4印刷")
+  const study = [["番号", "登録ID等", "治験・臨床研究名", "支援対象機関", "研究支援の種類", "プロトコル番号", "医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明"]];
+  const limitDate = new Date(2016, 12, 1);
 
-  for (var i = 0; i < items.length; i++) {
-    if ((""+ items[i][7]).indexOf("特定臨床") != -1 && items[i][10] != "" && items[i][10] >= limit_date) {
+  for (let i = 0; i < items.length; i++) {
+    if ((""+ items[i][7]).indexOf("特定臨床") != -1 && items[i][10] != "" && items[i][10] >= limitDate) {
       // sitesシートの数が1の時は対象外なので挿入しないようにする
-      for (var j = 1; j < siteValues.length; j++) {
+      for (let j = 1; j < siteValues.length; j++) {
         if (items[i][0] == siteValues[j][0] && siteValues[j][1] != 1) {
-          role = "プロトコール作成支援、データマネジメント、中央モニタリング";
-          sites = (items[i][6] == "JPLSG") ? "名古屋医療センター、東京大学医学部附属病院、他145施設" : "" ;
-          study[number] = [number, items[i][9], items[i][1], sites, role, items[i][0], ""];
+          const role = "プロトコール作成支援、データマネジメント、中央モニタリング";
+          const sites = (items[i][6] == "JPLSG") ? "名古屋医療センター、東京大学医学部附属病院、他145施設" : "" ;
+          study.push([study.length, items[i][9], items[i][1], sites, role, items[i][0], ""])
           // number, ctr,         study_name,  sites, role, protocol_ID, intervention
-          number++;
           break;
         }
       }
     }
   }
-  study[0] = ["番号", "登録ID等", "治験・臨床研究名", "支援対象機関", "研究支援の種類", "プロトコル番号", "医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明"];
   targetSheet.getRange("A1:I500").clear();
   targetSheet.getRange(1, 1, study.length, study[0].length).setValues(study);
 
   // 番号と支援対象機関の挿入
-  var form4Values = targetSheet.getDataRange().getValues();
-  var no = 0;
+  const form4Values = targetSheet.getDataRange().getValues();
+  let no = 0;
 
-  for (var i = 1; i < form4Values.length; i++) {
+  for (let i = 1; i < form4Values.length; i++) {
     // 番号を挿入する
-    for (var j = 1; j < siteValues.length; j++) {
+    for (let j = 1; j < siteValues.length; j++) {
       if (form4Values[i][5] == siteValues[j][0]) {
-        var noString = no + 1;
-        if (siteValues[j][1] != 1) {
-          noString = noString + '〜' + (noString + siteValues[j][1] - 1);
+        let noString = undefined
+        if (siteValues[j][1]) {
+          const count = siteValues[j][1] || 1
+          const fromCount = no + 1
+          const toCount = no + count
+          no += count;
+          noString = (fromCount === toCount) ? ('' + fromCount) : ([fromCount, toCount].join('〜'))
+        } else {
+          noString = 'sites に' +  form4Values[i][5] + ' 該当なし'
         }
-        no += siteValues[j][1];
         targetSheet.getRange(i+1, 1).setValue(noString);
         break;
       }
     }
 
     // 対象支援機関を挿入する
-    for (var k = 1; k < items.length; k++) {
+    for (let k = 1; k < items.length; k++) {
       if (form4Values[i][5] == items[k][0]) {
-        var currentNum = String(targetSheet.getRange(i+1, 1).getValue());
-        var string = items[k][3];
+        const currentNum = String(targetSheet.getRange(i+1, 1).getValue());
+        let str = items[k][3];
         if (currentNum.indexOf('〜') != -1) {
-          var siteNums = currentNum.split('〜');
-          string += '、ほか' + (Number(siteNums[1]) - Number(siteNums[0]) + 1) + '施設';
+          const siteNums = currentNum.split('〜');
+          str += '、ほか' + (Number(siteNums[1]) - Number(siteNums[0]) + 1) + '施設';
         }
-        string += (items[k][6] == 'NHOネットワーク') ? '(NHOネットワーク共同臨床研究参加施設)' :
+        str += (items[k][6] == 'NHOネットワーク') ? '(NHOネットワーク共同臨床研究参加施設)' :
                   (items[k][6] == 'JPLSG') ? '(JPLSG(日本小児がん研究グループ(JCCG)血液腫瘍分科会参加施設)' : '';
-        targetSheet.getRange(i+1, 4).setValue(string);
+        targetSheet.getRange(i+1, 4).setValue(str);
         break;
       }
     }
   }
 
   // すでにfromHtmlシート内に記載されているUMINIDを取得する
-  var registerdUminIds = getRegisterdUminIds();
+  const registerdUminIds = getRegisterdUminIds();
 
   // Form４シート内に記載されているUMINIDを取得する
-  var uminIds = getUminIds(form4Values, 1);
+  const uminIds = getUminIds(form4Values, 1);
 
   // fromHtmlシート内に記載されていないデータを取得する
   getUnregisteredData(registerdUminIds, uminIds);
 
   // fromHtmlシートからデータを取得してForm４に挿入する
-  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
-  var htmlValues = htmlSheet.getDataRange().getValues();
-  for (var i = 1; i < form4Values.length; i++) {
-    for (var j = 1; j < htmlValues.length; j++) {
+  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
+  const htmlValues = htmlSheet.getDataRange().getValues();
+  for (let i = 1; i < form4Values.length; i++) {
+    for (let j = 1; j < htmlValues.length; j++) {
       if (form4Values[i][1] == htmlValues[j][0]) {
-        var string = '本試験の対象は' + htmlValues[j][1].replace(/\r?\n/g, "、") + 'である。また「' + htmlValues[j][2].replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
-        targetSheet.getRange(i+1, 7).setValue(string);
+        const str = '本試験の対象は' + htmlValues[j][1].replace(/\r?\n/g, "、") + 'である。また「' + htmlValues[j][2].replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
+        targetSheet.getRange(i+1, 7).setValue(str);
         break;
       }
     }
