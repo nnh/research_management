@@ -1,4 +1,4 @@
-type TableType = { [key: string]: any }
+export type TableType = { [key: string]: any }
 
 export function readValues(values: any[][]): TableType[] {
   const headers = values[0].map((h) => String(h))
