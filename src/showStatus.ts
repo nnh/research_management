@@ -24,7 +24,8 @@ function onEdit(e: GoogleAppsScript.Events.SheetsOnEdit){
       for (var j = 0; j < targetrange[0].length; j++) {
         ecol = e.range.getColumn()+ j;
         if (ecol == 1) {
-          range = e.source.getSheetByName(targetsheetname).getRange(erow, ecol)
+          const sheet = e.source.getSheetByName(targetsheetname) as GoogleAppsScript.Spreadsheet.Sheet
+          range = sheet.getRange(erow, ecol)
           msgstrings = msgstrings + "セル:" + range.getA1Notation() + "　変更後の値:" + range.getValue()　+ "\\n"
         }
       }
