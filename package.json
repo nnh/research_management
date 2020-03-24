@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "Private",
-  "dependencies": {},
+  "dependencies": {
+    "node-html-parser": "^1.2.13"
+  },
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/google-apps-script": "^0.0.53",
