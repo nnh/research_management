@@ -21,7 +21,9 @@
     "prettier": "*",
     "ts-mocha": "*",
     "typescript": "*",
-    "typescript-language-server": "*"
+    "typescript-language-server": "*",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
   },
   "scripts": {
     "start": "clasp push -w",
