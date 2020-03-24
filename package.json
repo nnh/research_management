@@ -19,6 +19,7 @@
     "eslint-plugin-prettier": "*",
     "mocha": "*",
     "prettier": "*",
+    "ts-loader": "^6.2.2",
     "ts-mocha": "*",
     "typescript": "*",
     "typescript-language-server": "*",
