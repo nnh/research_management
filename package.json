@@ -24,11 +24,12 @@
     "ts-mocha": "*",
     "typescript": "*",
     "typescript-language-server": "*",
+    "watch": "^1.0.2",
     "webpack": "*",
     "webpack-cli": "*"
   },
   "scripts": {
-    "start": "clasp push -w",
+    "start": "watch 'webpack && clasp push' ./src",
     "test": "ts-mocha tests/*.test.ts"
   }
 }

@@ -3,19 +3,7 @@ import { getUminIds, getUminId, getJrctId } from './ctr-utils'
 import { getXmlRootElement, getElementsByTagName, getElementValue } from './xml'
 import { getDescriptionByJRCTID } from './jrct'
 
-function onOpen() {
-  var arr = [
-    {name: "様式第２、別添２作成", functionName: "generateForm2"},
-    {name: "様式第３、別添３作成", functionName: "generateForm3"},
-    {name: "様式第４", functionName: "generateForm4"},
-    {name: "Publication", functionName: "fillPublication"},
-    {name: "ARO支援一覧test", functionName: "exportSupports"},
-  ];
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  spreadsheet.addMenu("様式作成", arr);
-}
-
-function generateForm2() {
+export function generateForm2() {
   var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
   var items = sheetDatacenter.getDataRange().getValues();
   var sheetIrb = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("IRB") as GoogleAppsScript.Spreadsheet.Sheet;
@@ -165,7 +153,7 @@ function getData(recptNo: string) {
   return data;
 }
 
-function generateForm3() {
+export function generateForm3() {
 //  var startTime = new Date();
   var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
   var items = sheetDatacenter.getDataRange().getValues();
@@ -201,7 +189,7 @@ function generateForm3() {
 //  Browser.msgBox(status);
 }
 
-function generateForm4() {
+export function generateForm4() {
   const sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
   const items = sheetDatacenter.getDataRange().getValues();
   const sheetSites = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('sites') as GoogleAppsScript.Spreadsheet.Sheet;
@@ -290,7 +278,7 @@ function generateForm4() {
   }
 }
 
-function fillPublication() {
+export function fillPublication() {
   const publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication') as GoogleAppsScript.Spreadsheet.Sheet;
   const publicationValues = publicationSheet.getDataRange().getValues();
 
