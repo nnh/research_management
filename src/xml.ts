@@ -1,14 +1,5 @@
 import XML_Service = GoogleAppsScript.XML_Service
 
-export function getXmlRootElement(data: string) {
-  // 現状GAS のみでHTML をパースするにはdeprecated の Xml を利用するしか無い
-  //const docXml = Xml.parse(data, true);
-  //const body = docXml.html.body.toXmlString();
-  // const doc = XmlService.parse(body);
-  const doc = XmlService.parse(""); // FIXME
-  return doc.getRootElement();
-}
-
 export function getElementsByTagName(element: XML_Service.Element, tagName: string) {
   return filterElements(element, (elem) => elem.getName() == tagName)
 }

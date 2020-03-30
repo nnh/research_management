@@ -1,7 +1,10 @@
+import * as HTMLParser from 'node-html-parser'
+
 import { readValues, arrayUniq, arrayFind } from './utils'
 import { getUminIds, getUminId, getJrctId } from './ctr-utils'
-import { getXmlRootElement, getElementsByTagName, getElementValue } from './xml'
+import { getElementsByTagName, getElementValue } from './xml'
 import { getDescriptionByJRCTID } from './jrct'
+import { getHtmlRootElement, getHtmlElementsByTagName } from './html'
 
 export function generateForm2() {
   var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
@@ -117,14 +120,16 @@ function getRecptNo(uminId: string): string | undefined {
     }
   };
   var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/index.cgi', options).getContentText('UTF-8');
-  var root = getXmlRootElement(response);
-  var linkArray = getElementsByTagName(root, 'a');
+  var root = getHtmlRootElement(response);
   var recptNo: string | undefined;
-  for (var i = 0; i < linkArray.length; i++) {
-    var value = linkArray[i].getAttribute('href').getValue();
-    if (value.indexOf('recptno=') != -1) {
-      recptNo = value.split('=')[1];
-      break;
+  if (root) {
+    var linkArray = getHtmlElementsByTagName(root, 'a');
+    for (var i = 0; i < linkArray.length; i++) {
+      var value = linkArray[i].getAttribute('href')
+      if (value.indexOf('recptno=') != -1) {
+        recptNo = value.split('=')[1];
+        break;
+      }
     }
   }
   return recptNo;
@@ -138,16 +143,18 @@ interface GetDataType {
 function getData(recptNo: string) {
   // HTMLページから目的のデータを取得する
   var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/ctr_view.cgi?recptno=' + recptNo).getContentText('UTF-8');
-  var root = getXmlRootElement(response);
-  var tds = getElementsByTagName(root, 'td');
+  var root = getHtmlRootElement(response);
   var data: GetDataType = {};
-  for (var i = 0; i < tds.length; i++) {
-    if (tds[i].getValue().indexOf('対象疾患名/Condition') != -1) {
-      data.target = tds[i+1].getValue();
-    }
-    if (tds[i].getValue().indexOf('介入1/Interventions/Control_1') != -1) {
-      data.intervention = tds[i+1].getValue();
-      break;
+  if (root) {
+    var tds = getHtmlElementsByTagName(root, 'td');
+    for (var i = 0; i < tds.length; i++) {
+      if (tds[i].text.indexOf('対象疾患名/Condition') != -1) {
+        data.target = tds[i + 1].text;
+      }
+      if (tds[i].text.indexOf('介入1/Interventions/Control_1') != -1) {
+        data.intervention = tds[i + 1].text;
+        break;
+      }
     }
   }
   return data;
