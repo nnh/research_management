@@ -2,7 +2,7 @@ import * as htmlparser2 from 'htmlparser2'
 import * as domhandler from 'domhandler'
 
 export function getHtmlRootElement(html: string): domhandler.NodeWithChildren | undefined{
-  const nodes = htmlparser2.parseDOM(html, {normalizeWhitespace: true})
+  const nodes = htmlparser2.parseDOM(html)
   const root = nodes.find((node: domhandler.Node) => node instanceof domhandler.NodeWithChildren)
   return root as domhandler.NodeWithChildren | undefined
 }
@@ -12,13 +12,17 @@ export function getHtmlElementsByTagName(element: domhandler.NodeWithChildren, t
 }
 
 export function getInnerText(element: domhandler.NodeWithChildren): string {
-  return element.children.map(child => {
-    if (child instanceof domhandler.NodeWithChildren) {
-      return getInnerText(child)
+  const arr = element.children.map(child => {
+    if (child instanceof domhandler.NodeWithChildren || child instanceof domhandler.Element) {
+      const res = getInnerText(child)
+      return res
     } else if (child instanceof domhandler.DataNode) {
       return child.data
+    } else {
+      return ''
     }
-  }).join('')
+  })
+  return arr.join('')
 }
 
 export function getHtmlElementValue(target: domhandler.NodeWithChildren, name: string) {
