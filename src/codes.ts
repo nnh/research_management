@@ -97,7 +97,7 @@ function getRecptNo(uminId: string): string | undefined {
     payload: {
       sort: '03',
       'function': '04',
-      ids: uminId
+      ctrno: uminId
     }
   };
   var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/index.cgi', options).getContentText('UTF-8');
