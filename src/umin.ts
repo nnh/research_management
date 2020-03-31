@@ -21,8 +21,8 @@ interface RecptDataType {
   intervention? :string
 }
 
-export function getRecptData(response: string): RecptDataType {
-  var root = getHtmlRootElement(response);
+export function getRecptDataFromHtml(html: string): RecptDataType {
+  var root = getHtmlRootElement(html);
   var data: RecptDataType = {};
   if (root) {
     var tds = getHtmlElementsByTagName(root, 'td');

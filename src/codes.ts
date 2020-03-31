@@ -4,7 +4,7 @@ import { readValues, arrayUniq, arrayFind } from './utils'
 import { getUminIds, getUminId, getJrctId } from './ctr-utils'
 import { getElementsByTagName, getElementValue } from './xml'
 import { getDescriptionByJRCTID } from './jrct'
-import { getRecptNoFromHtml, getRecptData } from './umin'
+import { getRecptNoFromHtml, getRecptDataFromHtml } from './umin'
 import { searchUminHtml, getRecptHtml } from './crawler'
 
 export function generateForm2() {
@@ -118,7 +118,7 @@ function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[])
 function getData(recptNo: string) {
   // HTMLページから目的のデータを取得する
   var html = getRecptHtml(recptNo)
-  return getRecptData(html)
+  return getRecptDataFromHtml(html)
 }
 
 export function generateForm3() {
