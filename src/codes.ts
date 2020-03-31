@@ -1,11 +1,9 @@
-import * as HTMLParser from 'node-html-parser'
-
 import { readValues, arrayUniq, arrayFind } from './utils'
 import { getUminIds, getUminId, getJrctId } from './ctr-utils'
 import { getElementsByTagName, getElementValue } from './xml'
-import { getDescriptionByJRCTID } from './jrct'
+import { getDescriptionByHtml, JRctDescription } from './jrct'
 import { getRecptNoFromHtml, getRecptDataFromHtml } from './umin'
-import { searchUminHtml, getRecptHtml } from './crawler'
+import { searchUminHtml, getRecptHtml, getJrctHtml } from './crawler'
 
 export function generateForm2() {
   var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
@@ -245,6 +243,12 @@ export function generateForm4() {
     }
   }
 }
+
+export function getDescriptionByJRCTID(jRctId: string): JRctDescription {
+  const html = getJrctHtml(jRctId)
+  return getDescriptionByHtml(html)
+}
+
 
 export function fillPublication() {
   const publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication') as GoogleAppsScript.Spreadsheet.Sheet;

@@ -1,17 +1,14 @@
 import * as HTMLParser from 'node-html-parser'
-import { findElement, filterElements } from './xml'
 import { arrayFind } from './utils'
 import { getHtmlRootElement, findHtmlElement, filterHtmlElements } from './html'
 
-interface JRctDescription {
+export interface JRctDescription {
   condition: string
   interventions: string
 }
 
-export function getDescriptionByJRCTID(jRctId: string): JRctDescription {
-  const url = 'https://jrct.niph.go.jp/latest-detail/' + jRctId
-  const response = UrlFetchApp.fetch(url).getContentText('UTF-8')
-  const root = getHtmlRootElement(response)
+export function getDescriptionByHtml(html: string): JRctDescription {
+  const root = getHtmlRootElement(html)
   if (root) {
     const div21 = findHtmlElement(root, (elm) => {
       return elm.id === 'area-toggle-02-01'

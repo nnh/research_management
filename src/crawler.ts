@@ -15,3 +15,8 @@ export function searchUminHtml(uminId: string) {
 export function getRecptHtml(recptNo: string) {
   return UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/ctr_view.cgi?recptno=' + recptNo).getContentText('UTF-8');
 }
+
+export function getJrctHtml(jRctId: string): string {
+  const url = 'https://jrct.niph.go.jp/latest-detail/' + jRctId
+  return UrlFetchApp.fetch(url).getContentText('UTF-8')
+}
