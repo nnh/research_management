@@ -14,7 +14,6 @@
     "@types/mocha": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
-    "axios": "^0.19.2",
     "chai": "*",
     "eslint": "*",
     "eslint-config-prettier": "*",
