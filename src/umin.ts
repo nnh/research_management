@@ -1,6 +1,6 @@
 import { getHtmlRootElement, getHtmlElementsByTagName } from "./html";
 
-export function getRecptNoFromData(data: string): string | undefined {
+export function getRecptNoFromHtml(data: string): string | undefined {
   var root = getHtmlRootElement(data);
   var recptNo: string | undefined;
   if (root) {

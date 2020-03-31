@@ -1,4 +1,4 @@
-export function searchUmin(uminId: string) {
+export function searchUminHtml(uminId: string) {
   // UMINIDからrecptnoを取得する
   var options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'post',
@@ -12,6 +12,6 @@ export function searchUmin(uminId: string) {
   return response
 }
 
-export function readRecpt(recptNo: string) {
+export function getRecptHtml(recptNo: string) {
   return UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/ctr_view.cgi?recptno=' + recptNo).getContentText('UTF-8');
 }

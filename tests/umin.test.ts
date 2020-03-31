@@ -1,7 +1,7 @@
 import { assert } from "chai"
-import axios from 'axios'
+//import axios from 'axios'
 import fs from 'fs'
-import { getRecptNoFromData, getRecptData } from "../src/umin"
+import { getRecptNoFromHtml, getRecptData } from "../src/umin"
 
 /*
 async function searchUmin(uminId: string): Promise<string> {
@@ -19,13 +19,13 @@ async function searchUmin(uminId: string): Promise<string> {
 }
 */
 
-describe('getRecptNo', () => {
+describe('getRecptNoFromHtml', () => {
   context('valid uminId', () => {
     const uminId = 'UMIN000027821'
     it('returns valid receptNo', () => {
       //const data = await searchUmin(uminId)
       const data = fs.readFileSync(`tests/fixtures/umin_${uminId}.html`).toString()
-      const recptNo = getRecptNoFromData(data)
+      const recptNo = getRecptNoFromHtml(data)
       assert.equal(recptNo, 'R000031865')
     })
   })

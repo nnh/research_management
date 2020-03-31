@@ -4,8 +4,8 @@ import { readValues, arrayUniq, arrayFind } from './utils'
 import { getUminIds, getUminId, getJrctId } from './ctr-utils'
 import { getElementsByTagName, getElementValue } from './xml'
 import { getDescriptionByJRCTID } from './jrct'
-import { getRecptNoFromData, getRecptData } from './umin'
-import { searchUmin } from './crawler'
+import { getRecptNoFromHtml, getRecptData } from './umin'
+import { searchUminHtml, getRecptHtml } from './crawler'
 
 export function generateForm2() {
   var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
@@ -91,8 +91,8 @@ function getRegisterdUminIds(): string[] {
 }
 
 function getRecptNo(uminId: string): string | undefined {
-  const data = searchUmin(uminId)
-  return getRecptNoFromData(data)
+  const html = searchUminHtml(uminId)
+  return getRecptNoFromHtml(html)
 }
 
 function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[]) {
@@ -117,8 +117,8 @@ function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[])
 
 function getData(recptNo: string) {
   // HTMLページから目的のデータを取得する
-  var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/ctr_view.cgi?recptno=' + recptNo).getContentText('UTF-8');
-  return getRecptData(response)
+  var html = getRecptHtml(recptNo)
+  return getRecptData(html)
 }
 
 export function generateForm3() {
