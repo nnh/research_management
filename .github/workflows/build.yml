@@ -11,6 +11,10 @@ jobs:
         node-version: [12.16.1]
 
     steps:
+    - name: Set git to use LF
+      run: |
+        git config --global core.autocrlf false
+
     - uses: actions/checkout@v1
     - name: Set up packages
       run: |
