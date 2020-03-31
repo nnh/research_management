@@ -106,7 +106,7 @@ function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[])
       const recptNo = getRecptNo(uminIds[i]);
       if (recptNo !== undefined) {
         // データをシートにセットする
-        var data = getData(recptNo);
+        var data = getRecptData(recptNo);
         var rowData = new Array(1);
         rowData[0] = [uminIds[i], data.target, data.intervention];
         htmlSheet.getRange(htmlSheet.getLastRow()+1, 1, 1, 3).setValues(rowData);
@@ -115,7 +115,7 @@ function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[])
   }
 }
 
-function getData(recptNo: string) {
+function getRecptData(recptNo: string) {
   // HTMLページから目的のデータを取得する
   var html = getRecptHtml(recptNo)
   return getRecptDataFromHtml(html)
