@@ -5,6 +5,7 @@
   "license": "Private",
   "dependencies": {
     "@google/clasp": "*",
+    "@types/node": "^13.9.8",
     "node-html-parser": "*"
   },
   "devDependencies": {
@@ -13,6 +14,7 @@
     "@types/mocha": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
+    "axios": "^0.19.2",
     "chai": "*",
     "eslint": "*",
     "eslint-config-prettier": "*",

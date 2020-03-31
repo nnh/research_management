@@ -5,7 +5,7 @@ import { getUminIds, getUminId, getJrctId } from './ctr-utils'
 import { getElementsByTagName, getElementValue } from './xml'
 import { getDescriptionByJRCTID } from './jrct'
 import { getHtmlRootElement, getHtmlElementsByTagName } from './html'
-import { getRecptNo } from './umin'
+import { getRecptNoFromData } from './umin'
 
 export function generateForm2() {
   var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
@@ -88,6 +88,20 @@ function getRegisterdUminIds(): string[] {
     const objs = readValues(htmlItems)
     return objs.map((row) => row['UMINID'] as string)
   }
+}
+
+function getRecptNo(uminId: string): string | undefined {
+  // UMINIDからrecptnoを取得する
+  var options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+    method: 'post',
+    payload: {
+      sort: '03',
+      'function': '04',
+      ids: uminId
+    }
+  };
+  var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/index.cgi', options).getContentText('UTF-8');
+  return getRecptNoFromData(response)
 }
 
 function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[]) {

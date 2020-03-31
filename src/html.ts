@@ -2,7 +2,7 @@ import * as HTMLParser from 'node-html-parser'
 
 export function getHtmlRootElement(data: string): HTMLParser.HTMLElement | undefined {
   const res = HTMLParser.parse(data)
-  if (res.valid && res instanceof HTMLParser.HTMLElement) {
+  if (res instanceof HTMLParser.HTMLElement) {
     return res
   } else {
     undefined

@@ -1,17 +1,7 @@
 import { getHtmlRootElement, getHtmlElementsByTagName } from "./html";
 
-export function getRecptNo(uminId: string): string | undefined {
-  // UMINIDからrecptnoを取得する
-  var options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    method: 'post',
-    payload: {
-      sort: '03',
-      'function': '04',
-      ids: uminId
-    }
-  };
-  var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/index.cgi', options).getContentText('UTF-8');
-  var root = getHtmlRootElement(response);
+export function getRecptNoFromData(data: string): string | undefined {
+  var root = getHtmlRootElement(data);
   var recptNo: string | undefined;
   if (root) {
     var linkArray = getHtmlElementsByTagName(root, 'a');
