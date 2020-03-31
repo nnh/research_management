@@ -4,7 +4,7 @@ import fs from 'fs'
 import { getRecptNoFromData } from "../src/umin"
 
 /*
-async function getUmin(uminId: string): Promise<string> {
+async function searchUmin(uminId: string): Promise<string> {
   const obj: {[key: string]: string} = {
     sort: '03',
     'function': '04',
@@ -23,7 +23,7 @@ describe('getRecptNo', () => {
   context('valid uminId', () => {
     const uminId = 'UMIN000027821'
     it('returns valid receptNo', () => {
-      //const data = await getUmin(uminId)
+      //const data = await searchUmin(uminId)
       const data = fs.readFileSync(`tests/fixtures/umin_${uminId}.html`).toString()
       const recptNo = getRecptNoFromData(data)
       assert.equal(recptNo, 'R000031865')

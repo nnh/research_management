@@ -6,6 +6,7 @@ import { getElementsByTagName, getElementValue } from './xml'
 import { getDescriptionByJRCTID } from './jrct'
 import { getHtmlRootElement, getHtmlElementsByTagName } from './html'
 import { getRecptNoFromData } from './umin'
+import { searchUmin } from './crawler'
 
 export function generateForm2() {
   var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
@@ -91,17 +92,8 @@ function getRegisterdUminIds(): string[] {
 }
 
 function getRecptNo(uminId: string): string | undefined {
-  // UMINIDからrecptnoを取得する
-  var options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    method: 'post',
-    payload: {
-      sort: '03',
-      'function': '04',
-      ctrno: uminId
-    }
-  };
-  var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/index.cgi', options).getContentText('UTF-8');
-  return getRecptNoFromData(response)
+  const data = searchUmin(uminId)
+  return getRecptNoFromData(data)
 }
 
 function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[]) {
