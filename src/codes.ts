@@ -4,8 +4,7 @@ import { readValues, arrayUniq, arrayFind } from './utils'
 import { getUminIds, getUminId, getJrctId } from './ctr-utils'
 import { getElementsByTagName, getElementValue } from './xml'
 import { getDescriptionByJRCTID } from './jrct'
-import { getHtmlRootElement, getHtmlElementsByTagName } from './html'
-import { getRecptNoFromData } from './umin'
+import { getRecptNoFromData, getRecptData } from './umin'
 import { searchUmin } from './crawler'
 
 export function generateForm2() {
@@ -116,29 +115,10 @@ function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[])
   }
 }
 
-interface GetDataType {
-  target?: string
-  intervention? :string
-}
-
 function getData(recptNo: string) {
   // HTMLページから目的のデータを取得する
   var response = UrlFetchApp.fetch('https://upload.umin.ac.jp/cgi-open-bin/ctr/ctr_view.cgi?recptno=' + recptNo).getContentText('UTF-8');
-  var root = getHtmlRootElement(response);
-  var data: GetDataType = {};
-  if (root) {
-    var tds = getHtmlElementsByTagName(root, 'td');
-    for (var i = 0; i < tds.length; i++) {
-      if (tds[i].text.indexOf('対象疾患名/Condition') != -1) {
-        data.target = tds[i + 1].text;
-      }
-      if (tds[i].text.indexOf('介入1/Interventions/Control_1') != -1) {
-        data.intervention = tds[i + 1].text;
-        break;
-      }
-    }
-  }
-  return data;
+  return getRecptData(response)
 }
 
 export function generateForm3() {
