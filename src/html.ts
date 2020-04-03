@@ -1,5 +1,6 @@
 import * as htmlparser2 from 'htmlparser2'
 import * as domhandler from 'domhandler'
+import decode from 'unescape'
 
 export function getHtmlRootElement(html: string): domhandler.NodeWithChildren | undefined{
   const nodes = htmlparser2.parseDOM(html)
@@ -17,7 +18,7 @@ export function getInnerText(element: domhandler.NodeWithChildren): string {
       const res = getInnerText(child)
       return res
     } else if (child instanceof domhandler.DataNode) {
-      return child.data
+      return decode(child.data)
     } else {
       return ''
     }
