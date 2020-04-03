@@ -12,7 +12,6 @@ export function onEdit(e: GoogleAppsScript.Events.SheetsOnEdit){
   var sheet = e.source;
   var sheetname = sheet.getActiveSheet().getName();
   var range;
-  var oldvalue = e.oldValue;　　// 複数セルの場合oldvalueは取得不可
   var msgstrings = "";
   var erow;
   var ecol;
