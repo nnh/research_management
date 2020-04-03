@@ -53,6 +53,6 @@ function exportSupportsBySpreadsheet(spreadsheet: GoogleAppsScript.Spreadsheet.S
   range.setValues(merged);
 }
 
-function exportSupports() {
+export function exportSupports() {
   exportSupportsBySpreadsheet(SpreadsheetApp.getActiveSpreadsheet());
 }
