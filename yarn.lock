@@ -98,7 +98,7 @@
   resolved "https://registry.yarnpkg.com/@types/google-apps-script/-/google-apps-script-1.0.11.tgz#28f97c3cffda4ea4d477e3057799575b9b466b7e"
   integrity sha512-LQS3WtXMv/dcU3kdk2DT80fdTZUdL+7Wi4mIZFBYisbx8SBSln7uPDhejpe9BiULvEscZW74pgqrD+rqAaZw5w==
 
-"@types/htmlparser2@^3.10.1":
+"@types/htmlparser2@*":
   version "3.10.1"
   resolved "https://registry.yarnpkg.com/@types/htmlparser2/-/htmlparser2-3.10.1.tgz#1e65ba81401d53f425c1e2ba5a3d05c90ab742c7"
   integrity sha512-fCxmHS4ryCUCfV9+CJZY1UjkbR+6Al/EQdX5Jh03qBj9gdlPG5q+7uNoDgE/ZNXb3XNWSAQgqKIWnbRCbOyyWA==
@@ -127,7 +127,7 @@
   resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-7.0.2.tgz#b17f16cf933597e10d6d78eae3251e692ce8b0ce"
   integrity sha512-ZvO2tAcjmMi8V/5Z3JsyofMe3hasRcaw88cto5etSVMwVQfeivGAlEYmaQgceUSVYFofVjT+ioHsATjdWcFt1w==
 
-"@types/node@*", "@types/node@^13.9.8":
+"@types/node@*":
   version "13.9.8"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.9.8.tgz#09976420fc80a7a00bf40680c63815ed8c7616f4"
   integrity sha512-1WgO8hsyHynlx7nhP1kr0OFzsgKz5XDQL+Lfc3b1Q3qIln/n8cKD4m09NJ0+P1Rq7Zgnc7N0+SsMnoD1rEb0kA==
@@ -2203,7 +2203,7 @@ homedir-polyfill@^1.0.1:
   dependencies:
     parse-passwd "^1.0.0"
 
-htmlparser2@^4.1.0:
+htmlparser2@*:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/htmlparser2/-/htmlparser2-4.1.0.tgz#9a4ef161f2e4625ebf7dfbe6c0a2f52d18a59e78"
   integrity sha512-4zDq1a1zhE4gQso/c5LP1OtrhYTncXNSpvJYtWJBtXAETPlMfi3IFNjGuQbYLuVY4ZR0QMqRVvo4Pdy9KLyP8Q==
@@ -4360,7 +4360,7 @@ typescript@*, typescript@^3.6.2, typescript@^3.8.3:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.8.3.tgz#409eb8544ea0335711205869ec458ab109ee1061"
   integrity sha512-MYlEfn5VrLNsgudQTVJeNaQFUAI7DkhnOjdpAp4T+ku1TfQClewlbSuTVHiA+8skNBgaf02TL/kLOvig4y3G8w==
 
-unescape@^1.0.1:
+unescape@*:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/unescape/-/unescape-1.0.1.tgz#956e430f61cad8a4d57d82c518f5e6cc5d0dda96"
   integrity sha512-O0+af1Gs50lyH1nUu3ZyYS1cRh01Q/kUKatTOkSs7jukXE6/NebucDVxyiDsA9AQ4JC1V1jUH9EO8JX2nMDgGQ==
@@ -4533,7 +4533,7 @@ vscode-uri@^1.0.5:
   resolved "https://registry.yarnpkg.com/vscode-uri/-/vscode-uri-1.0.8.tgz#9769aaececae4026fb6e22359cb38946580ded59"
   integrity sha512-obtSWTlbJ+a+TFRYGaUumtVwb+InIUVI0Lu0VBUAPmj2cU5JutEXg3xUE0c2J5Tcy7h2DEKVJBFi+Y9ZSFzzPQ==
 
-watch@^1.0.2:
+watch@*, watch@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/watch/-/watch-1.0.2.tgz#340a717bde765726fa0aa07d721e0147a551df0c"
   integrity sha1-NApxe952Vyb6CqB9ch4BR6VR3ww=
