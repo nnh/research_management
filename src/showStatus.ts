@@ -5,7 +5,7 @@
 // https://teratail.com/questions/21724
 // https://jjnurburg.com/onedit2/
 
-function onEdit(e: GoogleAppsScript.Events.SheetsOnEdit){
+export function onEdit(e: GoogleAppsScript.Events.SheetsOnEdit){
   // Set a comment on the edited cell to indicate when it was changed.
   const targetsheetname = "Base"
   var targetrange = e.range.getValues(); // 複数セル編集時対応

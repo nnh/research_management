@@ -5,6 +5,7 @@ import './jrct'
 import './showStatus'
 import './utils'
 import './xml'
+import { onEdit } from './showStatus'
 
 function onOpen() {
   var arr = [
@@ -23,6 +24,7 @@ declare const global: {
 }
 
 global.onOpen = onOpen
+global.onEdit = onEdit
 global.generateForm2 = generateForm2
 global.generateForm3 = generateForm3
 global.generateForm4 = generateForm4
