@@ -11,10 +11,8 @@ Google Drive内に存在するスプレッドシート「研究管理システ�
 yarn install --frozen-lockfile
 # このコマンドでGoogle Apps Script にログインする
 clasp login
-# 研究管理システムをコピーしたファイルのスクリプトのID を取り込む
-clasp clone [GOOGLE_APPS_SCRIPT_ID] --rootDir ./src
-# ts ファイルの変更を監視し、GAS にpush する
-clasp push -w
+# webpackしたソースをpush
+yarn start
 ```
 
 ## テスト
@@ -32,7 +30,6 @@ TODO: 何度も実行するなら自動化する
 ```
 mv .clasp.json .clasp.json.dev
 # 本番のID でclone
-clasp clone [GOOGLE_APPS_SCRIPT_ID] --rootDir ./src
-clasp push
+yarn push
 mv .clasp.json.dev .clasp.json
 ```
