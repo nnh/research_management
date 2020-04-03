@@ -6,7 +6,8 @@
   "dependencies": {
     "@google/clasp": "*",
     "@types/node": "^13.9.8",
-    "htmlparser2": "^4.1.0"
+    "htmlparser2": "^4.1.0",
+    "unescape": "^1.0.1"
   },
   "devDependencies": {
     "@types/chai": "*",
