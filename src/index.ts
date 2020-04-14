@@ -6,6 +6,7 @@ import './showStatus'
 import './utils'
 import './xml'
 import { onEdit } from './showStatus'
+import { DCtrialslist } from './DCtrialslist'
 
 function onOpen() {
   var arr = [
@@ -14,6 +15,7 @@ function onOpen() {
     {name: "様式第４", functionName: "generateForm4"},
     {name: "Publication", functionName: "fillPublication"},
     {name: "ARO支援一覧test", functionName: "exportSupports"},
+    {name: "DCtrialslist作成", functionName: "DCtrialslist"},
   ];
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   spreadsheet.addMenu("様式作成", arr);
@@ -30,3 +32,4 @@ global.generateForm3 = generateForm3
 global.generateForm4 = generateForm4
 global.fillPublication = fillPublication
 global.exportSupports = exportSupports
+global.DCtrialslist = DCtrialslist
