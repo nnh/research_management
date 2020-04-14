@@ -1,4 +1,4 @@
-function DCtrialslist() {
+export function DCtrialslist() {
     var spreadsheet = SpreadsheetApp.getActive();
     var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
     var items = sheetDatacenter.getDataRange().getValues();
