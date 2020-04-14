@@ -2,20 +2,20 @@ function DCtrialslist() {
     var spreadsheet = SpreadsheetApp.getActive();
     var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
     var items = sheetDatacenter.getDataRange().getValues();
-    var DC1　= 0;   //プロトコールID
-    var DC2　= 47;  //対象1(患者年齢)
-    var DC3　= 48;  //対象2(疾患領域)
-    var DC4　= 15;  //システム
-    var DC5　= 16;  //CDISC対応
-    var DC6　= 40;  //登録数
-    var DC7　= 7;   //研究種別
-    var DC11　= 14;   //Status
-    var DC12　= 13;   //研究グループ（資金源）
-    var DC13　= 49;   //試験の枠組
-    var DC14　= 19;   //登録開始
-    var DC15　= 2;   //PI
-    var DC16　= 3;   //PI所属機関
-    var DC17　= 6;   //研究費（院内以外は他施設共同試験）
+    var DC1 = 0;   //プロトコールID
+    var DC2 = 47;  //対象1(患者年齢)
+    var DC3 = 48;  //対象2(疾患領域)
+    var DC4 = 15;  //システム
+    var DC5 = 16;  //CDISC対応
+    var DC6 = 40;  //登録数
+    var DC7 = 7;   //研究種別
+    var DC11 = 14;   //Status
+    var DC12 = 13;   //研究グループ（資金源）
+    var DC13 = 49;   //試験の枠組
+    var DC14 = 19;   //登録開始
+    var DC15 = 2;   //PI
+    var DC16 = 3;   //PI所属機関
+    var DC17 = 6;   //研究費（院内以外は他施設共同試験）
     var sheetMembers = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Members") as GoogleAppsScript.Spreadsheet.Sheet;
     var items2 = sheetMembers.getDataRange().getValues();
     var mem1 = 2    //Group
@@ -27,22 +27,22 @@ function DCtrialslist() {
     var group = "";
     var star ="";
     var other ="";
-    var status　= "";
+    var status = "";
     var statuscode = 0;
-    var countregistry　= 0;
-    var countbefore　= 0;
-    var countafter　= 0;
-    var listcountregistry　= 0;
-    var listcountbefore　= 0;
-    var listcountafter　= 0;
-    var sortcode　= "";
-    var del　= "";
+    var countregistry = 0;
+    var countbefore = 0;
+    var countafter = 0;
+    var listcountregistry = 0;
+    var listcountbefore = 0;
+    var listcountafter = 0;
+    var sortcode = "";
+    var del = "";
 
     targetSheetFull.activate()
 
 //***  前提条件
 //***  A1セルに「データの入力規則」、「表示形式：日付」を設定すること
-//***  条件：日付、有効な日付　　無効なデータの場合：入力を拒否
+//***  条件：日付、有効な日付  無効なデータの場合：入力を拒否
 
     var ReferenceDate = targetSheetFull.getRange("A1");
     if (ReferenceDate.isBlank()){
@@ -76,7 +76,7 @@ function DCtrialslist() {
 //status
           switch(true){
             case items[i][DC7] == "レジストリ":
-              status　= "疫学研究/疾患登録"
+              status = "疫学研究/疾患登録"
               statuscode = 3
               countregistry++
                 if (del == ""){
@@ -235,7 +235,7 @@ function DCtrialslist() {
 //罫線
     targetSheetFull.getRange(1,1,countbefore+countafter+countregistry+1,8).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
     targetSheetFull.getRange(1,9,countbefore+countafter+countregistry+1,2).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID)
-  　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　.setBorder(null, null, null, null, null, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
+                                           .setBorder(null, null, null, null, null, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
     targetSheetFull.getRange(1,11,countbefore+countafter+countregistry+1,4).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
     targetSheetFull.getRange('A1:N1').setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
     targetSheetFull.getRange(2,1,countbefore,14).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
@@ -264,7 +264,7 @@ function DCtrialslist() {
     var newtargetSheet = targetSheetFull.copyTo(spreadsheet)
     newtargetSheet.setName("DCtrialslist");
     spreadsheet.setActiveSheet(newtargetSheet);
-    spreadsheet.moveActiveSheet(9);　　//シートを差し込む位置
+    spreadsheet.moveActiveSheet(9);  //シートを差し込む位置
 
 //Discontinued,Completedの行を削除
     for(var j = 2; j < countbefore+countafter+countregistry; j++){
@@ -289,7 +289,7 @@ function DCtrialslist() {
 //罫線
     newtargetSheet.getRange(1,1,listcountbefore+listcountafter+listcountregistry+1,8).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
     newtargetSheet.getRange(1,9,listcountbefore+listcountafter+listcountregistry+1,2).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID)
-  　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　.setBorder(null, null, null, null, null, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
+                                           .setBorder(null, null, null, null, null, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
     newtargetSheet.getRange('A1:J1').setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
     newtargetSheet.getRange(2,1,listcountbefore,10).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
     newtargetSheet.getRange(listcountbefore+2,1,listcountafter,10).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
