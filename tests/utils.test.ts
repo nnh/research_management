@@ -1,5 +1,5 @@
 import { assert } from "chai"
-import { readValues, arrayUniq, arrayFind } from "../src/utils.ts"
+import { readValues, arrayUniq, arrayFind } from "../src/utils"
 
 describe("readValues", () => {
   context('with normal table', () => {

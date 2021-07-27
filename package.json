@@ -20,12 +20,12 @@
     "gas-webpack-plugin": "*",
     "htmlparser2": "*",
     "mocha": "*",
-    "unescape": "*",
     "prettier": "*",
     "ts-loader": "*",
     "ts-mocha": "*",
     "typescript": "*",
     "typescript-language-server": "*",
+    "unescape": "*",
     "watch": "*",
     "webpack": "*",
     "webpack-cli": "*"
