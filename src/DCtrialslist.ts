@@ -36,8 +36,6 @@ export function DCtrialslist() {
     var listcountbefore = 0;
     var listcountafter = 0;
     var sortcode = "";
-    var del = "";
-
     targetSheetFull.activate()
 
 //***  前提条件
@@ -63,16 +61,9 @@ export function DCtrialslist() {
 
 
     for (var i = 1; i < items.length; i++) {
-        if (items[i][DC11] != "NoSupport" && items[i][DC11] != "Uncertain" && items[i][DC1] != "") {
+        if (!(items[i][DC11].includes("NoSupport")) && !(items[i][DC11].includes("Uncertain")) && items[i][DC1] != "") {
 //掲示対象判定
-          switch(true){
-            case (items[i][DC11] == "Discontinued") || (items[i][DC11] == "Completed"):
-              del = "Delete"
-              break;
-            default:
-              del = ""
-              break;
-          }
+          const del = items[i][DC11].includes("Discontinued") || items[i][DC11].includes("Completed")? "Delete" : "";
 //status
           switch(true){
             case items[i][DC7] == "レジストリ":
