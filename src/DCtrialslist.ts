@@ -21,7 +21,8 @@ export function DCtrialslist() {
     var mem1 = 2    //Group
     var mem2 = 3    //Sortoder
     var targetSheetFull = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("DCtrialslistFull") as GoogleAppsScript.Spreadsheet.Sheet;
-    var oldtargetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("DCtrialslist") as GoogleAppsScript.Spreadsheet.Sheet;
+    const oldtargetSheetName = "DCtrialslist";
+    var oldtargetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(oldtargetSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
     var study = [];
     var number = 1;
     var group = "";
@@ -250,10 +251,12 @@ export function DCtrialslist() {
 
 //DCtrialslist加工
 //前回作成のDCtrialslistを削除、DCtrialslistFullをコピーして新しくDCtrialslistを作成
-    spreadsheet.deleteSheet(oldtargetSheet);
+    if (oldtargetSheet !== null) {
+      spreadsheet.deleteSheet(oldtargetSheet);    
+    }
     targetSheetFull.activate() ;
     var newtargetSheet = targetSheetFull.copyTo(spreadsheet)
-    newtargetSheet.setName("DCtrialslist");
+    newtargetSheet.setName(oldtargetSheetName);
     spreadsheet.setActiveSheet(newtargetSheet);
     spreadsheet.moveActiveSheet(9);  //シートを差し込む位置
 
