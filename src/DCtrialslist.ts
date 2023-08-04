@@ -3,8 +3,8 @@ export function DCtrialslist() {
     var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
     var items = sheetDatacenter.getDataRange().getValues();
     var DC1 = 0;   //プロトコールID
-    var DC2 = 49;  //対象1(患者年齢)
-    var DC3 = 50;  //対象2(疾患領域)
+    var DC2 = 44;  //対象1(患者年齢)
+    var DC3 = 45;  //対象2(疾患領域)
     var DC4 = 15;  //システム
     var DC5 = 16;  //CDISC対応
     var DC6 = 42;  //登録数
