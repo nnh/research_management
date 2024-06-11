@@ -3,15 +3,15 @@ export function DCtrialslist() {
     var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
     var items = sheetDatacenter.getDataRange().getValues();
     var DC1 = 0;   //プロトコールID
-    var DC2 = 47;  //対象1(患者年齢)
-    var DC3 = 48;  //対象2(疾患領域)
+    var DC2 = 44;  //対象1(患者年齢)
+    var DC3 = 45;  //対象2(疾患領域)
     var DC4 = 15;  //システム
     var DC5 = 16;  //CDISC対応
-    var DC6 = 40;  //登録数
+    var DC6 = 42;  //登録数
     var DC7 = 7;   //研究種別
     var DC11 = 14;   //Status
     var DC12 = 13;   //研究グループ（資金源）
-    var DC13 = 49;   //試験の枠組
+    var DC13 = 52;   //試験の枠組
     var DC14 = 19;   //登録開始
     var DC15 = 2;   //PI
     var DC16 = 3;   //PI所属機関
@@ -21,7 +21,8 @@ export function DCtrialslist() {
     var mem1 = 2    //Group
     var mem2 = 3    //Sortoder
     var targetSheetFull = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("DCtrialslistFull") as GoogleAppsScript.Spreadsheet.Sheet;
-    var oldtargetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("DCtrialslist") as GoogleAppsScript.Spreadsheet.Sheet;
+    const oldtargetSheetName = "DCtrialslist";
+    var oldtargetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(oldtargetSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
     var study = [];
     var number = 1;
     var group = "";
@@ -250,10 +251,12 @@ export function DCtrialslist() {
 
 //DCtrialslist加工
 //前回作成のDCtrialslistを削除、DCtrialslistFullをコピーして新しくDCtrialslistを作成
-    spreadsheet.deleteSheet(oldtargetSheet);
+    if (oldtargetSheet !== null) {
+      spreadsheet.deleteSheet(oldtargetSheet);    
+    }
     targetSheetFull.activate() ;
     var newtargetSheet = targetSheetFull.copyTo(spreadsheet)
-    newtargetSheet.setName("DCtrialslist");
+    newtargetSheet.setName(oldtargetSheetName);
     spreadsheet.setActiveSheet(newtargetSheet);
     spreadsheet.moveActiveSheet(9);  //シートを差し込む位置
 
