@@ -11,6 +11,8 @@ library(googlesheets4)
 library(rvest)
 # ------ constants ------
 kUrlHead <- "https://jrct.niph.go.jp/latest-detail/"
+kInputSheetName <- "抽出対象のjRCT番号"
+kOutputSheetName <- "output"
 # ------ functions ------
 GetWebPageData <- function(url){
   return(read_html(url))
@@ -43,22 +45,12 @@ GetBaseData <- function(webpage){
 }
 GetJrctTables <- function(url) {
   webpage <- GetWebPageData(url)
+  Sys.sleep(3)
   res <- GetBaseData(webpage)
   return(res)
 }
 # ------ main ------
-# スクレイピング対象のURL
-jrctList <- list()
-jrctNoList <- c("jRCT2031230581")
-urlList <- jrctNoList %>% str_c(kUrlHead, .)
-for (i in 1:length(urlList)){
-  url <- urlList[i]
-  temp <- GetJrctTables(url)
-  jrctList[[i]] <- temp
-}
-names(jrctList) <- jrctNoList
-df_jrctList <- bind_rows(jrctList)
-# 出力先スプレッドシートIDを取得
+# 入出力先スプレッドシートIDを取得
 sheetid <- read.csv(here("r_src", "sheet_id.txt"), header=F) %>% .[1, 1, drop=T]
 # google authentication
 gs4_auth(
@@ -67,6 +59,17 @@ gs4_auth(
   cache = gargle::gargle_oauth_cache(),
   use_oob = gargle::gargle_oob_default(),
   token = NULL)
-kOutputSheetName <- "output"
+temp <- sheetid %>% read_sheet(sheet=kInputSheetName, range="A:A", col_names=T) %>% flatten_chr()
+jrctNoList <- temp %>% str_extract_all("jRCT[0-9]{10}") %>% flatten_chr()
+urlList <- jrctNoList %>% str_c(kUrlHead, .)
+# スクレイピング対象のURL
+jrctList <- list()
+for (i in 1:length(urlList)){
+  url <- urlList[i]
+  temp <- GetJrctTables(url)
+  jrctList[[i]] <- temp
+}
+names(jrctList) <- jrctNoList
+df_jrctList <- bind_rows(jrctList)
 sheetid %>% range_clear(sheet=kOutputSheetName, range=NULL)
-sheetid %>% write_sheet(df_jrctList, sheet=kOutputSheetName)
+sheetid %>% write_sheet(df_jrctList, ss=., sheet=kOutputSheetName)
