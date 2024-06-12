@@ -1,56 +1,59 @@
 #' title
 #' description
-#' @file xxx.R
+#' @file getJrct.R
 #' @author Mariko Ohtsuka
-#' @date YYYY.MM.DD
+#' @date 2024.06.12
 rm(list=ls())
 # ------ libraries ------
 library(tidyverse)
 library(here)
 library(googlesheets4)
 library(rvest)
-
 # ------ constants ------
-kTestConstants <- NULL
+kUrlHead <- "https://jrct.niph.go.jp/latest-detail/"
 # ------ functions ------
 GetWebPageData <- function(url){
   return(read_html(url))
 }
-GetBaseData <- function(webpage){
-  body <- webpage %>% html_node("body")
-  bodytop <- body %>% html_node("div")
-  tables <- webpage %>% html_nodes(".jr-caption") %>% html_nodes("table") %>% html_nodes("tbody")
-  # class="jr-caption"のDIV要素を抽出
-  captions <- tables[[1]] %>% html_nodes("tr") %>% html_nodes("td") %>%
-    html_text()
+GetTables <- function(table){
   # 各行のTHタグのラベルとTDタグの内容を取得してデータフレームにする
-  captions <- tables[[1]] %>% html_nodes("tr") %>% map_df( ~ {
+  res <- table %>% html_nodes("tr") %>% map_df( ~ {
     th <- .x %>% html_node("th") %>% html_text(trim = TRUE)
     td <- .x %>% html_node("td") %>% html_text(trim = TRUE)
     data.frame(Label = th, Value = td, stringsAsFactors = FALSE)
   })
-  # 研究名
-  # 治験調整医師名
-  # 治験調整医師所属
-  # 届出日
+  return(res)
+}
+GetBaseData <- function(webpage){
+  captions <-  webpage %>% html_node(xpath = '/html/body/div/div[2]/table/tbody') %>% GetTables()
+  # XPathを使って特定のテーブル要素を抽出
+  managerial_matter <- webpage %>% html_node(xpath = '//*[@id="area-toggle-00"]/table/tbody') %>% GetTables()
+  temp <- webpage %>% html_node(xpath = '//*[@id="area-toggle-02-01"]/table/tbody') %>% GetTables()
+  temp$Label <- temp$Label %>% str_remove_all("\\s")
+  trialBody <- temp %>%
+    filter(str_detect(Label, "試験等の目的") |
+           str_detect(Label, "実施予定被験者数") |
+           str_detect(Label, "実施期間")|
+           str_detect(Label, "年齢")
+          )
+  res <- bind_rows(captions, managerial_matter, trialBody)
+  jrctNo <- res %>% filter(str_detect(Label, "jRCT番号")) %>% .[ , "Value", drop=T]
+  res$jrctNo <- jrctNo
+  return(res)
+}
+GetJrctTables <- function(url) {
+  webpage <- GetWebPageData(url)
+  res <- GetBaseData(webpage)
+  return(res)
 }
 # ------ main ------
 # スクレイピング対象のURL
-url <- "https://jrct.niph.go.jp/latest-detail/jRCT2031230581"
-
-  # HTMLコンテンツを読み込む
-  webpage <- read_html(url)
-
-# 必要な情報を抽出する（例としてタイトルを抽出）
-title <- webpage %>%
-  html_node("h1") %>%
-  html_text()
-
-# さらに詳細な情報を抽出（例としてすべてのテーブルデータを抽出）
-tables <- webpage %>%
-  html_nodes("table") %>%
-  html_table()
-
-# 最初のテーブルのデータを表示
-first_table <- tables[[1]]
-print(first_table)
+jrctList <- list()
+jrctNoList <- c("jRCT2031230581")
+urlList <- jrctNoList %>% str_c(kUrlHead, .)
+for (i in 1:length(urlList)){
+  url <- urlList[i]
+  temp <- GetJrctTables(url)
+  jrctList[[i]] <- temp
+}
+names(jrctList) <- jrctNoList
