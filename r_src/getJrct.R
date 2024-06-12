@@ -57,3 +57,16 @@ for (i in 1:length(urlList)){
   jrctList[[i]] <- temp
 }
 names(jrctList) <- jrctNoList
+df_jrctList <- bind_rows(jrctList)
+# 出力先スプレッドシートIDを取得
+sheetid <- read.csv(here("r_src", "sheet_id.txt"), header=F) %>% .[1, 1, drop=T]
+# google authentication
+gs4_auth(
+  email = gargle::gargle_oauth_email(),
+  scopes = "https://www.googleapis.com/auth/spreadsheets",
+  cache = gargle::gargle_oauth_cache(),
+  use_oob = gargle::gargle_oob_default(),
+  token = NULL)
+kOutputSheetName <- "output"
+sheetid %>% range_clear(sheet=kOutputSheetName, range=NULL)
+sheetid %>% write_sheet(df_jrctList, sheet=kOutputSheetName)
