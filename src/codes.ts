@@ -4,45 +4,66 @@ import { getElementsByTagName, getElementValue } from './xml'
 import { getDescriptionByHtml, JRctDescription } from './jrct'
 import { getRecptNoFromHtml, getRecptDataFromHtml } from './umin'
 import { searchUminHtml, getRecptHtml, getJrctHtml } from './crawler'
+import { he } from 'date-fns/locale'
+const trialTypeList = new Map([
+  ["chiken", "特定臨床(治験)"],
+  ["specificClinicalStudy", "特定臨床(臨床研究法)"],
+])
+const itemsTrialTypeIdx: number = 7;
+const itemsCtrIdx: number = 9;
+const itemsIrbIdx: number = 10;
+
+function getDatacenterValues_(): any[][] {
+  const sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
+  const items = sheetDatacenter.getDataRange().getValues();
+  return items;
+}
+
+export function getTargetJRCT() {
+  const items = getDatacenterValues_();
+  const jrctFormat = /jRCT[0-9]{10}|jRCTs[0-9]{9}/;
+  const targetIds = items.map((item) => item[itemsCtrIdx]).filter((ctr) => jrctFormat.test(ctr));
+  const jrctIds = targetIds.map((ctr) => ctr.match(jrctFormat)[0]);
+  const res = Array.from(new Set(jrctIds)).map((jrctId) => [jrctId]);
+  const outputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("test_jrct") as GoogleAppsScript.Spreadsheet.Sheet;
+  outputSheet.clear();
+  outputSheet.getRange(1, 1).setValue("jRCT_ID");
+  outputSheet.getRange(2, 1, res.length, res[0].length).setValues(res);
+ }
+function getTargetFromDatacenter_() {
+  const items = getDatacenterValues_();
+  const limit_date = new Date(2016, 12, 1);
+  const targetItems = items.filter(
+    item => (
+              item[itemsTrialTypeIdx] === trialTypeList.get("chiken") ||
+              item[itemsTrialTypeIdx] === trialTypeList.get("specificClinicalStudy")
+            ) && item[itemsIrbIdx] >= limit_date
+  );
+  const header = items.filter((_, index) => index === 0);
+  const res = [...header, ...targetItems];
+  return(res);
+}
+export function getTargetFromDatacenter() {
+  const outputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("test_youshiki2") as GoogleAppsScript.Spreadsheet.Sheet;
+  const targetItems = getTargetFromDatacenter_();
+  outputSheet.clear();
+  outputSheet.getRange(1, 1, targetItems.length, targetItems[0].length).setValues(targetItems);
+ }
 
 export function generateForm2() {
-  var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
-  var items = sheetDatacenter.getDataRange().getValues();
-  var sheetIrb = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("IRB") as GoogleAppsScript.Spreadsheet.Sheet;
-  var items2 = sheetIrb.getDataRange().getValues();
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form2印刷") as GoogleAppsScript.Spreadsheet.Sheet
-  var study = [];
-  var number = 1;
-  var role = "";
-  var protocol_ids = [];
-  var limit_date = new Date(2016, 12, 1);
+  const sheetIrb = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("IRB") as GoogleAppsScript.Spreadsheet.Sheet;
+  const items2 = sheetIrb.getDataRange().getValues();
+  const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form2印刷") as GoogleAppsScript.Spreadsheet.Sheet
+  const specificClinicalStudyHeader: string[] = [
+    "番号", "臨床研究名", "研究代表医師", "研究代表医師所属", "開始日", "登録ID等", "主導的な役割",
+    "医薬品等区分", "小児/成人", "疾病等分類", "実施施設数", "フェーズ(Phase)", 
+    "医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明",
+    "特定疾病領域（難病・希少疾病、小児疾患、新興・再興感染症）に係る特定臨床研究であることの説明"];
 
-  for (var i = 0; i < items.length; i++) {
-    if (items[i][7].indexOf("特定臨床") != -1 && items[i][7].indexOf("治験") == -1 && items[i][10] != "" && items[i][10] >= limit_date) {
-      role = (items[i][3].indexOf("名古屋医療センター") != -1) ? "１，２" : "２" ;
-      study[number] = [number, items[i][1], items[i][2], items[i][3], items[i][10], items[i][9], role, items[i][0], "", ""];
-                    // number, study_name, pi, pi_facility, irb_date, ctr, role, protocol_ID, intervention
-      protocol_ids.push(items[i][0]);
-      number++;
-    }
-  }
-
-  for (var j = 0; j < items2.length; j++) {
-    if (items2[j][5].indexOf("特定臨床") != -1 && items2[j][5].indexOf("治験") == -1 && items2[j][7] != "" && items2[j][7] >= limit_date && protocol_ids.indexOf(items2[j][0]) == -1) {
-      role = "１";
-      study[number] = [number, items2[j][1], items2[j][2], items2[j][3], items2[j][7], items2[j][6], role, items2[j][0], "", ""];
-                    // number, study_name, pi, pi_facility, irb_date, ctr, role, protocol_ID, intervention
-      number++;
-    }
-  }
-
-  study[0] = ["番号", "臨床研究名", "研究代表者名", "研究代表者所属", "許可日", "登録ID等", "主導的な役割", "プロトコル番号",
-              "医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明",
-              "特定疾病領域（難病・希少疾病、小児疾患、新興・再興感染症）に係る特定臨床研究であることの説明"];
-  targetSheet.getRange("A1:I500").clear();
-  targetSheet.getRange(1, 1, study.length, study[0].length).setValues(study);
-  targetSheet.getRange(2, 2, targetSheet.getLastRow(), targetSheet.getLastColumn() - 1).sort({column: 5, ascending: false});
-
+  
+  
+  
+  
   // すでにfromHtmlシート内に記載されているUMINIDを取得する
   var registerdUminIds = getRegisterdUminIds();
 
