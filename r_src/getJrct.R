@@ -3,20 +3,10 @@
 #' @file getJrct.R
 #' @author Mariko Ohtsuka
 #' @date 2024.06.12
-rm(list=ls())
 # ------ libraries ------
-library(tidyverse)
-library(here)
-library(googlesheets4)
-library(rvest)
+source(here("r_src", "scraping_common.R"), encoding="utf-8")
 # ------ constants ------
-kUrlHead <- "https://jrct.niph.go.jp/latest-detail/"
-kInputSheetName <- "抽出対象のjRCT番号"
-kOutputSheetName <- "output"
 # ------ functions ------
-GetWebPageData <- function(url){
-  return(read_html(url))
-}
 GetTables <- function(table){
   # 各行のTHタグのラベルとTDタグの内容を取得してデータフレームにする
   res <- table %>% html_nodes("tr") %>% map_df( ~ {
@@ -49,27 +39,69 @@ GetJrctTables <- function(url) {
   res <- GetBaseData(webpage)
   return(res)
 }
-# ------ main ------
-# 入出力先スプレッドシートIDを取得
-sheetid <- read.csv(here("r_src", "sheet_id.txt"), header=F) %>% .[1, 1, drop=T]
-# google authentication
-gs4_auth(
-  email = gargle::gargle_oauth_email(),
-  scopes = "https://www.googleapis.com/auth/spreadsheets",
-  cache = gargle::gargle_oauth_cache(),
-  use_oob = gargle::gargle_oob_default(),
-  token = NULL)
-temp <- sheetid %>% read_sheet(sheet=kInputSheetName, range="A:A", col_names=T) %>% flatten_chr()
-jrctNoList <- temp %>% str_extract_all("jRCT[0-9]{10}") %>% flatten_chr()
-urlList <- jrctNoList %>% str_c(kUrlHead, .)
-# スクレイピング対象のURL
-jrctList <- list()
-for (i in 1:length(urlList)){
-  url <- urlList[i]
-  temp <- GetJrctTables(url)
-  jrctList[[i]] <- temp
+GetTargetJrctNoList <- function(){
+  temp <- tryCatch(
+    {
+      sheetid %>% read_sheet(sheet=kInputSheetName, range="A:A", col_names=T) %>% flatten_chr()
+    },
+    error = function(e) {
+      NA  # エラーが発生した場合にNAを返す
+    }
+  )
+  if (length(temp) == 0) {
+    return(NULL)
+  }
+  jrctNoList <- temp %>% str_extract_all("jRCT[0-9]{10}") %>% flatten_chr()
+  if (length(jrctNoList) == 0) {
+    return(NULL)
+  }
+  return(jrctNoList)
 }
-names(jrctList) <- jrctNoList
+ExecGetJrctList <- function() {
+  if (is.na(sheetid)) {
+    return(NULL)
+  }
+  AddSheet(kOutputSheetName)
+  inputJrctNoList <- GetTargetJrctNoList()
+  if (is.null(inputJrctNoList)) {
+    return(NULL)
+  }
+  # 取得済みのjRCT番号は対象外とする
+  retrievedJrctNo <- sheetid %>%
+    read_sheet(sheet=kOutputSheetName, range="C:C", col_names=T) %>% flatten_chr() %>% unique()
+  jrctNoList <- setdiff(inputJrctNoList, retrievedJrctNo)
+  if (length(jrctNoList) == 0) {
+    return(NULL)
+  }
+  urlList <- jrctNoList %>% str_c(kUrlHead, .)
+  jrctList <- list()
+  for (i in 1:length(urlList)){
+    url <- urlList[i]
+    temp <- tryCatch(
+      {
+        GetJrctTables(url)
+      },
+      error = function(e) {
+        NA  # エラーが発生した場合にNAを返す
+      }
+    )
+    jrctList[[i]] <- temp
+  }
+  names(jrctList) <- jrctNoList
+  return(jrctList)
+}
+# ------ main ------
+jrctList <- ExecGetJrctList()
 df_jrctList <- bind_rows(jrctList)
-sheetid %>% range_clear(sheet=kOutputSheetName, range=NULL)
-sheetid %>% write_sheet(df_jrctList, ss=., sheet=kOutputSheetName)
+# とりあえずtempシートに出力
+WriteSheet(kWkSheetName, df_jrctList)
+# outputシートに追記
+sheetid %>% read_sheet(sheet=kOutputSheetName, range="C:C", col_names=T) %>% flatten_chr() %>% unique()
+output_sheet <- sheetid %>% read_sheet(sheet=kOutputSheetName, col_names=F)
+start_row <- nrow(output_sheet) + 1
+end_row <- nrow(df_jrctList) + start_row
+if (start_row > 1) {
+  sheetid %>% range_write(df_jrctList, sheet=kOutputSheetName, range=str_c("A", start_row, ":C", end_row), col_names=F)
+} else {
+  sheetid %>% range_write(df_jrctList, sheet=kOutputSheetName, range=str_c("A", start_row, ":C", end_row), col_names=T)
+}
