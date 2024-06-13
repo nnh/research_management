@@ -16,7 +16,7 @@ GetTables <- function(table){
   })
   return(res)
 }
-GetBaseData <- function(webpage){
+GetBaseDataJrct <- function(webpage){
   captions <-  webpage %>% html_node(xpath = '/html/body/div/div[2]/table/tbody') %>% GetTables()
   # XPathを使って特定のテーブル要素を抽出
   managerial_matter <- webpage %>% html_node(xpath = '//*[@id="area-toggle-00"]/table/tbody') %>% GetTables()
@@ -26,17 +26,19 @@ GetBaseData <- function(webpage){
     filter(str_detect(Label, "試験等の目的") |
            str_detect(Label, "実施予定被験者数") |
            str_detect(Label, "実施期間")|
-           str_detect(Label, "年齢")
+           str_detect(Label, "年齢")|
+           str_detect(Label, "介入")
           )
   res <- bind_rows(captions, managerial_matter, trialBody)
-  jrctNo <- res %>% filter(str_detect(Label, "jRCT番号")) %>% .[ , "Value", drop=T]
+  jrctNo <- res %>% filter(str_detect(Label, "jRCT番号") | str_detect(Label, "臨床研究実施計画番号")) %>% .[ , "Value", drop=T]
   res$jrctNo <- jrctNo
   return(res)
 }
-GetJrctTables <- function(url) {
+GetJrctTables <- function(jrctNo) {
+  url <- jrctNo %>% str_c(kUrlHead, .)
   webpage <- GetWebPageData(url)
-  Sys.sleep(3)
-  res <- GetBaseData(webpage)
+  Sys.sleep(5)
+  res <- GetBaseDataJrct(webpage)
   return(res)
 }
 GetTargetJrctNoList <- function(){
@@ -51,7 +53,7 @@ GetTargetJrctNoList <- function(){
   if (length(temp) == 0) {
     return(NULL)
   }
-  jrctNoList <- temp %>% str_extract_all("jRCT[0-9]{10}") %>% flatten_chr()
+  jrctNoList <- temp %>% str_extract_all("jRCT[0-9]{10}|jRCTs[0-9]{9}") %>% flatten_chr()
   if (length(jrctNoList) == 0) {
     return(NULL)
   }
@@ -69,17 +71,16 @@ ExecGetJrctList <- function() {
   # 取得済みのjRCT番号は対象外とする
   retrievedJrctNo <- sheetid %>%
     read_sheet(sheet=kOutputSheetName, range="C:C", col_names=T) %>% flatten_chr() %>% unique()
-  jrctNoList <- setdiff(inputJrctNoList, retrievedJrctNo)
+  jrctNoList <- setdiff(inputJrctNoList, retrievedJrctNo) %>% unique()
   if (length(jrctNoList) == 0) {
     return(NULL)
   }
-  urlList <- jrctNoList %>% str_c(kUrlHead, .)
   jrctList <- list()
-  for (i in 1:length(urlList)){
-    url <- urlList[i]
+  for (i in 1:length(jrctNoList)){
+    jrctNo <- jrctNoList[i]
     temp <- tryCatch(
       {
-        GetJrctTables(url)
+        GetJrctTables(jrctNo)
       },
       error = function(e) {
         NA  # エラーが発生した場合にNAを返す

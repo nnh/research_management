@@ -12,6 +12,8 @@ const trialTypeList = new Map([
 const itemsTrialTypeIdx: number = 7;
 const itemsCtrIdx: number = 9;
 const itemsIrbIdx: number = 10;
+const itemsStartDateIdx: number = 86;
+const targetDate = new Date(2021, 12, 1);
 
 function getDatacenterValues_(): any[][] {
   const sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
@@ -22,7 +24,8 @@ function getDatacenterValues_(): any[][] {
 export function getTargetJRCT() {
   const items = getDatacenterValues_();
   const jrctFormat = /jRCT[0-9]{10}|jRCTs[0-9]{9}/;
-  const targetIds = items.map((item) => item[itemsCtrIdx]).filter((ctr) => jrctFormat.test(ctr));
+  const targetDateIds = items.filter((item) => item[itemsStartDateIdx] >= targetDate);
+  const targetIds = targetDateIds.map((item) => item[itemsCtrIdx]).filter((ctr) => jrctFormat.test(ctr));
   const jrctIds = targetIds.map((ctr) => ctr.match(jrctFormat)[0]);
   const res = Array.from(new Set(jrctIds)).map((jrctId) => [jrctId]);
   const outputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("test_jrct") as GoogleAppsScript.Spreadsheet.Sheet;
