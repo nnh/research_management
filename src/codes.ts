@@ -4,7 +4,7 @@ import { getElementsByTagName, getElementValue } from './xml'
 import { getDescriptionByHtml, JRctDescription } from './jrct'
 import { getRecptNoFromHtml, getRecptDataFromHtml } from './umin'
 import { searchUminHtml, getRecptHtml, getJrctHtml } from './crawler'
-import { he } from 'date-fns/locale'
+import { he, id } from 'date-fns/locale'
 import { add } from 'date-fns'
 import { html } from 'cheerio/lib/api/manipulation'
 const chikenKey = "chiken";
@@ -16,17 +16,18 @@ const trialTypeList = new Map([
 const itemsTrialTypeIdx: number = 7;
 const itemsCtrIdx: number = 9;
 const itemsIrbIdx: number = 10;
+const itemsFacilityIdx: number = 24;
 const itemsStartDateIdx: number = 86;
 const targetDate = new Date(2021, 12, 1);
 
 function getDatacenterValues_(): any[][] {
-  const sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
-  const items = sheetDatacenter.getDataRange().getValues();
+  const sheetDatacenter: GoogleAppsScript.Spreadsheet.Sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
+  const items: any[][] = sheetDatacenter.getDataRange().getValues();
   return items;
 }
 
 export function getTargetJRCT() {
-  const items = getDatacenterValues_();
+  const items: any[][] = getDatacenterValues_();
   const jrctFormat = /jRCT[0-9]{10}|jRCTs[0-9]{9}/;
   const targetDateIds = items.filter((item) => item[itemsStartDateIdx] >= targetDate);
   const targetIds = targetDateIds.map((item) => item[itemsCtrIdx]).filter((ctr) => jrctFormat.test(ctr));
@@ -135,7 +136,12 @@ export function getFromHtml() {
   const htmlPiFacilityColIdx: number = htmlSheetColumns.indexOf(piFacilityLabel);
   const htmlUnderAgeColIdx: number = htmlSheetColumns.indexOf(underAgeLabel);
   const htmlOverAgeColIdx: number = htmlSheetColumns.indexOf(overAgeLabel);
+  const htmlIdColIdx: number = htmlSheetColumns.indexOf(idLabel);
   // 追加出力情報
+  const datacenterValues:any[][] = getDatacenterValues_();
+  const datacenterIdAndFacility:string[][] = datacenterValues.map((item) => [item[itemsCtrIdx], item[itemsFacilityIdx]]);
+  const idAndFacility: any[][] = datacenterIdAndFacility.filter(([id, facility]) =>
+    id !== "" && id !== undefined && typeof (id) === "string" && facility !== "" && facility !== undefined && typeof (facility) === "number");
   const piFacility = new RegExp("名古屋医療センター");
   const addValues = outputJrctValues.map((jrctInfo: string[]) => {
     const principalRole: string = piFacility.test(jrctInfo[htmlPiFacilityColIdx]) ? "１" : "２";
@@ -149,7 +155,8 @@ export function getFromHtml() {
       ageLabel = (overAge < 18) ? "小児" : "小児・成人";
     }
     const diseaseLabel: string = "dummy";
-    const facilityLabel: string = "dummy";
+    const targetFacility = idAndFacility.filter(([id, _]) => id === jrctInfo[htmlIdColIdx]);
+    const facilityLabel: string = targetFacility.length > 0 ? targetFacility[0][1] : "dummy";
     return ([principalRole, drugLabel, ageLabel, diseaseLabel, facilityLabel]);
   });
   const outputColumnSize = outputJrctValues[0].length;
