@@ -193,18 +193,18 @@ export function getFromHtml() {
     const attachment_2_2: string = `本試験の対象は年間発症件数が1,500件に満たない(Int J Hematol. 2013 Jul;98(1):74-88.)希少疾病である小児造血器腫瘍に含まれる
     ${disease}である。また「${intervention}」という一定の有害事象を伴う侵襲的な介入を行う試験であり、これによりQOL・生命予後の改善が期待できる。`;
     const attachment_3_text1: string = "当該試験は";
-    let attachment_3_text2: any = explanationMap.has("others") ? explanationMap.get("others") : "";
+    let attachment_3_text2: any = "";
     if (piNagoya) {
       attachment_3_text2 = explanationMap.has("PI") ? explanationMap.get("PI") : "";
     } else {
       const targetBudget = idAndBudget.filter(([id, _]) => id === jrctInfo[htmlIdColIdx]);
       if (targetBudget.length > 0) {
         const budget = targetBudget[0][1];
-        if (budget === "JPLSG") {
+        if (budget === "JPLSG" || budget === "NHOネットワーク") {
           attachment_3_text2 = explanationMap.has(budget) ? explanationMap.get(budget) : "";
-        } else if (budget === "NHOネットワーク") {
-          attachment_3_text2 = explanationMap.has("NHO") ? explanationMap.get("NHO") : "";
-        } 
+        } else {
+          attachment_3_text2 = explanationMap.has("Others") ? explanationMap.get("Others") : "";
+        }
       }
     }
     const attachment_3: string = `${attachment_3_text1}${attachment_3_text2}`;
@@ -276,6 +276,11 @@ function getJrctInfo(): any[][] | null {
   }
   const jrctInfoValues = jrctInfoSheet.getDataRange().getValues();
   return jrctInfoValues;
+}
+export function modExplanationSheetValues() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("explanation") as GoogleAppsScript.Spreadsheet.Sheet;
+  sheet.getRange(3, 1).setValue("NHOネットワーク");
+  sheet.getRange("A5:B8").clear();
 }
 export function generateForm2() {
   return;

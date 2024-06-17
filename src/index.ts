@@ -1,7 +1,7 @@
 import {
   generateForm2, generateForm3, generateForm4,
   fillPublication, getTargetFromDatacenter, getTargetJRCT,
-  getFromHtml
+  getFromHtml, modExplanationSheetValues
 } from './codes'
 import './ctr-utils'
 import { exportSupports } from './exportSupports'
@@ -40,3 +40,4 @@ global.DCtrialslist = DCtrialslist
 global.getTargetFromDatacenter = getTargetFromDatacenter
 global.getTargetJRCT = getTargetJRCT
 global.getFromHtml = getFromHtml
+global.modExplanationSheetValues = modExplanationSheetValues
