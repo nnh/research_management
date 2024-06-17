@@ -13,6 +13,7 @@ const trialTypeList = new Map([
   [chikenKey, "特定臨床(治験)"],
   [specificClinicalStudyKey, "特定臨床(臨床研究法)"],
 ])
+const itemsTrialBudgetIdx: number = 6;
 const itemsTrialTypeIdx: number = 7;
 const itemsCtrIdx: number = 9;
 const itemsIrbIdx: number = 10;
@@ -90,21 +91,29 @@ export function getFromHtml() {
   if (jrctLabelColIdx === -1 || jrctValueColIdx === -1 || jrctIdColIdx === -1) { 
     return;
   }
+  const trialTypeLabel = "研究の種別";
   const idLabel = "臨床研究実施計画番号";
   const underAgeLabel = "年齢下限/AgeMinimum";
   const overAgeLabel = "年齢上限/AgeMaximum";
   const piFacilityLabel = "研究責任（代表）医師の所属機関";
+  const trialPurposeLabel = "研究・治験の目的";
+  const interventionLabel = "介入の内容/Intervention(s)";
+  const diseaseLabel = "対象疾患名";
   const targetLabels:Set<string> = new Set([
-    "研究の種別", "研究名称", "研究責任（代表）医師の氏名", piFacilityLabel,
+    trialTypeLabel, "研究名称", "研究責任（代表）医師の氏名", piFacilityLabel,
     "届出日", idLabel, underAgeLabel, overAgeLabel,
-    "介入の有無", "介入の内容/Intervention(s)", "試験のフェーズ", "対象疾患名"
+    "介入の有無", interventionLabel, "試験のフェーズ", diseaseLabel,
+    trialPurposeLabel
   ]);
   const addLabels: Map<string, string> = new Map([
     ["principalRole", "主導的な役割"],
     ["drugLabel", "医薬品等区分"],
     ["ageLabel", "小児／成人"],
     ["diseaseLabel", "疾病等分類"],
-    ["facilityLabel", "実施施設数"]
+    ["facilityLabel", "実施施設数"],
+    ["attachment_2_1", "別添2-1"],
+    ["attachment_2_2", "別添2-2"],
+    ["attachment_3", "別添3"],
   ]);
   const tempHtmlSheetColumns = Array.from(targetLabels);
   const htmlSheetColumns = [...tempHtmlSheetColumns];
@@ -123,8 +132,11 @@ export function getFromHtml() {
     const targetRecord:string[][] = targetValues.filter((jrctInfo: string[]) => jrctInfo[jrctIdColIdx] === jrctId);
     const res: string[] = [];
     targetLabels.forEach((label: string) => {
-      // IDが/jRCT[0-9]{10}/ならば臨床研究実施計画番号ではなくjRCT番号を検索する
-      const labelCondition: string = (jrctId.match(/jRCT[0-9]{10}/) && label === idLabel) ? "jRCT番号" : label;
+      const labelCondition: string = (jrctId.match(/jRCT[0-9]{10}/) && label === idLabel)
+        ? "jRCT番号"
+        : (jrctId.match(/jRCT[0-9]{10}/) && label === trialPurposeLabel)
+          ? "試験等の目的"
+          : label;
       const target:string[][] = targetRecord.filter((jrctInfo: string[]) => jrctInfo[jrctLabelColIdx] === labelCondition);
       res.push(target.length === 0 ? "" : target[0][jrctValueColIdx]);
      });
@@ -137,14 +149,26 @@ export function getFromHtml() {
   const htmlUnderAgeColIdx: number = htmlSheetColumns.indexOf(underAgeLabel);
   const htmlOverAgeColIdx: number = htmlSheetColumns.indexOf(overAgeLabel);
   const htmlIdColIdx: number = htmlSheetColumns.indexOf(idLabel);
+  const htmlTrialTypeColIdx: number = htmlSheetColumns.indexOf(trialTypeLabel);
+  const htmlDiseaseColIdx: number = htmlSheetColumns.indexOf(diseaseLabel);
+  const htmlInterventionColIdx: number = htmlSheetColumns.indexOf(interventionLabel);
   // 追加出力情報
-  const datacenterValues:any[][] = getDatacenterValues_();
+  const explanationValues: string[][] | null = getExplanationValues_();
+  if (explanationValues === null) {
+    return;
+  }
+  const explanationMap: Map<string, string> = new Map(explanationValues.map((item) => [item[0], item[1]]));
+  const datacenterValues: any[][] = getDatacenterValues_();
+  const datacenterIdAndBudget:string[][] = datacenterValues.map((item) => [item[itemsCtrIdx], item[itemsTrialBudgetIdx]]);
+  const idAndBudget: string[][] = datacenterIdAndBudget.filter(([id, budget]) =>
+    id !== "" && id !== undefined && typeof (id) === "string" && budget !== "" && budget !== undefined && typeof (budget) === "string");
   const datacenterIdAndFacility:string[][] = datacenterValues.map((item) => [item[itemsCtrIdx], item[itemsFacilityIdx]]);
   const idAndFacility: any[][] = datacenterIdAndFacility.filter(([id, facility]) =>
     id !== "" && id !== undefined && typeof (id) === "string" && facility !== "" && facility !== undefined && typeof (facility) === "number");
   const piFacility = new RegExp("名古屋医療センター");
   const addValues = outputJrctValues.map((jrctInfo: string[]) => {
-    const principalRole: string = piFacility.test(jrctInfo[htmlPiFacilityColIdx]) ? "１" : "２";
+    const piNagoya = piFacility.test(jrctInfo[htmlPiFacilityColIdx]);
+    const principalRole: string = piNagoya ? "１" : "２";
     const drugLabel: string = "医薬品";
     const underAge: number = editAge_(jrctInfo[htmlUnderAgeColIdx]);
     const overAge: number = editAge_(jrctInfo[htmlOverAgeColIdx]);
@@ -154,14 +178,49 @@ export function getFromHtml() {
     } else {
       ageLabel = (overAge < 18) ? "小児" : "小児・成人";
     }
-    const diseaseLabel: string = "dummy";
+    const diseaseCategoryLabel: string = "dummy";
     const targetFacility = idAndFacility.filter(([id, _]) => id === jrctInfo[htmlIdColIdx]);
     const facilityLabel: string = targetFacility.length > 0 ? targetFacility[0][1] : "dummy";
-    return ([principalRole, drugLabel, ageLabel, diseaseLabel, facilityLabel]);
+    const disease = jrctInfo[htmlDiseaseColIdx];
+    const intervention = jrctInfo[htmlInterventionColIdx];
+    // 別添2-1, 特定臨床研究であることの説明
+    // 「研究概要」の欄は、研究の概要を簡潔に記載すること。
+    // ただし、平成30年3月31日までに開始した臨床研究については、研究の概要を簡潔に記載するとともに、侵襲及び介入を伴うことを示す部分に下線を付すこと。
+    const attachment_2_1: string = `本試験の対象は${disease}である。また「${intervention}」という一定の有害事象を伴う侵襲的な介入を行う。`;
+    // 特定領域に係る特定臨床研究であることの説明
+    // 1「特定領域に係る特定臨床研究であることの説明」の欄には、対象となる特定疾病領域及び具体的な疾患名、研究対象者の選定基準、研究成果が具体的にどのような形で特定領域の患者に還元されるかを明記すること。
+    // 2　特定領域とは、小児疾患、神経疾患その他の臨床研究の実施に際し疾患に応じた体制の整備を要する疾患が該当する。
+    const attachment_2_2: string = `本試験の対象は年間発症件数が1,500件に満たない(Int J Hematol. 2013 Jul;98(1):74-88.)希少疾病である小児造血器腫瘍に含まれる
+    ${disease}である。また「${intervention}」という一定の有害事象を伴う侵襲的な介入を行う試験であり、これによりQOL・生命予後の改善が期待できる。`;
+    const attachment_3_text1: string = "当該試験は";
+    let attachment_3_text2: any = explanationMap.has("others") ? explanationMap.get("others") : "";
+    if (piNagoya) {
+      attachment_3_text2 = explanationMap.has("PI") ? explanationMap.get("PI") : "";
+    } else {
+      const targetBudget = idAndBudget.filter(([id, _]) => id === jrctInfo[htmlIdColIdx]);
+      if (targetBudget.length > 0) {
+        const budget = targetBudget[0][1];
+        if (budget === "JPLSG") {
+          attachment_3_text2 = explanationMap.has(budget) ? explanationMap.get(budget) : "";
+        } else if (budget === "NHOネットワーク") {
+          attachment_3_text2 = explanationMap.has("NHO") ? explanationMap.get("NHO") : "";
+        } 
+      }
+    }
+    const attachment_3: string = `${attachment_3_text1}${attachment_3_text2}`;
+    return ([principalRole, drugLabel, ageLabel, diseaseCategoryLabel, facilityLabel, attachment_2_1, attachment_2_2, attachment_3]); 
   });
   const outputColumnSize = outputJrctValues[0].length;
   htmlSheet.getRange(lastRow, 1, outputJrctValues.length, outputColumnSize).setValues(outputJrctValues);
   htmlSheet.getRange(lastRow, outputColumnSize + 1, addValues.length, addValues[0].length).setValues(addValues);
+}
+function getExplanationValues_(): string[][] | null {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("explanation") as GoogleAppsScript.Spreadsheet.Sheet;
+  if (sheet === null) {
+    return null;
+  }
+  const values = sheet.getDataRange().getValues();
+  return values;
 }
 function editAge_(ageString: string): number {
   const highValue = 999;
