@@ -5,6 +5,8 @@ import { getDescriptionByHtml, JRctDescription } from './jrct'
 import { getRecptNoFromHtml, getRecptDataFromHtml } from './umin'
 import { searchUminHtml, getRecptHtml, getJrctHtml } from './crawler'
 import { he } from 'date-fns/locale'
+import { add } from 'date-fns'
+import { html } from 'cheerio/lib/api/manipulation'
 const chikenKey = "chiken";
 const specificClinicalStudyKey = "specificClinicalStudy";
 const trialTypeList = new Map([
@@ -55,26 +57,7 @@ export function getTargetFromDatacenter() {
   outputSheet.getRange(1, 1, targetItems.length, targetItems[0].length).setValues(targetItems);
  }
 
-export function getFromHtml() {
-  const jrctLabelColIdx: number = getJrctColIndexes_("label");
-  const jrctValueColIdx: number = getJrctColIndexes_("value");
-  const jrctIdColIdx: number = getJrctColIndexes_("jrctId");
-  if (jrctLabelColIdx === -1 || jrctValueColIdx === -1 || jrctIdColIdx === -1) { 
-    return;
-  }
-  const targetLabels:Set<string> = new Set([
-    "研究の種別", "研究名称", "研究責任（代表）医師の氏名", "研究責任（代表）医師の所属機関",
-    "届出日", "臨床研究実施計画番号", "年齢下限/AgeMinimum", "年齢上限/AgeMaximum",
-    "介入の有無", "介入の内容/Intervention(s)", "試験のフェーズ", "対象疾患名"
-  ]);
-  const targetLabelsIndex: Map<string, number> = new Map([
-    ["id", 5],
-  ]);
-  const htmlSheetColumns = Array.from(targetLabels);
-  const jrctInfoValues: any = getJrctInfo();
-  if (jrctInfoValues === null) {
-    return;
-  }
+function getHtmlSheet_(htmlSheetColumns: string[]): GoogleAppsScript.Spreadsheet.Sheet {
   const htmlSheetName = "fromHtml";
   const temp = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(htmlSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
   if (temp === null) {
@@ -82,34 +65,123 @@ export function getFromHtml() {
   }
   const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(htmlSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
   htmlSheet.getRange(1, 1, 1, htmlSheetColumns.length).setValues([htmlSheetColumns]);
-  const lastRow = htmlSheet.getLastRow() + 1;
-  const idIndex = targetLabelsIndex.get("id");
-  const htmlIdColIdx: number = idIndex !== undefined ? idIndex : -1;
-  if (htmlIdColIdx === -1) {
-    return;
-  }
-  const htmlIdColNum: number = htmlIdColIdx + 1;
-  const existingIDList: string[][] = htmlSheet.getRange(1, htmlIdColNum, lastRow, 1).getValues()
-    .filter((id) => id[0] !== "" && id !== undefined && id[0] !== htmlSheetColumns[htmlIdColIdx]).flat();
-  const targetValues = jrctInfoValues.filter((jrctInfo: string[][]) => !existingIDList.includes(jrctInfo[jrctIdColIdx]));
+  return htmlSheet;
+}
+function getTargetValuesAndIds_(existingIDList: string[], jrctInfoValues: string[][], jrctIdColIdx: number): [string[][], string[]]{
+  const targetValues = jrctInfoValues.filter((jrctInfo: string[]) => !existingIDList.includes(jrctInfo[jrctIdColIdx]));
   const targetIdsSet: Set <string> = new Set(targetValues.map((jrctInfo: string[]) => jrctInfo[jrctIdColIdx]));
   targetIdsSet.delete("jrctNo");
   const targetIds = Array.from(targetIdsSet);
-  let outputValues: any[][] = targetIds.map((jrctId: string) => {
-    const targetRecord = targetValues.filter((jrctInfo: string[]) => jrctInfo[jrctIdColIdx] === jrctId);
-    const res: any[][] = [];
+  return [targetValues, targetIds];
+}
+function getExistingIDList_(htmlSheet: GoogleAppsScript.Spreadsheet.Sheet,
+                            htmlSheetColumns: string[],
+                            idLabel: string, lastRow: number): string[] {
+  const htmlIdColIdx: number = htmlSheetColumns.indexOf(idLabel);
+  const values: string[][] = htmlSheet.getRange(1, htmlIdColIdx + 1, lastRow, 1).getValues();
+  const existingIDList: string[] = values.filter((id) => id[0] !== "" && id !== undefined && id[0] !== htmlSheetColumns[htmlIdColIdx]).flat();
+  return existingIDList;
+}
+export function getFromHtml() {
+  const jrctLabelColIdx: number = getJrctColIndexes_("label");
+  const jrctValueColIdx: number = getJrctColIndexes_("value");
+  const jrctIdColIdx: number = getJrctColIndexes_("jrctId");
+  if (jrctLabelColIdx === -1 || jrctValueColIdx === -1 || jrctIdColIdx === -1) { 
+    return;
+  }
+  const idLabel = "臨床研究実施計画番号";
+  const underAgeLabel = "年齢下限/AgeMinimum";
+  const overAgeLabel = "年齢上限/AgeMaximum";
+  const piFacilityLabel = "研究責任（代表）医師の所属機関";
+  const targetLabels:Set<string> = new Set([
+    "研究の種別", "研究名称", "研究責任（代表）医師の氏名", piFacilityLabel,
+    "届出日", idLabel, underAgeLabel, overAgeLabel,
+    "介入の有無", "介入の内容/Intervention(s)", "試験のフェーズ", "対象疾患名"
+  ]);
+  const addLabels: Map<string, string> = new Map([
+    ["principalRole", "主導的な役割"],
+    ["drugLabel", "医薬品等区分"],
+    ["ageLabel", "小児／成人"],
+    ["diseaseLabel", "疾病等分類"],
+    ["facilityLabel", "実施施設数"]
+  ]);
+  const tempHtmlSheetColumns = Array.from(targetLabels);
+  const htmlSheetColumns = [...tempHtmlSheetColumns];
+  addLabels.forEach((value, _) => {
+    htmlSheetColumns.push(value);
+  });
+  const jrctInfoValues: any = getJrctInfo();
+  if (jrctInfoValues === null) {
+    return;
+  }
+  const htmlSheet = getHtmlSheet_(htmlSheetColumns);
+  const lastRow = htmlSheet.getLastRow() + 1;
+  const existingIDList: string[] = getExistingIDList_(htmlSheet, htmlSheetColumns, idLabel, lastRow);
+  const [targetValues, targetIds]:[string[][], string[]] = getTargetValuesAndIds_(existingIDList, jrctInfoValues, jrctIdColIdx);
+  const outputJrctValues: any[][] = targetIds.map((jrctId: string) => {
+    const targetRecord:string[][] = targetValues.filter((jrctInfo: string[]) => jrctInfo[jrctIdColIdx] === jrctId);
+    const res: string[] = [];
     targetLabels.forEach((label: string) => {
       // IDが/jRCT[0-9]{10}/ならば臨床研究実施計画番号ではなくjRCT番号を検索する
-      const labelCondition: string = (jrctId.match(/jRCT[0-9]{10}/) && label === "臨床研究実施計画番号") ? "jRCT番号" : label;
-      const target = targetRecord.filter((jrctInfo: string[]) => jrctInfo[jrctLabelColIdx] === labelCondition);
+      const labelCondition: string = (jrctId.match(/jRCT[0-9]{10}/) && label === idLabel) ? "jRCT番号" : label;
+      const target:string[][] = targetRecord.filter((jrctInfo: string[]) => jrctInfo[jrctLabelColIdx] === labelCondition);
       res.push(target.length === 0 ? "" : target[0][jrctValueColIdx]);
      });
     return res;
   });
-  if (outputValues.length === 0) {
+  if (outputJrctValues.length === 0) {
     return;
   }
-  htmlSheet.getRange(lastRow, 1, outputValues.length, outputValues[0].length).setValues(outputValues);
+  const htmlPiFacilityColIdx: number = htmlSheetColumns.indexOf(piFacilityLabel);
+  const htmlUnderAgeColIdx: number = htmlSheetColumns.indexOf(underAgeLabel);
+  const htmlOverAgeColIdx: number = htmlSheetColumns.indexOf(overAgeLabel);
+  // 追加出力情報
+  const piFacility = new RegExp("名古屋医療センター");
+  const addValues = outputJrctValues.map((jrctInfo: string[]) => {
+    const principalRole: string = piFacility.test(jrctInfo[htmlPiFacilityColIdx]) ? "１" : "２";
+    const drugLabel: string = "医薬品";
+    const underAge: number = editAge_(jrctInfo[htmlUnderAgeColIdx]);
+    const overAge: number = editAge_(jrctInfo[htmlOverAgeColIdx]);
+    let ageLabel: string;
+    if (underAge > 18) {
+      ageLabel = "成人";
+    } else {
+      ageLabel = (overAge < 18) ? "小児" : "小児・成人";
+    }
+    const diseaseLabel: string = "dummy";
+    const facilityLabel: string = "dummy";
+    return ([principalRole, drugLabel, ageLabel, diseaseLabel, facilityLabel]);
+  });
+  const outputColumnSize = outputJrctValues[0].length;
+  htmlSheet.getRange(lastRow, 1, outputJrctValues.length, outputColumnSize).setValues(outputJrctValues);
+  htmlSheet.getRange(lastRow, outputColumnSize + 1, addValues.length, addValues[0].length).setValues(addValues);
+}
+function editAge_(ageString: string): number {
+  const highValue = 999;
+  const lowValue = 0;
+  const errorValue = -1;
+  const ageSplitString = "歳"
+  if (ageString === "") {
+    return highValue;
+  }
+  if (ageString === "上限なし") {
+    return highValue;
+  }
+  if (ageString === "下限なし") {
+    return lowValue;
+  }
+  if (!new RegExp(ageSplitString).test(ageString)) { 
+    return errorValue;
+  }
+  const ageSplit = ageString.split(ageSplitString);
+  if (Number.isNaN(ageSplit[0])) {
+    return errorValue;
+  }
+  const ageNum = Number(ageSplit[0]);
+  if (/未満/.test(ageSplit[1])) {
+    return ageNum - 1;
+  }
+  return ageNum;
 }
 function getJrctColIndexes_(targetLabel: string): number {
   const jrctIndex: Map<string, number> = new Map([
