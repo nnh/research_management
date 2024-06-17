@@ -55,41 +55,91 @@ export function getTargetFromDatacenter() {
   outputSheet.getRange(1, 1, targetItems.length, targetItems[0].length).setValues(targetItems);
  }
 
-function getJrctInfo() {
-  const jrctSsId: string | null = PropertiesService.getScriptProperties().getProperty('ss_jrct_id');
-  const jrctSheetName: string | null = PropertiesService.getScriptProperties().getProperty('ss_jrct_sheet_name');
-  if (jrctSsId === null || jrctSheetName === null) { 
+export function getFromHtml() {
+  const jrctLabelColIdx: number = getJrctColIndexes_("label");
+  const jrctValueColIdx: number = getJrctColIndexes_("value");
+  const jrctIdColIdx: number = getJrctColIndexes_("jrctId");
+  if (jrctLabelColIdx === -1 || jrctValueColIdx === -1 || jrctIdColIdx === -1) { 
     return;
   }
-  const jrctInfoSs = SpreadsheetApp.openById(jrctSsId);
-  if (jrctInfoSs === null) { 
-    return;
-  }
-  const jrctInfoSheet = jrctInfoSs.getSheetByName(jrctSheetName);
-  if (jrctInfoSheet === null) {
-    return;
-  }
-  const jrctInfoValues = jrctInfoSheet.getDataRange().getValues();
-  return jrctInfoValues;
-}
-export function generateForm2() {
-  const jrctIndex: Map<string, number> = new Map([
-    ["label", 0],
-    ["value", 1],
-    ["jrctId", 2],
-  ]);
   const targetLabels:Set<string> = new Set([
     "研究の種別", "研究名称", "研究責任（代表）医師の氏名", "研究責任（代表）医師の所属機関",
     "届出日", "臨床研究実施計画番号", "年齢下限/AgeMinimum", "年齢上限/AgeMaximum",
     "介入の有無", "介入の内容/Intervention(s)", "試験のフェーズ", "対象疾患名"
   ]);
-  const jrctInfoValues:any = getJrctInfo();
-  // jRCT番号を取得
-  const jrctIds = new Set(jrctInfoValues.map((row) => row[jrctIndex.get("jrctId")]));
-  jrctIds.forEach((jrctId) => {
-    const target = jrctInfoValues.filter((row) => row[jrctIndex.get("jrctId")] === jrctId);
-    targetLabels.forEach((label) => { };
+  const targetLabelsIndex: Map<string, number> = new Map([
+    ["id", 5],
+  ]);
+  const htmlSheetColumns = Array.from(targetLabels);
+  const jrctInfoValues: any = getJrctInfo();
+  if (jrctInfoValues === null) {
+    return;
+  }
+  const htmlSheetName = "fromHtml";
+  const temp = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(htmlSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
+  if (temp === null) {
+    SpreadsheetApp.getActiveSpreadsheet().insertSheet(htmlSheetName);
+  }
+  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(htmlSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
+  htmlSheet.getRange(1, 1, 1, htmlSheetColumns.length).setValues([htmlSheetColumns]);
+  const lastRow = htmlSheet.getLastRow() + 1;
+  const idIndex = targetLabelsIndex.get("id");
+  const htmlIdColIdx: number = idIndex !== undefined ? idIndex : -1;
+  if (htmlIdColIdx === -1) {
+    return;
+  }
+  const htmlIdColNum: number = htmlIdColIdx + 1;
+  const existingIDList: string[][] = htmlSheet.getRange(1, htmlIdColNum, lastRow, 1).getValues()
+    .filter((id) => id[0] !== "" && id !== undefined && id[0] !== htmlSheetColumns[htmlIdColIdx]).flat();
+  const targetValues = jrctInfoValues.filter((jrctInfo: string[][]) => !existingIDList.includes(jrctInfo[jrctIdColIdx]));
+  const targetIdsSet: Set <string> = new Set(targetValues.map((jrctInfo: string[]) => jrctInfo[jrctIdColIdx]));
+  targetIdsSet.delete("jrctNo");
+  const targetIds = Array.from(targetIdsSet);
+  let outputValues: any[][] = targetIds.map((jrctId: string) => {
+    const targetRecord = targetValues.filter((jrctInfo: string[]) => jrctInfo[jrctIdColIdx] === jrctId);
+    const res: any[][] = [];
+    targetLabels.forEach((label: string) => {
+      // IDが/jRCT[0-9]{10}/ならば臨床研究実施計画番号ではなくjRCT番号を検索する
+      const labelCondition: string = (jrctId.match(/jRCT[0-9]{10}/) && label === "臨床研究実施計画番号") ? "jRCT番号" : label;
+      const target = targetRecord.filter((jrctInfo: string[]) => jrctInfo[jrctLabelColIdx] === labelCondition);
+      res.push(target.length === 0 ? "" : target[0][jrctValueColIdx]);
+     });
+    return res;
   });
+  if (outputValues.length === 0) {
+    return;
+  }
+  htmlSheet.getRange(lastRow, 1, outputValues.length, outputValues[0].length).setValues(outputValues);
+}
+function getJrctColIndexes_(targetLabel: string): number {
+  const jrctIndex: Map<string, number> = new Map([
+    ["label", 0],
+    ["value", 1],
+    ["jrctId", 2],
+  ]);
+  const jrctLabelColIdx: number | undefined = jrctIndex.get(targetLabel);
+  const res: number = jrctLabelColIdx === undefined ? -1 : jrctLabelColIdx;
+  return res;
+} 
+
+function getJrctInfo(): any[][] | null {
+  const jrctSsId: string | null = PropertiesService.getScriptProperties().getProperty('ss_jrct_id');
+  const jrctSheetName: string | null = PropertiesService.getScriptProperties().getProperty('ss_jrct_sheet_name');
+  if (jrctSsId === null || jrctSheetName === null) { 
+    return null;
+  }
+  const jrctInfoSs = SpreadsheetApp.openById(jrctSsId);
+  if (jrctInfoSs === null) { 
+    return null;
+  }
+  const jrctInfoSheet = jrctInfoSs.getSheetByName(jrctSheetName);
+  if (jrctInfoSheet === null) {
+    return null;
+  }
+  const jrctInfoValues = jrctInfoSheet.getDataRange().getValues();
+  return jrctInfoValues;
+}
+export function generateForm2() {
   return;
 
   const targetItems = getTargetFromDatacenter_();

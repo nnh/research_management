@@ -1,4 +1,8 @@
-import { generateForm2, generateForm3, generateForm4, fillPublication, getTargetFromDatacenter, getTargetJRCT } from './codes'
+import {
+  generateForm2, generateForm3, generateForm4,
+  fillPublication, getTargetFromDatacenter, getTargetJRCT,
+  getFromHtml
+} from './codes'
 import './ctr-utils'
 import { exportSupports } from './exportSupports'
 import './jrct'
@@ -35,3 +39,4 @@ global.exportSupports = exportSupports
 global.DCtrialslist = DCtrialslist
 global.getTargetFromDatacenter = getTargetFromDatacenter
 global.getTargetJRCT = getTargetJRCT
+global.getFromHtml = getFromHtml
