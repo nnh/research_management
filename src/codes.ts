@@ -5,9 +5,11 @@ import { getDescriptionByHtml, JRctDescription } from './jrct'
 import { getRecptNoFromHtml, getRecptDataFromHtml } from './umin'
 import { searchUminHtml, getRecptHtml, getJrctHtml } from './crawler'
 import { he } from 'date-fns/locale'
+const chikenKey = "chiken";
+const specificClinicalStudyKey = "specificClinicalStudy";
 const trialTypeList = new Map([
-  ["chiken", "特定臨床(治験)"],
-  ["specificClinicalStudy", "特定臨床(臨床研究法)"],
+  [chikenKey, "特定臨床(治験)"],
+  [specificClinicalStudyKey, "特定臨床(臨床研究法)"],
 ])
 const itemsTrialTypeIdx: number = 7;
 const itemsCtrIdx: number = 9;
@@ -53,47 +55,62 @@ export function getTargetFromDatacenter() {
   outputSheet.getRange(1, 1, targetItems.length, targetItems[0].length).setValues(targetItems);
  }
 
-export function generateForm2() {
-  const sheetIrb = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("IRB") as GoogleAppsScript.Spreadsheet.Sheet;
-  const items2 = sheetIrb.getDataRange().getValues();
-  const targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form2印刷") as GoogleAppsScript.Spreadsheet.Sheet
-  const specificClinicalStudyHeader: string[] = [
-    "番号", "臨床研究名", "研究代表医師", "研究代表医師所属", "開始日", "登録ID等", "主導的な役割",
-    "医薬品等区分", "小児/成人", "疾病等分類", "実施施設数", "フェーズ(Phase)", 
-    "医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明",
-    "特定疾病領域（難病・希少疾病、小児疾患、新興・再興感染症）に係る特定臨床研究であることの説明"];
-
-  
-  
-  
-  
-  // すでにfromHtmlシート内に記載されているUMINIDを取得する
-  var registerdUminIds = getRegisterdUminIds();
-
-  // Form2シート内に記載されているUMINIDを取得する
-  var form2Values = targetSheet.getDataRange().getValues();
-  var uminIds = getUminIds(form2Values, 5);
-
-  // fromHtmlシート内に記載されていないデータを取得する
-  getUnregisteredData(registerdUminIds, uminIds);
-
-  // fromHtmlシートからデータを取得してForm2に挿入する
-  var htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml") as GoogleAppsScript.Spreadsheet.Sheet;
-  var htmlValues = htmlSheet.getDataRange().getValues();
-  for (var i = 1; i < form2Values.length; i++) {
-    for (var j = 1; j < htmlValues.length; j++) {
-      if (form2Values[i][5] == htmlValues[j][0]) {
-        var string = '本試験の対象は' + htmlValues[j][1].replace(/\r?\n/g, "、") + 'である。また「' + htmlValues[j][2].replace(/\r?\n/g, "　") + '」という一定の有害事象を伴う侵襲的な介入を行う。'
-        targetSheet.getRange(i+1, 9).setValue(string);
-        var string2 = '本試験の対象は年間発症件数が1,500件に満たない(Int J Hematol. 2013 Jul;98(1):74-88.)希少疾病である小児造血器腫瘍に含まれる' +
-                      htmlValues[j][1].replace(/\r?\n/g, "、") + 'である。また「' + htmlValues[j][2].replace(/\r?\n/g, "　") +
-                      '」という一定の有害事象を伴う侵襲的な介入を行う試験であり、これによりQOL・生命予後の改善が期待できる。';
-        targetSheet.getRange(i+1, 10).setValue(string2);
-      }
-    }
+function getJrctInfo() {
+  const jrctSsId: string | null = PropertiesService.getScriptProperties().getProperty('ss_jrct_id');
+  const jrctSheetName: string | null = PropertiesService.getScriptProperties().getProperty('ss_jrct_sheet_name');
+  if (jrctSsId === null || jrctSheetName === null) { 
+    return;
   }
+  const jrctInfoSs = SpreadsheetApp.openById(jrctSsId);
+  if (jrctInfoSs === null) { 
+    return;
+  }
+  const jrctInfoSheet = jrctInfoSs.getSheetByName(jrctSheetName);
+  if (jrctInfoSheet === null) {
+    return;
+  }
+  const jrctInfoValues = jrctInfoSheet.getDataRange().getValues();
+  return jrctInfoValues;
 }
+export function generateForm2() {
+  const jrctIndex: Map<string, number> = new Map([
+    ["label", 0],
+    ["value", 1],
+    ["jrctId", 2],
+  ]);
+  const targetLabels:Set<string> = new Set([
+    "研究の種別", "研究名称", "研究責任（代表）医師の氏名", "研究責任（代表）医師の所属機関",
+    "届出日", "臨床研究実施計画番号", "年齢下限/AgeMinimum", "年齢上限/AgeMaximum",
+    "介入の有無", "介入の内容/Intervention(s)", "試験のフェーズ", "対象疾患名"
+  ]);
+  const jrctInfoValues:any = getJrctInfo();
+  // jRCT番号を取得
+  const jrctIds = new Set(jrctInfoValues.map((row) => row[jrctIndex.get("jrctId")]));
+  jrctIds.forEach((jrctId) => {
+    const target = jrctInfoValues.filter((row) => row[jrctIndex.get("jrctId")] === jrctId);
+    targetLabels.forEach((label) => { };
+  });
+  return;
 
+  const targetItems = getTargetFromDatacenter_();
+  const sheetNameList = new Map([
+    [chikenKey, "youshiki2_chiken"],
+    [specificClinicalStudyKey, "youshiki2_specificClinicalStudy"],
+  ]);
+  const outputSheetList = new Map();
+  sheetNameList.forEach((sheetname, key) => {
+    const outputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetname);
+    if (outputSheet === null) {
+      SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetname);
+    };
+    outputSheetList.set(key, SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetname) as GoogleAppsScript.Spreadsheet.Sheet);
+  });
+  outputSheetList.forEach((outputSheet, key) => {
+    const outputValues = targetItems.filter((item) => item[itemsTrialTypeIdx] === trialTypeList.get(key));
+    outputSheet.clear();
+    outputSheet.getRange(1, 1, outputValues.length, outputValues[0].length).setValues(outputValues);
+  });
+}
 function getRegisterdUminIds(): string[] {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
   if (sheet === null) {
