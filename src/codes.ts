@@ -99,9 +99,10 @@ export function getFromHtml() {
   const trialPurposeLabel = "研究・治験の目的";
   const interventionLabel = "介入の内容/Intervention(s)";
   const diseaseLabel = "対象疾患名";
+  const dateLabel = "初回公表日";
   const targetLabels:Set<string> = new Set([
     trialTypeLabel, "研究名称", "研究責任（代表）医師の氏名", piFacilityLabel,
-    "届出日", idLabel, underAgeLabel, overAgeLabel,
+    dateLabel, idLabel, underAgeLabel, overAgeLabel,
     "介入の有無", interventionLabel, "試験のフェーズ", diseaseLabel,
     trialPurposeLabel
   ]);
@@ -136,7 +137,9 @@ export function getFromHtml() {
         ? "jRCT番号"
         : (jrctId.match(/jRCT[0-9]{10}/) && label === trialPurposeLabel)
           ? "試験等の目的"
-          : label;
+          : (jrctId.match(/jRCT[0-9]{10}/) && label === dateLabel)
+            ? dateLabel 
+            : label;
       const target:string[][] = targetRecord.filter((jrctInfo: string[]) => jrctInfo[jrctLabelColIdx] === labelCondition);
       res.push(target.length === 0 ? "" : target[0][jrctValueColIdx]);
      });
@@ -149,7 +152,6 @@ export function getFromHtml() {
   const htmlUnderAgeColIdx: number = htmlSheetColumns.indexOf(underAgeLabel);
   const htmlOverAgeColIdx: number = htmlSheetColumns.indexOf(overAgeLabel);
   const htmlIdColIdx: number = htmlSheetColumns.indexOf(idLabel);
-  const htmlTrialTypeColIdx: number = htmlSheetColumns.indexOf(trialTypeLabel);
   const htmlDiseaseColIdx: number = htmlSheetColumns.indexOf(diseaseLabel);
   const htmlInterventionColIdx: number = htmlSheetColumns.indexOf(interventionLabel);
   // 追加出力情報

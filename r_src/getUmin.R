@@ -9,26 +9,143 @@ library(here)
 source(here("r_src", "scraping_common.R"), encoding="utf-8")
 library(httr)
 # ------ constants ------
-kTestConstants <- NULL
+baseurl <- "https://center6.umin.ac.jp/cgi-open-bin/ctr/ctr_view.cgi?recptno="
+kUminSearchText <- "UMIN試験ID"
+kNameTarget1 <- "日本語 名\n"
+kNameTarget2 <- "\nミドルネーム\n\n姓\n"
+kNameTarget3 <- "\n英語"
+kUminRNoLabel <- "UMIN受付番号"
+kUminIdLabel <- "臨床研究実施計画番号"
 # ------ functions ------
-TestFunction <- function(){
-
+GetTargetUminRNoList <- function(){
+  temp <- tryCatch(
+    {
+      sheetid %>% read_sheet(sheet=kInputSheetName, range="A:A", col_names=T) %>% flatten_chr()
+    },
+    error = function(e) {
+      NA  # エラーが発生した場合にNAを返す
+    }
+  )
+  if (length(temp) == 0) {
+    return(NULL)
+  }
+  uminRNoList <- temp %>% str_extract_all("^R[0-9]{9}") %>% flatten_chr()
+  if (length(uminRNoList) == 0) {
+    return(NULL)
+  }
+  return(uminRNoList)
+}
+ExecGetUminList <- function() {
+  if (is.na(sheetid)) {
+    return(NULL)
+  }
+  AddSheet(kOutputSheetName)
+  inputUminRNoList <- GetTargetUminRNoList()
+  if (is.null(inputUminRNoList)) {
+    return(NULL)
+  }
+  # 取得済みのUMIN番号は対象外とする
+  retrievedUminRNo <- sheetid %>%
+    read_sheet(sheet=kOutputSheetName, range="A:C", col_names=T) %>% filter(Label == kUminRNoLabel) %>% select(Value) %>% flatten_chr() %>% unique()
+  uminRNoList <- setdiff(inputUminRNoList, retrievedUminRNo) %>% unique()
+  if (length(uminRNoList) == 0) {
+    return(NULL)
+  }
+  uminList <- list()
+  for (i in 1:length(uminRNoList)){
+    uminRNo <- uminRNoList[i]
+    temp <- tryCatch(
+      {
+        GetUminInfo(uminRNo)
+      },
+      error = function(e) {
+        NA  # エラーが発生した場合にNAを返す
+      }
+    )
+    uminList[[i]] <- temp
+  }
+  names(uminList) <- uminRNoList
+  return(uminList)
+}
+GetUminInfo <- function(uminRNo) {
+  url <- str_c(baseurl, uminRNo)
+  webpage <- GetWebPageData(url)
+  basetable <- webpage %>% html_nodes(xpath = '/html/body/div/table[1]/tbody/tr') %>% html_text()
+  uminId <- NULL
+  for (i in 1:length(basetable)) {
+    if (str_detect(basetable[i], kUminSearchText)) {
+      uminId <- basetable[i] %>% str_remove(kUminSearchText) %>% str_remove_all("\n")
+      break
+    }
+  }
+  parent_node <- webpage %>% html_nodes(xpath = '//*[@id="Input_vew_Mandatory"]')
+  # 親ノード内のすべての<tr>およびその他の子ノードを取得
+  h3Text <- parent_node %>% html_node("h3") %>% html_text()
+  trText <- parent_node %>% html_node("tr") %>% html_text()
+  trList <- trText %>% map( ~ {
+    temp <- str_split(., "\n")
+    res <- unlist(temp)[1] %>% str_remove("^日本語  ")
+    return(res)
+  })
+  header <- h3Text %>% map_vec( ~ {
+    value <- .
+    if (value == "一般向け試験名/Public title") {
+      res <- "研究名称"
+    } else if (value == "試験の種類/Study type") {
+      res <- "研究の種別"
+    } else if (value == "所属組織/Organization") {
+      res <- "研究責任（代表）医師の所属機関"
+    } else if (value == "登録日時/Registered date") {
+      res <- "初回公表日"
+    } else if (value == "年齢（下限）/Age-lower limit") {
+      res <- "年齢下限/AgeMinimum"
+    } else if (value == "年齢（上限）/Age-upper limit") {
+      res <- "年齢上限/AgeMaximum"
+    } else if (value == "介入1/Interventions/Control_1") {
+      res <- "介入の内容/Intervention(s)"
+    } else if (value == "試験のフェーズ/Developmental phase") {
+      res <- "試験のフェーズ"
+    } else if (value == "対象疾患名/Condition") {
+      res <- "対象疾患名"
+    } else if (value == "目的1/Narrative objectives1") {
+      res <- "研究・治験の目的"
+    } else {
+      res <- value
+    }
+    return(res)
+  })
+  names(trList) <- header
+  kNameOfPi <- "責任研究者/Name of lead principal investigator"
+  # 責任研究者/Name of lead principal investigatorを再取得
+  for (i in 1:length(h3Text)) {
+    if (h3Text[i] == kNameOfPi) {
+      break
+    }
+  }
+  temp_jpName <- trText[[i]] %>% str_extract(str_c("^", kNameTarget1, ".+", kNameTarget2, ".+", kNameTarget3))
+  jpName_mei <- temp_jpName %>% str_remove(str_c(kNameTarget2, ".+", kNameTarget3)) %>% str_remove(kNameTarget1)
+  jpName_sei <- temp_jpName %>% str_remove(str_c(kNameTarget1, ".+", kNameTarget2)) %>% str_remove(kNameTarget3)
+  jpName <- str_c(jpName_sei, "　", jpName_mei)
+  trList$`研究責任（代表）医師の氏名` <- jpName
+  # 介入
+  trList$介入の有無 <- ifelse("介入の目的/Purpose of intervention" %in% h3Text, "あり", "なし")
+  # umin id
+  trList[[kUminIdLabel]] <- uminId
+  trList[[kUminRNoLabel]] <- uminRNo
+  return(trList)
 }
 # ------ main ------
-url <- "https://upload.umin.ac.jp/cgi-open-bin/ctr/index.cgi"
-uminId <- "UMIN000027218"
-# POSTリクエストに送信するデータ
-payload <- list(
-  sort = '03',
-  `function` = '04',  # 'function'はRでは予約語なのでバッククォートで囲む
-  ctrno = uminId
-)
+uminData <- ExecGetUminList()
+df_uminList <- uminData %>% map_df( ~ {
+  values <- .
+  temp <- tibble()
+  temp_col <- values %>% names()
+  temp[1:length(temp_col) , 1] <- temp_col
+  temp[ , 2] <- values %>% flatten_chr()
+  temp[ , 3] <- values[[kUminIdLabel]]
+  colnames(temp) <- c("Label", "Value", "jrctNo")
+  return(temp)
+})
 
-# POSTリクエストを送信し、結果を取得
-response <- POST(url, body = payload, encode = "form")
-
-# レスポンスの内容をUTF-8で表示
-content <- content(response, "text", encoding = "UTF-8")
-
-print(content)
-str_detect(content, "R000030669")
+# とりあえずtempシートに出力
+WriteSheet(kWkSheetName, df_uminList)
