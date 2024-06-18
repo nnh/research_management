@@ -9,13 +9,13 @@ library(here)
 source(here("r_src", "scraping_common.R"), encoding="utf-8")
 library(httr)
 # ------ constants ------
-baseurl <- "https://center6.umin.ac.jp/cgi-open-bin/ctr/ctr_view.cgi?recptno="
 kUminSearchText <- "UMIN試験ID"
 kNameTarget1 <- "日本語 名\n"
 kNameTarget2 <- "\nミドルネーム\n\n姓\n"
 kNameTarget3 <- "\n英語"
 kUminRNoLabel <- "UMIN受付番号"
-kUminIdLabel <- "臨床研究実施計画番号"
+kNameOfPi <- "責任研究者/Name of lead principal investigator"
+kUminIdLabel <- kIdLabel
 # ------ functions ------
 GetTargetUminRNoList <- function(){
   temp <- tryCatch(
@@ -68,7 +68,7 @@ ExecGetUminList <- function() {
   return(uminList)
 }
 GetUminInfo <- function(uminRNo) {
-  url <- str_c(baseurl, uminRNo)
+  url <- str_c(kUminUrlHead, uminRNo)
   webpage <- GetWebPageData(url)
   basetable <- webpage %>% html_nodes(xpath = '/html/body/div/table[1]/tbody/tr') %>% html_text()
   uminId <- NULL
@@ -78,18 +78,39 @@ GetUminInfo <- function(uminRNo) {
       break
     }
   }
-  parent_node <- webpage %>% html_nodes(xpath = '//*[@id="Input_vew_Mandatory"]')
-  # 親ノード内のすべての<tr>およびその他の子ノードを取得
+  parent_node <- webpage %>% html_nodes(xpath = '/html/body/div') %>% html_nodes("div")
+  parent_node[[1]] <- NULL
   h3Text <- parent_node %>% html_node("h3") %>% html_text()
-  trText <- parent_node %>% html_node("tr") %>% html_text()
-  trList <- trText %>% map( ~ {
-    temp <- str_split(., "\n")
-    res <- unlist(temp)[1] %>% str_remove("^日本語  ")
-    return(res)
+  trList <- parent_node %>% html_node("tr") %>% map( ~ {
+    target <- .
+    temp <- html_node(target, "p") %>% html_text() %>% str_remove("^日本語") %>% str_remove("^\\s+") %>% str_remove("\n$") %>% str_remove("\r$")
+    if (is.na(temp)) {
+      return("")
+    }
+    if (temp != "") {
+      return(temp)
+    }
+    temp <- html_node(target, "table") %>% html_node("tr") %>% html_text() %>% str_remove_all("\n")
+    return(temp)
   })
+  # 責任医師名を再取得する
+  for (i in 1:length(h3Text)) {
+    if (h3Text[i] == kNameOfPi) {
+      break
+    }
+  }
+  target <- parent_node[[i]]
+  temp <- html_node(target, "tr") %>% html_node("table")
+  sei <- temp %>% html_node("tr:nth-child(3)") %>% html_node("td:nth-child(2)") %>% html_text()
+  mei <- temp %>% html_node("tr:nth-child(1)") %>% html_node("td:nth-child(2)") %>% html_text()
+  nameOfPi <- str_c(sei, "　", mei)
+  trList[[i]] <- nameOfPi
+
   header <- h3Text %>% map_vec( ~ {
     value <- .
-    if (value == "一般向け試験名/Public title") {
+    if (is.na(value)) {
+      res <- "dummy"
+    } else if (value == "一般向け試験名/Public title") {
       res <- "研究名称"
     } else if (value == "試験の種類/Study type") {
       res <- "研究の種別"
@@ -109,29 +130,22 @@ GetUminInfo <- function(uminRNo) {
       res <- "対象疾患名"
     } else if (value == "目的1/Narrative objectives1") {
       res <- "研究・治験の目的"
+    } else if (value == kNameOfPi) {
+      res <- "研究責任（代表）医師の氏名"
     } else {
       res <- value
     }
     return(res)
   })
+  trText <- trList %>% flatten_chr()
   names(trList) <- header
-  kNameOfPi <- "責任研究者/Name of lead principal investigator"
-  # 責任研究者/Name of lead principal investigatorを再取得
-  for (i in 1:length(h3Text)) {
-    if (h3Text[i] == kNameOfPi) {
-      break
-    }
-  }
-  temp_jpName <- trText[[i]] %>% str_extract(str_c("^", kNameTarget1, ".+", kNameTarget2, ".+", kNameTarget3))
-  jpName_mei <- temp_jpName %>% str_remove(str_c(kNameTarget2, ".+", kNameTarget3)) %>% str_remove(kNameTarget1)
-  jpName_sei <- temp_jpName %>% str_remove(str_c(kNameTarget1, ".+", kNameTarget2)) %>% str_remove(kNameTarget3)
-  jpName <- str_c(jpName_sei, "　", jpName_mei)
-  trList$`研究責任（代表）医師の氏名` <- jpName
   # 介入
   trList$介入の有無 <- ifelse("介入の目的/Purpose of intervention" %in% h3Text, "あり", "なし")
   # umin id
   trList[[kUminIdLabel]] <- uminId
   trList[[kUminRNoLabel]] <- uminRNo
+  # 初回公開日
+  trList$初回公開日 <- trList$`登録日時/Registered date`
   return(trList)
 }
 # ------ main ------
@@ -143,9 +157,7 @@ df_uminList <- uminData %>% map_df( ~ {
   temp[1:length(temp_col) , 1] <- temp_col
   temp[ , 2] <- values %>% flatten_chr()
   temp[ , 3] <- values[[kUminIdLabel]]
-  colnames(temp) <- c("Label", "Value", "jrctNo")
+  colnames(temp) <- kOutputHeader
   return(temp)
-})
-
-# とりあえずtempシートに出力
-WriteSheet(kWkSheetName, df_uminList)
+}) %>% filter(Label != "dummy")
+AddOutputSheet(df_uminList)

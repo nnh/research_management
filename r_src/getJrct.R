@@ -2,7 +2,7 @@
 #' description
 #' @file getJrct.R
 #' @author Mariko Ohtsuka
-#' @date 2024.06.12
+#' @date 2024.06.18
 # ------ libraries ------
 source(here("r_src", "scraping_common.R"), encoding="utf-8")
 # ------ constants ------
@@ -30,7 +30,7 @@ GetBaseDataJrct <- function(webpage){
            str_detect(Label, "介入")
           )
   res <- bind_rows(captions, managerial_matter, trialBody)
-  jrctNo <- res %>% filter(str_detect(Label, "jRCT番号") | str_detect(Label, "臨床研究実施計画番号")) %>% .[ , "Value", drop=T]
+  jrctNo <- res %>% filter(str_detect(Label, "jRCT番号") | str_detect(Label, kIdLabel)) %>% .[ , kOutputHeader[2], drop=T]
   res$jrctNo <- jrctNo
   return(res)
 }
@@ -94,15 +94,4 @@ ExecGetJrctList <- function() {
 # ------ main ------
 jrctList <- ExecGetJrctList()
 df_jrctList <- bind_rows(jrctList)
-# とりあえずtempシートに出力
-WriteSheet(kWkSheetName, df_jrctList)
-# outputシートに追記
-sheetid %>% read_sheet(sheet=kOutputSheetName, range="C:C", col_names=T) %>% flatten_chr() %>% unique()
-output_sheet <- sheetid %>% read_sheet(sheet=kOutputSheetName, col_names=F)
-start_row <- nrow(output_sheet) + 1
-end_row <- nrow(df_jrctList) + start_row
-if (start_row > 1) {
-  sheetid %>% range_write(df_jrctList, sheet=kOutputSheetName, range=str_c("A", start_row, ":C", end_row), col_names=F)
-} else {
-  sheetid %>% range_write(df_jrctList, sheet=kOutputSheetName, range=str_c("A", start_row, ":C", end_row), col_names=T)
-}
+AddOutputSheet(df_jrctList)

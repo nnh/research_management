@@ -7,6 +7,7 @@ import { searchUminHtml, getRecptHtml, getJrctHtml } from './crawler'
 import { he, id } from 'date-fns/locale'
 import { add } from 'date-fns'
 import { html } from 'cheerio/lib/api/manipulation'
+const htmlSheetName = "fromHtml";
 const chikenKey = "chiken";
 const specificClinicalStudyKey = "specificClinicalStudy";
 const trialTypeList = new Map([
@@ -60,7 +61,6 @@ export function getTargetFromDatacenter() {
  }
 
 function getHtmlSheet_(htmlSheetColumns: string[]): GoogleAppsScript.Spreadsheet.Sheet {
-  const htmlSheetName = "fromHtml";
   const temp = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(htmlSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
   if (temp === null) {
     SpreadsheetApp.getActiveSpreadsheet().insertSheet(htmlSheetName);
@@ -284,27 +284,51 @@ export function modExplanationSheetValues() {
   sheet.getRange(3, 1).setValue("NHOネットワーク");
   sheet.getRange("A5:B8").clear();
 }
+function addSheet_(sheetName: string, colnames: string[]): GoogleAppsScript.Spreadsheet.Sheet {
+  const temp = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (temp === null) {
+    SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
+  }
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName) as GoogleAppsScript.Spreadsheet.Sheet;
+  sheet.clear();
+  sheet.getRange(1, 1, 1, colnames.length).setValues([colnames]);
+  return sheet;
+}
+function getColIdx_(sheet: GoogleAppsScript.Spreadsheet.Sheet, targetLabel: string): number {
+  const colnames = sheet.getDataRange().getValues()[0];
+  const colIdx = colnames.indexOf(targetLabel);
+  return colIdx;
+ }
 export function generateForm2() {
-  return;
+  const youshiki2_2_colnames: string[] = ["番号", "臨床研究名", "研究代表医師", "研究代表医師所属", "開始日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施", "施設数", "フェーズ（Phase）"];
+  const inputColnames: string[] = [...youshiki2_2_colnames];
+  const youshiki2_1_colnames: string[] = youshiki2_2_colnames.map(colname => { 
+    return colname === "臨床研究名"
+      ? "治験名"
+      : colname === "研究代表医師"
+        ? "治験調整医師名"
+        : colname === "研究代表医師所属"
+          ? "治験調整医師所属"
+          : colname === "開始日"
+            ? "届出日"
+            : colname;
+  });
+  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(htmlSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
+  if (htmlSheet === null) {
+    return;
+  }
+  const youshiki2_1_Sheet = addSheet_("様式第２-１（１）", youshiki2_1_colnames);
+  const youshiki2_2_Sheet = addSheet_("様式第２-２（２）", youshiki2_2_colnames);
+  const htmlItems = htmlSheet.getDataRange().getValues();
+  const trialTypeColIdx: number = getColIdx_(htmlSheet, "研究の種別");
+  if (trialTypeColIdx === -1) {
+    return;
+  }
+  const youshiki2_1 = htmlItems.filter((item) => item[trialTypeColIdx] === "医師主導治験");
+  const youshiki2_2 = htmlItems.filter((item) => item[trialTypeColIdx] !== "医師主導治験");
+  console.log(9);
 
-  const targetItems = getTargetFromDatacenter_();
-  const sheetNameList = new Map([
-    [chikenKey, "youshiki2_chiken"],
-    [specificClinicalStudyKey, "youshiki2_specificClinicalStudy"],
-  ]);
-  const outputSheetList = new Map();
-  sheetNameList.forEach((sheetname, key) => {
-    const outputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetname);
-    if (outputSheet === null) {
-      SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetname);
-    };
-    outputSheetList.set(key, SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetname) as GoogleAppsScript.Spreadsheet.Sheet);
-  });
-  outputSheetList.forEach((outputSheet, key) => {
-    const outputValues = targetItems.filter((item) => item[itemsTrialTypeIdx] === trialTypeList.get(key));
-    outputSheet.clear();
-    outputSheet.getRange(1, 1, outputValues.length, outputValues[0].length).setValues(outputValues);
-  });
+
 }
 function getRegisterdUminIds(): string[] {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
