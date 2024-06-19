@@ -1,6 +1,6 @@
 import {
   generateForm2, generateForm3, generateForm4,
-  fillPublication, getTargetFromDatacenter, getTargetJRCT,
+  fillPublication, getTargetFromDatacenter, getTargetJrct,
   getFromHtml, modExplanationSheetValues
 } from './codes'
 import './ctr-utils'
@@ -38,6 +38,6 @@ global.fillPublication = fillPublication
 global.exportSupports = exportSupports
 global.DCtrialslist = DCtrialslist
 global.getTargetFromDatacenter = getTargetFromDatacenter
-global.getTargetJRCT = getTargetJRCT
+global.getTargetJrct = getTargetJrct
 global.getFromHtml = getFromHtml
 global.modExplanationSheetValues = modExplanationSheetValues

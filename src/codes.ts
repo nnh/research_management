@@ -23,7 +23,7 @@ const itemsIrbIdx: number = 10;
 const itemsFacilityIdx: number = 24;
 const itemsStartDateIdx: number = 86;
 const highValue = 999;
-const targetDate = new Date(2021, 12, 1);
+const limit_date = new Date(2021, 8, 1);
 
 function getDatacenterValues_(): any[][] {
   const sheetDatacenter: GoogleAppsScript.Spreadsheet.Sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
@@ -31,26 +31,20 @@ function getDatacenterValues_(): any[][] {
   return items;
 }
 
-export function getTargetJRCT() {
-  const items: any[][] = getDatacenterValues_();
-  const jrctFormat = /jRCT[0-9]{10}|jRCTs[0-9]{9}/;
-  const targetDateIds = items.filter((item) => item[itemsStartDateIdx] >= targetDate);
-  const targetIds = targetDateIds.map((item) => item[itemsCtrIdx]).filter((ctr) => jrctFormat.test(ctr));
-  const jrctIds = targetIds.map((ctr) => ctr.match(jrctFormat)[0]);
-  const res = Array.from(new Set(jrctIds)).map((jrctId) => [jrctId]);
-  const outputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("test_jrct") as GoogleAppsScript.Spreadsheet.Sheet;
-  outputSheet.clear();
-  outputSheet.getRange(1, 1).setValue("jRCT_ID");
+export function getTargetJrct() {
+  const targetItems: any[][] = getTargetFromDatacenter_();
+  const targetIds = targetItems.map((item) => item[itemsCtrIdx]).filter((ctr, idx) => ctr !== "" && idx !== 0);
+  const res = Array.from(new Set(targetIds)).map((jrctId) => [jrctId]);
+  const outputSheet = addSheet_("test_jrct", ["jRCT_ID"]);
   outputSheet.getRange(2, 1, res.length, res[0].length).setValues(res);
  }
 function getTargetFromDatacenter_() {
   const items = getDatacenterValues_();
-  const limit_date = new Date(2016, 12, 1);
   const targetItems = items.filter(
     item => (
               item[itemsTrialTypeIdx] === trialTypeList.get("chiken") ||
               item[itemsTrialTypeIdx] === trialTypeList.get("specificClinicalStudy")
-            ) && item[itemsIrbIdx] >= limit_date
+            ) && item[itemsStartDateIdx] >= limit_date
   );
   const header = items.filter((_, index) => index === 0);
   const res = [...header, ...targetItems];
