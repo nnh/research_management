@@ -13,13 +13,15 @@ const specificClinicalStudyKey = "specificClinicalStudy";
 const trialTypeList = new Map([
   [chikenKey, "特定臨床(治験)"],
   [specificClinicalStudyKey, "特定臨床(臨床研究法)"],
-])
+]);
+const trialTypeLabel = "研究の種別";
 const itemsTrialBudgetIdx: number = 6;
 const itemsTrialTypeIdx: number = 7;
 const itemsCtrIdx: number = 9;
 const itemsIrbIdx: number = 10;
 const itemsFacilityIdx: number = 24;
 const itemsStartDateIdx: number = 86;
+const highValue = 999;
 const targetDate = new Date(2021, 12, 1);
 
 function getDatacenterValues_(): any[][] {
@@ -91,7 +93,6 @@ export function getFromHtml() {
   if (jrctLabelColIdx === -1 || jrctValueColIdx === -1 || jrctIdColIdx === -1) { 
     return;
   }
-  const trialTypeLabel = "研究の種別";
   const idLabel = "臨床研究実施計画番号";
   const underAgeLabel = "年齢下限/AgeMinimum";
   const overAgeLabel = "年齢上限/AgeMaximum";
@@ -225,7 +226,6 @@ function getExplanationValues_(): string[][] | null {
   return values;
 }
 function editAge_(ageString: string): number {
-  const highValue = 999;
   const lowValue = 0;
   const errorValue = -1;
   const ageSplitString = "歳"
@@ -290,7 +290,7 @@ function addSheet_(sheetName: string, colnames: string[]): GoogleAppsScript.Spre
     SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
   }
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName) as GoogleAppsScript.Spreadsheet.Sheet;
-  sheet.clear();
+  sheet.clearContents();
   sheet.getRange(1, 1, 1, colnames.length).setValues([colnames]);
   return sheet;
 }
@@ -300,35 +300,35 @@ function getColIdx_(sheet: GoogleAppsScript.Spreadsheet.Sheet, targetLabel: stri
   return colIdx;
  }
 export function generateForm2() {
-  const youshiki2_2_colnames: string[] = ["番号", "臨床研究名", "研究代表医師", "研究代表医師所属", "開始日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施", "施設数", "フェーズ（Phase）"];
-  const inputColnames: string[] = [...youshiki2_2_colnames];
-  const youshiki2_1_colnames: string[] = youshiki2_2_colnames.map(colname => { 
-    return colname === "臨床研究名"
-      ? "治験名"
-      : colname === "研究代表医師"
-        ? "治験調整医師名"
-        : colname === "研究代表医師所属"
-          ? "治験調整医師所属"
-          : colname === "開始日"
-            ? "届出日"
-            : colname;
-  });
+  const seqColName = "番号";
+  const youshiki2_2_colnames: string[] = [seqColName, "臨床研究名", "研究代表医師", "研究代表医師所属", "開始日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "フェーズ（Phase）"];
+  const youshiki2_1_colnames: string[] = [seqColName, "治験名", "治験調整医師名", "治験調整医師所属", "届出日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "フェーズ（Phase）"];
   const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(htmlSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
   if (htmlSheet === null) {
     return;
   }
+  const htmlItems = htmlSheet.getDataRange().getValues();
+  const input_colnames:string[] = [seqColName, "研究名称", "研究責任（代表）医師の氏名", "研究責任（代表）医師の所属機関", "初回公表日", "臨床研究実施計画番号", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "試験のフェーズ"];
+  const inputColIndexes: number[] = input_colnames.map(colname => colname === seqColName ? highValue : htmlItems[0].indexOf(colname));
+  if (inputColIndexes.includes(-1)) {
+    return;
+  }
   const youshiki2_1_Sheet = addSheet_("様式第２-１（１）", youshiki2_1_colnames);
   const youshiki2_2_Sheet = addSheet_("様式第２-２（２）", youshiki2_2_colnames);
-  const htmlItems = htmlSheet.getDataRange().getValues();
-  const trialTypeColIdx: number = getColIdx_(htmlSheet, "研究の種別");
+  const trialTypeColIdx: number = getColIdx_(htmlSheet, trialTypeLabel);
   if (trialTypeColIdx === -1) {
     return;
   }
   const youshiki2_1 = htmlItems.filter((item) => item[trialTypeColIdx] === "医師主導治験");
-  const youshiki2_2 = htmlItems.filter((item) => item[trialTypeColIdx] !== "医師主導治験");
-  console.log(9);
-
-
+  const youshiki2_2 = htmlItems.filter((item) => item[trialTypeColIdx] !== "医師主導治験" && item[trialTypeColIdx] !== trialTypeLabel);
+  const outputYoushiki2_1 = editOutputForm2Values_(youshiki2_1, inputColIndexes);
+  const outputYoushiki2_2 = editOutputForm2Values_(youshiki2_2, inputColIndexes);
+  youshiki2_1_Sheet.getRange(2, 1, outputYoushiki2_1.length, outputYoushiki2_1[0].length).setValues(outputYoushiki2_1);
+  youshiki2_2_Sheet.getRange(2, 1, outputYoushiki2_2.length, outputYoushiki2_2[0].length).setValues(outputYoushiki2_2);
+}
+function editOutputForm2Values_(values: string[][], inputColIndexes: number[]): string[][] {
+  const res = values.map((item, rowIdx) => inputColIndexes.map(idx => idx === highValue ? String(rowIdx + 1) : item[idx]));
+  return res;
 }
 function getRegisterdUminIds(): string[] {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
