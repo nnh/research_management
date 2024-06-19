@@ -15,6 +15,7 @@ const trialTypeList = new Map([
   [specificClinicalStudyKey, "特定臨床(臨床研究法)"],
 ]);
 const trialTypeLabel = "研究の種別";
+const seqColName = "番号";
 const itemsTrialBudgetIdx: number = 6;
 const itemsTrialTypeIdx: number = 7;
 const itemsCtrIdx: number = 9;
@@ -298,9 +299,21 @@ function getColIdx_(sheet: GoogleAppsScript.Spreadsheet.Sheet, targetLabel: stri
   const colnames = sheet.getDataRange().getValues()[0];
   const colIdx = colnames.indexOf(targetLabel);
   return colIdx;
- }
+}
+function generateAttachment2_1_1(targetValues: string[][], outputSheetName: string) {
+  const input_colnames:string[] = [seqColName, "研究名称", "臨床研究実施計画番号", "別添2-1"];
+  const inputColIndexes: number[] = input_colnames.map(colname => colname === seqColName ? highValue : targetValues[0].indexOf(colname));
+  if (inputColIndexes.includes(-1)) {
+    return;
+  }
+  const inputBetten = targetValues.filter((_, idx) => idx !== 0); 
+  const outputColnames: string[] = [seqColName, "臨床研究名", "登録ID等", "研究概要"];
+  const outputBetten = editOutputForm2Values_(inputBetten, inputColIndexes);
+  const betten_sheet = addSheet_(outputSheetName, outputColnames);
+  const outputValues = [outputColnames, ...outputBetten];
+  betten_sheet.getRange(1, 1, outputValues.length, outputValues[0].length).setValues(outputValues);
+}
 export function generateForm2() {
-  const seqColName = "番号";
   const youshiki2_2_colnames: string[] = [seqColName, "臨床研究名", "研究代表医師", "研究代表医師所属", "開始日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "フェーズ（Phase）"];
   const youshiki2_1_colnames: string[] = [seqColName, "治験名", "治験調整医師名", "治験調整医師所属", "届出日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "フェーズ（Phase）"];
   const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(htmlSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
@@ -321,6 +334,7 @@ export function generateForm2() {
   }
   const youshiki2_1 = htmlItems.filter((item) => item[trialTypeColIdx] === "医師主導治験");
   const youshiki2_2 = htmlItems.filter((item) => item[trialTypeColIdx] !== "医師主導治験" && item[trialTypeColIdx] !== trialTypeLabel);
+  generateAttachment2_1_1([htmlItems[0], ...youshiki2_2], "別添２-１（１）");
   const outputYoushiki2_1 = editOutputForm2Values_(youshiki2_1, inputColIndexes);
   const outputYoushiki2_2 = editOutputForm2Values_(youshiki2_2, inputColIndexes);
   youshiki2_1_Sheet.getRange(2, 1, outputYoushiki2_1.length, outputYoushiki2_1[0].length).setValues(outputYoushiki2_1);
