@@ -2,14 +2,13 @@
 #' description
 #' @file scraping_common.r
 #' @author Mariko Ohtsuka
-#' @date 2024.6.12
+#' @date 2024.6.20
 # ------ libraries ------
 # ------ constants ------
 kUrlHead <- "https://jrct.niph.go.jp/latest-detail/"
 kUminUrlHead <- "https://center6.umin.ac.jp/cgi-open-bin/ctr/ctr_view.cgi?recptno="
-kInputSheetName <- "抽出対象のjRCT番号"
-kOutputSheetName <- "output"
-kWkSheetName <- "temp"
+kInputSheetName <- "jRCTandUMINNumbers"
+kOutputSheetName <- "ctr_output"
 kJrctNoColNum <- 3
 kIdLabel <- "臨床研究実施計画番号"
 kOutputHeader <- c("Label", "Value", "jrctNo")

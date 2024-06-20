@@ -9,7 +9,7 @@ export function getUminId(ctr: any): string[] {
 export function isUminId(id: string): boolean{
   return /(UMIN|C)\d{9}/.test(id.trim())
 }
-
+/*
 export function getJrctId(ctr: any): string[] {
   if (typeof ctr === 'string') {
     return ctr.split(',').filter((id) => isJrctId(id))
@@ -21,7 +21,7 @@ export function getJrctId(ctr: any): string[] {
 export function isJrctId(id: string): boolean {
   return /^jRCTs\d{9}$/.test(id.trim())
 }
-
+*/
 export function getUminIds(targetSheetValues: any[][], column: number): string[] {
   // targetSheet内に記載されているUMINIDを取得する
   const uminIds = []

@@ -1,8 +1,8 @@
-#' title
-#' description
+#' init functions
+#'
 #' @file init.R
 #' @author Mariko Ohtsuka
-#' @date YYYY.MM.DD
+#' @date 2024.6.20
 rm(list=ls())
 # ------ libraries ------
 library(here)
