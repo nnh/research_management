@@ -1,14 +1,14 @@
 //import { getUminIds, getUminId, getJrctId } from './ctr-utils'
-//import { getDatacenterValues_, getHtmlSheet_, getExplanationValues_, getJrctUminValues_} from './get-sheets'
-import { addSheet_, getColIdx_ } from './ss-utils'
+import { getColIdx_ } from './ss-utils'
 import * as utils from './utils';
+import * as getSheets from './get-sheets';
 
 //import { getRecptNoFromHtml, getRecptDataFromHtml } from './umin'
 //import { searchUminHtml, getRecptHtml } from './crawler'
 const seqColName = "番号";
 
 function generateAttachment2_1_1(targetValues: string[][], outputSheetName: string) {
-  const input_colnames:string[] = [seqColName, "研究名称", "臨床研究実施計画番号", "別添2-1"];
+  const input_colnames:string[] = [seqColName, "研究名称", utils.idLabel, "別添2-1"];
   const inputColIndexes: number[] = input_colnames.map(colname => colname === seqColName ? utils.highValue : targetValues[0].indexOf(colname));
   if (inputColIndexes.includes(-1)) {
     return;
@@ -16,39 +16,30 @@ function generateAttachment2_1_1(targetValues: string[][], outputSheetName: stri
   const inputBetten = targetValues.filter((_, idx) => idx !== 0); 
   const outputColnames: string[] = [seqColName, "臨床研究名", "登録ID等", "研究概要"];
   const outputBetten = editOutputForm2Values_(inputBetten, inputColIndexes);
-  const betten_sheet = addSheet_(outputSheetName, outputColnames);
+  const betten_sheet = new getSheets.GetSheet_().addSheet_(outputSheetName, outputColnames);
   const outputValues = [outputColnames, ...outputBetten];
   betten_sheet.getRange(1, 1, outputValues.length, outputValues[0].length).setValues(outputValues);
 }
 export function generateForm2() {
-  const htmlSheetName: string | null = PropertiesService.getScriptProperties().getProperty('html_sheet_name');
-  if (htmlSheetName === null) {
-    throw new Error('html_sheet_name is not set');
-  }
   const youshiki2_2_colnames: string[] = [seqColName, "臨床研究名", "研究代表医師", "研究代表医師所属", "開始日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "フェーズ（Phase）"];
   const youshiki2_1_colnames: string[] = [seqColName, "治験名", "治験調整医師名", "治験調整医師所属", "届出日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "フェーズ（Phase）"];
-  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(htmlSheetName) as GoogleAppsScript.Spreadsheet.Sheet;
-  if (htmlSheet === null) {
-    return;
-  }
+  const htmlSheet = new getSheets.GetSheet_().getSheetByProperty_("html_sheet_name");
   const htmlItems = htmlSheet.getDataRange().getValues();
-  const input_colnames:string[] = [seqColName, "研究名称", "研究責任（代表）医師の氏名", "研究責任（代表）医師の所属機関", "初回公表日", "臨床研究実施計画番号", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "試験のフェーズ"];
+  const input_colnames:string[] = [seqColName, "研究名称", "研究責任（代表）医師の氏名", utils.piFacilityLabel, "初回公表日", utils.idLabel, "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "試験のフェーズ"];
   const inputColIndexes: number[] = input_colnames.map(colname => colname === seqColName ? utils.highValue : htmlItems[0].indexOf(colname));
   if (inputColIndexes.includes(-1)) {
-    return;
+    throw new Error("One or more columns do not exist.");
   }
-  const youshiki2_1_Sheet = addSheet_("様式第２-１（１）", youshiki2_1_colnames);
-  const youshiki2_2_Sheet = addSheet_("様式第２-２（２）", youshiki2_2_colnames);
-  const trialTypeLabel : string | null = PropertiesService.getScriptProperties().getProperty('trial_type_label');
-  if (trialTypeLabel === null) {
-    return;
-  }
+  const youshiki2_1_Sheet = new getSheets.GetSheet_().addSheet_("様式第２-１（１）", youshiki2_1_colnames);
+  const youshiki2_2_Sheet = new getSheets.GetSheet_().addSheet_("様式第２-２（２）", youshiki2_2_colnames);
+  const trialTypeLabel : string = utils.getProperty_("trial_type_label");
   const trialTypeColIdx: number = getColIdx_(htmlSheet, trialTypeLabel);
   if (trialTypeColIdx === -1) {
-    return;
+    throw new Error(`${trialTypeLabel} columns do not exist.`);
   }
-  const youshiki2_1 = htmlItems.filter((item) => item[trialTypeColIdx] === "医師主導治験");
-  const youshiki2_2 = htmlItems.filter((item) => item[trialTypeColIdx] !== "医師主導治験" && item[trialTypeColIdx] !== trialTypeLabel);
+  const chikenText = utils.trialTypeListJrct.get(utils.chikenKey);
+  const youshiki2_1 = htmlItems.filter((item) => item[trialTypeColIdx] === chikenText);
+  const youshiki2_2 = htmlItems.filter((item) => item[trialTypeColIdx] !== chikenText && item[trialTypeColIdx] !== trialTypeLabel);
   generateAttachment2_1_1([htmlItems[0], ...youshiki2_2], "別添２-１（１）");
   const outputYoushiki2_1 = editOutputForm2Values_(youshiki2_1, inputColIndexes);
   const outputYoushiki2_2 = editOutputForm2Values_(youshiki2_2, inputColIndexes);

@@ -7,9 +7,7 @@ export function getDatacenterValues_(): any[][] {
 }
 
 export function getHtmlSheet_(htmlSheetColumns: string[]): GoogleAppsScript.Spreadsheet.Sheet {
-    const sheetName: string = utils.getProperty_("html_sheet_name");
-    const sheet: GoogleAppsScript.Spreadsheet.Sheet = new GetSheet_().addSheet_(sheetName, htmlSheetColumns);
-    return sheet;
+  return new GetHtmlSheet_().addSheet_(htmlSheetColumns);
 }
 
 export function getExplanationValues_(): string[][] {
@@ -22,7 +20,87 @@ export function getJrctUminValues_(): any[][] {
     return sheet.getDataRange().getValues();
 }
 
-class GetSheet_{
+export class GetHtmlSheet_ { 
+  sheetName: string;
+  trialTypeLabel: string;
+  constructor() {
+    this.sheetName = utils.getProperty_("html_sheet_name");
+    this.trialTypeLabel = utils.getProperty_("trial_type_label");
+  }
+  getColumnsList_(): string[]{ 
+    const sheet: GoogleAppsScript.Spreadsheet.Sheet = new GetSheet_().getSheetByName_(this.sheetName);
+    const columnsList: string[] = sheet.getDataRange().getValues()[0];
+    return columnsList;
+  }
+  addSheet_(htmlSheetColumns: string[]): GoogleAppsScript.Spreadsheet.Sheet {
+    const sheet : GoogleAppsScript.Spreadsheet.Sheet = new GetSheet_().addSheet_(this.sheetName, htmlSheetColumns);
+    return sheet;
+  }
+  editColumnsIndexes_(): Map<string, number> {
+    const columnsIndex: Map<string, number> = new Map();
+    ['key', 'inputColumnName', 'chikenColumnName', 'specificClinicalStudyColumnName'].forEach((value: string, idx: number) => columnsIndex.set(value, idx));
+    return columnsIndex;
+  }
+  editColumnsList_() {
+    const columnsList : (string | null)[][] = [
+      ['trialType', this.trialTypeLabel, null, null],
+      ['trialName', "研究名称", "治験名", "臨床研究名"],
+      ['piName', "研究責任（代表）医師の氏名", "治験調整医師名", "研究代表医師"],
+      ['piFacility', utils.piFacilityLabel, "治験調整医師所属", "研究代表医師所属"],
+      ['date', utils.dateLabel, "届出日", "開始日"],
+      ['id', utils.idLabel, "登録ID等", "登録ID等"],
+      ['underAge', utils.underAgeLabel, null, null],
+      ['overAge', utils.overAgeLabel, null, null],
+      ['intervention', "介入の有無", null, null],
+      ['interventionContent', utils.interventionLabel, null, null],
+      ['phase', "試験のフェーズ", "フェーズ（Phase）", "フェーズ（Phase）"],
+      ['disease', utils.diseaseLabel, utils.diseaseLabel, utils.diseaseLabel],
+      ['trialPurpose', utils.trialPurposeLabel, null, null]
+    ];
+    return columnsList;
+  }
+
+  editColumnsArray_(key: string = 'inputColumnName'): string[] {
+    const columnsIndex: Map<string, number> = this.editColumnsIndexes_();
+    const temp = columnsIndex.get(key);
+    const keyIndex: number = temp === undefined ? -1 : temp;
+    const columnsList = this.editColumnsList_();
+    const columnsArray: string[] = columnsList.map((value: (string | null)[]) => value[keyIndex]).filter((value: string | null) => value !== null) as string[];
+    return columnsArray;
+  }
+
+  editColumnsSet_(key: string = 'inputColumnName'): Set<string> {
+    return new Set(this.editColumnsArray_(key));
+  }
+}
+export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
+  constructor() {
+    super();
+  }
+  editColumnsList_() {
+    const columnsList: (string | null)[][] = [
+      ["principalRole", "主導的な役割", "主導的な役割", "主導的な役割"],
+      ["drugLabel", "医薬品等区分", "医薬品等区分", "医薬品等区分"],
+      ["ageLabel", "小児／成人", "小児／成人", "小児／成人"],
+      ["diseaseLabel", "疾病等分類", "疾病等分類", "疾病等分類"],
+      ["facilityLabel", "実施施設数", "実施施設数", "実施施設数"],
+      ["attachment_2_1", "別添2-1", "別添2-1", "別添2-1"],
+      ["attachment_2_2", "別添2-2", "別添2-2", "別添2-2"],
+      ["attachment_3", "別添3", "別添3", "別添3"],
+    ];
+    return columnsList; 
+  }
+  editMap_() {
+    const columnsList = this.editColumnsList_();
+    const map = new Map();
+    columnsList.forEach(([key, value, filler1, filler2]) => {
+      map.set(key, value);
+    });
+    return map;
+  }
+}
+
+export class GetSheet_{
   ss: GoogleAppsScript.Spreadsheet.Spreadsheet; // Declare the property outside the constructor
   constructor(targetSsId: string | null = null) {
     if (targetSsId === null) {

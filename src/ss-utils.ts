@@ -1,4 +1,4 @@
-export function addSheet_(sheetName: string, colnames: string[]): GoogleAppsScript.Spreadsheet.Sheet {
+/*export function addSheet_(sheetName: string, colnames: string[]): GoogleAppsScript.Spreadsheet.Sheet {
     const temp = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
     if (temp === null) {
       SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
@@ -7,7 +7,7 @@ export function addSheet_(sheetName: string, colnames: string[]): GoogleAppsScri
     sheet.clearContents();
     sheet.getRange(1, 1, 1, colnames.length).setValues([colnames]);
     return sheet;
-}
+}*/
   
 export function getColIdx_(sheet: GoogleAppsScript.Spreadsheet.Sheet, targetLabel: string): number {
     const colnames = sheet.getDataRange().getValues()[0];

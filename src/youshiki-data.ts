@@ -1,3 +1,4 @@
+import set from 'date-fns/set';
 import * as getSheets from './get-sheets';
 import * as utils from './utils';
 
@@ -12,25 +13,10 @@ function getJrctColIndexes_() : number[] {
 }
 
 export function getFromHtml() {
-    const trialTypeLabel : string = utils.getProperty_("trial_type_label");
-    const targetLabels : Set<string> = new Set([
-      trialTypeLabel, "研究名称", "研究責任（代表）医師の氏名", utils.piFacilityLabel,
-      utils.dateLabel, utils.idLabel, utils.underAgeLabel, utils.overAgeLabel,
-      "介入の有無", utils.interventionLabel, "試験のフェーズ", utils.diseaseLabel,
-      utils.trialPurposeLabel
-    ]);
-    const addLabels: Map<string, string> = new Map([
-      ["principalRole", "主導的な役割"],
-      ["drugLabel", "医薬品等区分"],
-      ["ageLabel", "小児／成人"],
-      ["diseaseLabel", "疾病等分類"],
-      ["facilityLabel", "実施施設数"],
-      ["attachment_2_1", "別添2-1"],
-      ["attachment_2_2", "別添2-2"],
-      ["attachment_3", "別添3"],
-    ]);
-    const tempHtmlSheetColumns = Array.from(targetLabels);
-    const htmlSheetColumns = [...tempHtmlSheetColumns];
+    const getHtml = new getSheets.GetHtmlSheet_();
+    const targetLabels: Set<string> = getHtml.editColumnsSet_();
+    const addLabels: Map<string, string> = new getSheets.GetHtmlSheetAddColumn_().editMap_();
+    const htmlSheetColumns = [...Array.from(targetLabels)];
     addLabels.forEach((value, _) => {
       htmlSheetColumns.push(value);
     });

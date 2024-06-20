@@ -1,10 +1,14 @@
 export const highValue: number = 9999;
 
-const chikenKey = "chiken";
-const specificClinicalStudyKey = "specificClinicalStudy";
+export const chikenKey = "chiken";
+export const specificClinicalStudyKey = "specificClinicalStudy";
 const trialTypeList = new Map([
   [chikenKey, "特定臨床(治験)"],
   [specificClinicalStudyKey, "特定臨床(臨床研究法)"],
+]);
+export const trialTypeListJrct = new Map([
+    [chikenKey, "医師主導治験"],
+    [specificClinicalStudyKey, "特定臨床研究"],
 ]);
 export const idLabel = "臨床研究実施計画番号";
 export const underAgeLabel = "年齢下限/AgeMinimum";
