@@ -23,7 +23,7 @@ export function getFromHtml() {
     htmlSheetColumns.push(value);
   });
   const htmlSheet: GoogleAppsScript.Spreadsheet.Sheet =
-    getSheets.getHtmlSheet_(htmlSheetColumns);
+    getHtml.addSheet_(htmlSheetColumns);
   const lastRow: number = htmlSheet.getLastRow() + 1;
   const outputJrctValues: any[][] = getOutputJrctValues_(
     htmlSheet,
@@ -85,17 +85,24 @@ function getOutputJrctValues_(
         (jrctInfo: string[]) => jrctInfo[jrctLabelColIdx] === labelCondition
       );
       const target: string[][] = temp_target.map((jrctInfo: string[]) => {
-        if (jrctInfo[jrctLabelColIdx] === utils.phaseLabel) {
-          if (isNaN(Number(jrctInfo[jrctValueColIdx]))) {
-            const res = [
-              jrctInfo[jrctLabelColIdx],
-              `'${jrctInfo[jrctValueColIdx]}`,
-              jrctInfo[jrctIdColIdx],
-            ];
-            return res;
-          }
+        if (jrctInfo[jrctLabelColIdx] !== utils.phaseLabel) {
+          return jrctInfo;
         }
-        return jrctInfo;
+        if (!isNaN(Number(jrctInfo[jrctValueColIdx]))) {
+          return jrctInfo;
+        }
+        if (jrctInfo[jrctValueColIdx] === "該当せず/Not applicable") {
+          return [
+            jrctInfo[jrctLabelColIdx],
+            "その他（　）",
+            jrctInfo[jrctIdColIdx],
+          ];
+        }
+        return [
+          jrctInfo[jrctLabelColIdx],
+          `'${jrctInfo[jrctValueColIdx]}`,
+          jrctInfo[jrctIdColIdx],
+        ];
       });
       res.push(target.length === 0 ? "" : target[0][jrctValueColIdx]);
     });

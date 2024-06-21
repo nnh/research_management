@@ -2,6 +2,7 @@
 import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
+import * as pubmed from "./pubmed";
 
 class GenerateForm {
   inputColnames: string[];
@@ -38,7 +39,7 @@ class GenerateForm {
   }
   private getOutputSheet_(outputSheetName: string, targetKey: string) {
     const outputColnames: string[] = this.getOutputColnames_(targetKey);
-    const sheet = new ssUtils.GetSheet_().addSheet_(
+    const sheet = new ssUtils.GetSheet_().createSheet_(
       outputSheetName,
       outputColnames
     );
@@ -218,6 +219,11 @@ export function getDescriptionByJRCTID(jRctId: string): JRctDescription {
 */
 
 export function fillPublication() {
+  const pbmd = new pubmed.GetPubmedData();
+  const test = pbmd.getPubmedData_("34421094");
+  console.log(test);
+  return;
+  const publicationValues: string[][] = getSheets.getPublicationValues_();
   /*
   const publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication') as GoogleAppsScript.Spreadsheet.Sheet;
   const publicationValues = publicationSheet.getDataRange().getValues();

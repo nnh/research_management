@@ -1,4 +1,4 @@
-import { generateForm2 } from "./codes";
+import { generateForm2, fillPublication } from "./codes";
 import "./ctr-utils";
 import "./xml";
 import { getFromHtml } from "./youshiki-data";
@@ -23,5 +23,5 @@ global.onOpen = onOpen;
 global.generateForm2 = generateForm2;
 //global.generateForm3 = generateForm3
 //global.generateForm4 = generateForm4
-//global.fillPublication = fillPublication
+global.fillPublication = fillPublication;
 global.getFromHtml = getFromHtml;

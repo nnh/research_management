@@ -1,18 +1,27 @@
 import * as utils from "./utils";
 import * as ssUtils from "./ss-utils";
 
+export function getPublicationValues_(): string[][] {
+  const publicationId: string = utils.getProperty_("ss_publication_id");
+  const sheet = new ssUtils.GetSheet_(publicationId).getSheetByProperty_(
+    "publication_sheet_name"
+  );
+  const values = sheet.getDataRange().getValues();
+  const splitRow = values.filter((value, idx) => value[0] === "");
+  if (splitRow.length === 0) {
+    return values;
+  }
+  const splitIndex = values.indexOf(splitRow[0]);
+  const res = values.filter((_, idx) => idx < splitIndex);
+  return res;
+}
+
 export function getDatacenterValues_(): any[][] {
   const datacenterId: string = utils.getProperty_("ss_research_management_id");
   const sheet = new ssUtils.GetSheet_(datacenterId).getSheetByProperty_(
     "datacenter_sheet_name"
   );
   return sheet.getDataRange().getValues();
-}
-
-export function getHtmlSheet_(
-  htmlSheetColumns: string[]
-): GoogleAppsScript.Spreadsheet.Sheet {
-  return new GetHtmlSheet_().addSheet_(htmlSheetColumns);
 }
 
 export function getExplanationValues_(): string[][] {
@@ -44,15 +53,7 @@ export class GetHtmlSheet_ {
     return columnsList;
   }
   addSheet_(htmlSheetColumns: string[]): GoogleAppsScript.Spreadsheet.Sheet {
-    try {
-      const dummy: GoogleAppsScript.Spreadsheet.Sheet =
-        new ssUtils.GetSheet_().getSheetByName_(this.sheetName);
-    } catch (error) {
-      const dummy: GoogleAppsScript.Spreadsheet.Sheet =
-        new ssUtils.GetSheet_().addSheet_(this.sheetName, htmlSheetColumns);
-    }
-    const sheet = new ssUtils.GetSheet_().getSheetByName_(this.sheetName);
-    return sheet;
+    return new ssUtils.GetSheet_().addSheet_(this.sheetName, htmlSheetColumns);
   }
   editColumnsIndexes_(): Map<string, number> {
     const columnsIndex: Map<string, number> = new Map();

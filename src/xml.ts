@@ -8,7 +8,7 @@ export function getElementsByTagName(
 }
 
 export function getElementValue(target: XML_Service.Element, name: string) {
-  var element = getElementsByTagName(target, name);
+  const element = getElementsByTagName(target, name);
   return element.length ? element[0].getValue() : "";
 }
 
