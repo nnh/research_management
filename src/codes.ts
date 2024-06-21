@@ -1,51 +1,126 @@
 //import { getUminIds, getUminId, getJrctId } from './ctr-utils'
-import * as ssUtils from './ss-utils';
-import * as utils from './utils';
-import * as getSheets from './get-sheets';
+import * as ssUtils from "./ss-utils";
+import * as utils from "./utils";
+import * as getSheets from "./get-sheets";
 
-function generateAttachment2_1_1(targetValues: string[][], outputSheetName: string) {
-  const input_colnames:string[] = [utils.seqColName, utils.trialNameLabel, utils.idLabel, utils.attachment_2_1];
-  const inputColIndexes: number[] = input_colnames.map(colname => colname === utils.seqColName ? utils.highValue : targetValues[0].indexOf(colname));
+function generateAttachment2_1_1(
+  targetValues: string[][],
+  outputSheetName: string
+) {
+  const input_colnames: string[] = [
+    utils.seqColName,
+    utils.trialNameLabel,
+    utils.idLabel,
+    utils.attachment_2_1,
+  ];
+  const inputColIndexes: number[] = input_colnames.map((colname) =>
+    colname === utils.seqColName
+      ? utils.highValue
+      : targetValues[0].indexOf(colname)
+  );
   if (inputColIndexes.includes(-1)) {
     return;
   }
-  const inputBetten = targetValues.filter((_, idx) => idx !== 0); 
-  const outputColnames: string[] = [utils.seqColName, "臨床研究名", "登録ID等", "研究概要"];
+  const inputBetten = targetValues.filter((_, idx) => idx !== 0);
+  const outputColnames: string[] = [
+    utils.seqColName,
+    "臨床研究名",
+    "登録ID等",
+    "研究概要",
+  ];
   const outputBetten = editOutputForm2Values_(inputBetten, inputColIndexes);
-  const betten_sheet = new ssUtils.GetSheet_().addSheet_(outputSheetName, outputColnames);
+  const betten_sheet = new ssUtils.GetSheet_().addSheet_(
+    outputSheetName,
+    outputColnames
+  );
   const outputValues = [outputColnames, ...outputBetten];
-  betten_sheet.getRange(1, 1, outputValues.length, outputValues[0].length).setValues(outputValues);
+  betten_sheet
+    .getRange(1, 1, outputValues.length, outputValues[0].length)
+    .setValues(outputValues);
 }
 
 export function generateForm2() {
-  const input_colnames: string[] = [utils.seqColName, utils.trialNameLabel, "研究責任（代表）医師の氏名", utils.piFacilityLabel, "初回公表日", utils.idLabel, "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "試験のフェーズ"];
-  const youshiki2_1_colnames: string[] = getSheets.getColumnsArrayByInputColNames_(utils.chikenKey, input_colnames);
-  const youshiki2_2_colnames: string[] = getSheets.getColumnsArrayByInputColNames_(utils.specificClinicalStudyKey, input_colnames);
-  const htmlSheet = new ssUtils.GetSheet_().getSheetByProperty_("html_sheet_name");
+  const input_colnames: string[] = [
+    utils.seqColName,
+    utils.trialNameLabel,
+    utils.piNameLabel,
+    utils.piFacilityLabel,
+    utils.dateLabel,
+    utils.idLabel,
+    utils.principalRoleLabel,
+    utils.drugLabel,
+    utils.ageLabel,
+    utils.diseaseCategoryLabel,
+    utils.facilityLabel,
+    utils.phaseLabel,
+  ];
+  const youshiki2_1_colnames: string[] =
+    getSheets.getColumnsArrayByInputColNames_(utils.chikenKey, input_colnames);
+  const youshiki2_2_colnames: string[] =
+    getSheets.getColumnsArrayByInputColNames_(
+      utils.specificClinicalStudyKey,
+      input_colnames
+    );
+  const htmlSheet = new ssUtils.GetSheet_().getSheetByProperty_(
+    "html_sheet_name"
+  );
   const htmlItems = htmlSheet.getDataRange().getValues();
-  const inputColIndexes: number[] = input_colnames.map(colname => colname === utils.seqColName ? utils.highValue : htmlItems[0].indexOf(colname));
+  const inputColIndexes: number[] = input_colnames.map((colname) =>
+    colname === utils.seqColName
+      ? utils.highValue
+      : htmlItems[0].indexOf(colname)
+  );
   if (inputColIndexes.includes(-1)) {
     throw new Error("One or more columns do not exist.");
   }
-  const youshiki2_1_Sheet = new ssUtils.GetSheet_().addSheet_("様式第２-１（１）", youshiki2_1_colnames);
-  const youshiki2_2_Sheet = new ssUtils.GetSheet_().addSheet_("様式第２-２（２）", youshiki2_2_colnames);
-  const trialTypeLabel : string = utils.getProperty_("trial_type_label");
+  const youshiki2_1_Sheet = new ssUtils.GetSheet_().addSheet_(
+    "様式第２-１（１）",
+    youshiki2_1_colnames
+  );
+  const youshiki2_2_Sheet = new ssUtils.GetSheet_().addSheet_(
+    "様式第２-２（２）",
+    youshiki2_2_colnames
+  );
+  const trialTypeLabel: string = utils.getProperty_("trial_type_label");
   const trialTypeColIdx: number = ssUtils.getColIdx_(htmlSheet, trialTypeLabel);
   if (trialTypeColIdx === -1) {
     throw new Error(`${trialTypeLabel} columns do not exist.`);
   }
   const chikenText = utils.trialTypeListJrct.get(utils.chikenKey);
-  const youshiki2_1 = htmlItems.filter((item) => item[trialTypeColIdx] === chikenText);
-  const youshiki2_2 = htmlItems.filter((item) => item[trialTypeColIdx] !== chikenText && item[trialTypeColIdx] !== trialTypeLabel);
+  const youshiki2_1 = htmlItems.filter(
+    (item) => item[trialTypeColIdx] === chikenText
+  );
+  const youshiki2_2 = htmlItems.filter(
+    (item) =>
+      item[trialTypeColIdx] !== chikenText &&
+      item[trialTypeColIdx] !== trialTypeLabel
+  );
   generateAttachment2_1_1([htmlItems[0], ...youshiki2_2], "別添２-１（１）");
-  const outputYoushiki2_1 = editOutputForm2Values_(youshiki2_1, inputColIndexes);
-  const outputYoushiki2_2 = editOutputForm2Values_(youshiki2_2, inputColIndexes);
-  youshiki2_1_Sheet.getRange(2, 1, outputYoushiki2_1.length, outputYoushiki2_1[0].length).setValues(outputYoushiki2_1);
-  youshiki2_2_Sheet.getRange(2, 1, outputYoushiki2_2.length, outputYoushiki2_2[0].length).setValues(outputYoushiki2_2);
+  const outputYoushiki2_1 = editOutputForm2Values_(
+    youshiki2_1,
+    inputColIndexes
+  );
+  const outputYoushiki2_2 = editOutputForm2Values_(
+    youshiki2_2,
+    inputColIndexes
+  );
+  youshiki2_1_Sheet
+    .getRange(2, 1, outputYoushiki2_1.length, outputYoushiki2_1[0].length)
+    .setValues(outputYoushiki2_1);
+  youshiki2_2_Sheet
+    .getRange(2, 1, outputYoushiki2_2.length, outputYoushiki2_2[0].length)
+    .setValues(outputYoushiki2_2);
 }
 
-function editOutputForm2Values_(values: string[][], inputColIndexes: number[]): string[][] {
-  const res = values.map((item, rowIdx) => inputColIndexes.map(idx => idx === utils.highValue ? String(rowIdx + 1) : item[idx]));
+function editOutputForm2Values_(
+  values: string[][],
+  inputColIndexes: number[]
+): string[][] {
+  const res = values.map((item, rowIdx) =>
+    inputColIndexes.map((idx) =>
+      idx === utils.highValue ? String(rowIdx + 1) : item[idx]
+    )
+  );
   return res;
 }
 /*
@@ -99,8 +174,8 @@ function getRecptData(recptNo: string) {
 }
 */
 export function generateForm3() {
-//  var startTime = new Date();
-/*  var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
+  //  var startTime = new Date();
+  /*  var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
   var items = sheetDatacenter.getDataRange().getValues();
   var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form3印刷") as GoogleAppsScript.Spreadsheet.Sheet;
   var explanationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("explanation") as GoogleAppsScript.Spreadsheet.Sheet;
@@ -310,4 +385,3 @@ export function fillPublication() {
   }
   */
 }
-
