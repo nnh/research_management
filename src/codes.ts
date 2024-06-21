@@ -10,8 +10,8 @@ class GenerateForm {
   htmlItems: string[][];
   trialTypeLabel: string;
   trialTypeColIdx: number;
-  constructor(input_colnames: string[]) {
-    this.inputColnames = input_colnames;
+  constructor() {
+    this.inputColnames = this.getInputColumns();
     this.htmlSheet = new ssUtils.GetSheet_().getSheetByProperty_(
       "html_sheet_name"
     );
@@ -80,24 +80,27 @@ class GenerateForm {
     }
     return inputColIndexes;
   }
+  private getInputColumns(): string[] {
+    const inputColumns: string[] = [
+      utils.seqColName,
+      utils.trialNameLabel,
+      utils.piNameLabel,
+      utils.piFacilityLabel,
+      utils.dateLabel,
+      utils.idLabel,
+      utils.principalRoleLabel,
+      utils.drugLabel,
+      utils.ageLabel,
+      utils.diseaseCategoryLabel,
+      utils.facilityLabel,
+      utils.phaseLabel,
+    ];
+    return inputColumns;
+  }
 }
 
 export function generateForm2() {
-  const input_colnames: string[] = [
-    utils.seqColName,
-    utils.trialNameLabel,
-    utils.piNameLabel,
-    utils.piFacilityLabel,
-    utils.dateLabel,
-    utils.idLabel,
-    utils.principalRoleLabel,
-    utils.drugLabel,
-    utils.ageLabel,
-    utils.diseaseCategoryLabel,
-    utils.facilityLabel,
-    utils.phaseLabel,
-  ];
-  const form2 = new GenerateForm(input_colnames);
+  const form2 = new GenerateForm();
   const chikenText = utils.trialTypeListJrct.get(utils.chikenKey);
   const youshiki2_1 = form2.htmlItems.filter(
     (item) => item[form2.trialTypeColIdx] === chikenText
@@ -109,7 +112,7 @@ export function generateForm2() {
   );
   form2.generateForm("様式第２-１（１）", utils.chikenKey, youshiki2_1);
   form2.generateForm(
-    "様式第２-２（２）",
+    "様式第２-1（２）",
     utils.specificClinicalStudyKey,
     youshiki2_2
   );
