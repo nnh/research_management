@@ -3,40 +3,83 @@ import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 
-function generateAttachment2_1_1(
-  targetValues: string[][],
-  outputSheetName: string
-) {
-  const input_colnames: string[] = [
-    utils.seqColName,
-    utils.trialNameLabel,
-    utils.idLabel,
-    utils.attachment_2_1,
-  ];
-  const inputColIndexes: number[] = input_colnames.map((colname) =>
-    colname === utils.seqColName
-      ? utils.highValue
-      : targetValues[0].indexOf(colname)
-  );
-  if (inputColIndexes.includes(-1)) {
-    return;
+class GenerateForm {
+  inputColnames: string[];
+  inputColIndexes: number[];
+  htmlSheet: GoogleAppsScript.Spreadsheet.Sheet;
+  htmlItems: string[][];
+  trialTypeLabel: string;
+  trialTypeColIdx: number;
+  constructor(input_colnames: string[]) {
+    this.inputColnames = input_colnames;
+    this.htmlSheet = new ssUtils.GetSheet_().getSheetByProperty_(
+      "html_sheet_name"
+    );
+    this.htmlItems = this.htmlSheet.getDataRange().getValues();
+    this.inputColIndexes = this.getInputColIndexes();
+    this.trialTypeLabel = utils.getProperty_("trial_type_label");
+    this.trialTypeColIdx = this.getTrialTypeColIdx_();
   }
-  const inputBetten = targetValues.filter((_, idx) => idx !== 0);
-  const outputColnames: string[] = [
-    utils.seqColName,
-    "臨床研究名",
-    "登録ID等",
-    "研究概要",
-  ];
-  const outputBetten = editOutputForm2Values_(inputBetten, inputColIndexes);
-  const betten_sheet = new ssUtils.GetSheet_().addSheet_(
-    outputSheetName,
-    outputColnames
-  );
-  const outputValues = [outputColnames, ...outputBetten];
-  betten_sheet
-    .getRange(1, 1, outputValues.length, outputValues[0].length)
-    .setValues(outputValues);
+  private getTrialTypeColIdx_(): number {
+    const trialTypeColIdx: number = ssUtils.getColIdx_(
+      this.htmlSheet,
+      this.trialTypeLabel
+    );
+    if (trialTypeColIdx === -1) {
+      throw new Error(`${this.trialTypeLabel} columns do not exist.`);
+    }
+    return trialTypeColIdx;
+  }
+  private getOutputColnames_(targetKey: string): string[] {
+    return getSheets.getColumnsArrayByInputColNames_(
+      targetKey,
+      this.inputColnames
+    );
+  }
+  private getOutputSheet_(outputSheetName: string, targetKey: string) {
+    const outputColnames: string[] = this.getOutputColnames_(targetKey);
+    const sheet = new ssUtils.GetSheet_().addSheet_(
+      outputSheetName,
+      outputColnames
+    );
+    return sheet;
+  }
+  private getOutputValues_(values: string[][]): string[][] {
+    const res = values.map((item, rowIdx) =>
+      this.inputColIndexes.map((idx) =>
+        idx === utils.highValue ? String(rowIdx + 1) : item[idx]
+      )
+    );
+    return res;
+  }
+  generateForm(
+    outputSheetName: string,
+    targetKey: string,
+    inputValues: string[][]
+  ) {
+    const outputSheet = this.getOutputSheet_(outputSheetName, targetKey);
+    const outputValues = this.getOutputValues_(inputValues);
+    outputSheet
+      .getRange(
+        2,
+        1,
+        outputValues.length,
+        outputValues[utils.headerRowIndex].length
+      )
+      .setValues(outputValues);
+  }
+
+  private getInputColIndexes(): number[] {
+    const inputColIndexes: number[] = this.inputColnames.map((colname) =>
+      colname === utils.seqColName
+        ? utils.highValue
+        : this.htmlItems[utils.headerRowIndex].indexOf(colname)
+    );
+    if (inputColIndexes.includes(-1)) {
+      throw new Error("One or more columns do not exist.");
+    }
+    return inputColIndexes;
+  }
 }
 
 export function generateForm2() {
@@ -54,161 +97,25 @@ export function generateForm2() {
     utils.facilityLabel,
     utils.phaseLabel,
   ];
-  const youshiki2_1_colnames: string[] =
-    getSheets.getColumnsArrayByInputColNames_(utils.chikenKey, input_colnames);
-  const youshiki2_2_colnames: string[] =
-    getSheets.getColumnsArrayByInputColNames_(
-      utils.specificClinicalStudyKey,
-      input_colnames
-    );
-  const htmlSheet = new ssUtils.GetSheet_().getSheetByProperty_(
-    "html_sheet_name"
-  );
-  const htmlItems = htmlSheet.getDataRange().getValues();
-  const inputColIndexes: number[] = input_colnames.map((colname) =>
-    colname === utils.seqColName
-      ? utils.highValue
-      : htmlItems[0].indexOf(colname)
-  );
-  if (inputColIndexes.includes(-1)) {
-    throw new Error("One or more columns do not exist.");
-  }
-  const youshiki2_1_Sheet = new ssUtils.GetSheet_().addSheet_(
-    "様式第２-１（１）",
-    youshiki2_1_colnames
-  );
-  const youshiki2_2_Sheet = new ssUtils.GetSheet_().addSheet_(
-    "様式第２-２（２）",
-    youshiki2_2_colnames
-  );
-  const trialTypeLabel: string = utils.getProperty_("trial_type_label");
-  const trialTypeColIdx: number = ssUtils.getColIdx_(htmlSheet, trialTypeLabel);
-  if (trialTypeColIdx === -1) {
-    throw new Error(`${trialTypeLabel} columns do not exist.`);
-  }
+  const form2 = new GenerateForm(input_colnames);
   const chikenText = utils.trialTypeListJrct.get(utils.chikenKey);
-  const youshiki2_1 = htmlItems.filter(
-    (item) => item[trialTypeColIdx] === chikenText
+  const youshiki2_1 = form2.htmlItems.filter(
+    (item) => item[form2.trialTypeColIdx] === chikenText
   );
-  const youshiki2_2 = htmlItems.filter(
+  const youshiki2_2 = form2.htmlItems.filter(
     (item) =>
-      item[trialTypeColIdx] !== chikenText &&
-      item[trialTypeColIdx] !== trialTypeLabel
+      item[form2.trialTypeColIdx] !== chikenText &&
+      item[form2.trialTypeColIdx] !== form2.trialTypeLabel
   );
-  generateAttachment2_1_1([htmlItems[0], ...youshiki2_2], "別添２-１（１）");
-  const outputYoushiki2_1 = editOutputForm2Values_(
-    youshiki2_1,
-    inputColIndexes
+  form2.generateForm("様式第２-１（１）", utils.chikenKey, youshiki2_1);
+  form2.generateForm(
+    "様式第２-２（２）",
+    utils.specificClinicalStudyKey,
+    youshiki2_2
   );
-  const outputYoushiki2_2 = editOutputForm2Values_(
-    youshiki2_2,
-    inputColIndexes
-  );
-  youshiki2_1_Sheet
-    .getRange(2, 1, outputYoushiki2_1.length, outputYoushiki2_1[0].length)
-    .setValues(outputYoushiki2_1);
-  youshiki2_2_Sheet
-    .getRange(2, 1, outputYoushiki2_2.length, outputYoushiki2_2[0].length)
-    .setValues(outputYoushiki2_2);
 }
 
-function editOutputForm2Values_(
-  values: string[][],
-  inputColIndexes: number[]
-): string[][] {
-  const res = values.map((item, rowIdx) =>
-    inputColIndexes.map((idx) =>
-      idx === utils.highValue ? String(rowIdx + 1) : item[idx]
-    )
-  );
-  return res;
-}
-/*
-function getRegisterdUminIds(): string[] {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml");
-  if (sheet === null) {
-    // シートが存在しない場合、「医薬品・医療機器等を用いた侵襲及び介入を伴う臨床研究であることの説明」のためにシートを用意する
-    SpreadsheetApp.getActiveSpreadsheet().insertSheet('fromHtml');
-    const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml") as GoogleAppsScript.Spreadsheet.Sheet;
-    var column = new Array(1);
-    column[0] = ['UMINID', '対象疾患名/Condition', '介入1/Interventions/Control_1'];
-    htmlSheet.getRange(1, 1, 1, 3).setValues(column);
-    return []
-  } else {
-    // すでに記載されているUMINID
-    const htmlItems = sheet.getDataRange().getValues();
-    const objs = readValues(htmlItems)
-    return objs.map((row) => row['UMINID'] as string)
-  }
-}
-*/
-/*function getRecptNo(uminId: string): string | undefined {
-  const html = searchUminHtml(uminId)
-  return getRecptNoFromHtml(html)
-}*/
-/*
-function getUnregisteredData(registerdUminIds: string[], sheetUminIds: string[]) {
-  const htmlSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("fromHtml") as GoogleAppsScript.Spreadsheet.Sheet;
-  // fromHtmlシートに重複記載を防ぐため、重複しているUMINIDを取り除く
-  const uminIds = arrayUniq(sheetUminIds)
-
-  for (let i = 0; i < uminIds.length; i++) {
-     // まだ記載されていないUMINIDを使用してデータを取得する
-    if (registerdUminIds.indexOf(uminIds[i]) == -1) {
-      const recptNo = getRecptNo(uminIds[i]);
-      if (recptNo !== undefined) {
-        // データをシートにセットする
-        var data = getRecptData(recptNo);
-        var rowData = new Array(1);
-        rowData[0] = [uminIds[i], data.target, data.intervention];
-        htmlSheet.getRange(htmlSheet.getLastRow()+1, 1, 1, 3).setValues(rowData);
-      }
-    }
-  }
-}
-
-function getRecptData(recptNo: string) {
-  // HTMLページから目的のデータを取得する
-  var html = getRecptHtml(recptNo)
-  return getRecptDataFromHtml(html)
-}
-*/
-export function generateForm3() {
-  //  var startTime = new Date();
-  /*  var sheetDatacenter = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Datacenter") as GoogleAppsScript.Spreadsheet.Sheet;
-  var items = sheetDatacenter.getDataRange().getValues();
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form3印刷") as GoogleAppsScript.Spreadsheet.Sheet;
-  var explanationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("explanation") as GoogleAppsScript.Spreadsheet.Sheet;
-  var roleDetails = explanationSheet.getDataRange().getValues();
-  var study = [];
-  var number = 1;
-  var role = "";
-  var limit_date = new Date(2016, 12, 1);
-
-  for (var i = 0; i < items.length; i++) {
-    if (items[i][7].indexOf("特定臨床") != -1 && items[i][7].indexOf("治験") == -1 && items[i][10] != "" && items[i][10] >= limit_date) {
-      role = (items[i][3].indexOf("名古屋医療センター") != -1) ? "１，２" : "２" ;
-      let roleDetail = "当該試験は";
-      roleDetail += (items[i][3].indexOf("名古屋医療センター") != -1) ? roleDetails[0][1] :
-                    (items[i][6] == "JPLSG") ?       roleDetails[1][1] :
-                    (items[i][6] == "NHOネットワーク") ? roleDetails[2][1] :
-                                                     roleDetails[3][1] ;
-      study[number] = [number, items[i][1], items[i][2], items[i][10], items[i][9], role, items[i][0], roleDetail];
-                    // number, study_name, pi, irb_date, ctr, role, protocol_ID, explanation
-      number++;
-    }
-  }
-
-  study[0] = ["番号", "臨床研究名", "研究代表者名", "許可日", "登録ID等", "主導的な役割", "プロトコル番号", "主導的な役割を果たした実績の詳細"];
-  targetSheet.getRange("A1:I500").clear();
-  targetSheet.getRange(1, 1, study.length, study[0].length).setValues(study);
-  targetSheet.getRange(2, 2, targetSheet.getLastRow(), targetSheet.getLastColumn()).sort({column: 4, ascending: false});
-
-//  var currentTime = new Date();
-//  var status = (currentTime - startTime) / 1000 + '秒経過';
-//  Browser.msgBox(status);
-*/
-}
+export function generateForm3() {}
 
 export function generateForm4() {
   /*

@@ -35,6 +35,7 @@ export const attachment_2_2 = "別添2-2";
 export const attachment_3 = "別添3";
 
 export const jrctUminColnames = ["Label", "Value", "jrctNo"];
+export const headerRowIndex = 0;
 export const itemsTrialBudgetIdx: number = 6;
 export const itemsTrialTypeIdx: number = 7;
 export const itemsCtrIdx: number = 9;
