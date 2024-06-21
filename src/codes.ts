@@ -47,7 +47,7 @@ class GenerateForm {
   private getOutputValues_(values: string[][]): string[][] {
     const res = values.map((item, rowIdx) =>
       this.inputColIndexes.map((idx) =>
-        idx === utils.highValue ? String(rowIdx + 1) : item[idx]
+        idx === utils.highValue ? String(rowIdx + 1) : `'${item[idx]}`
       )
     );
     return res;

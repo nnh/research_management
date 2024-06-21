@@ -1,7 +1,5 @@
-import set from "date-fns/set";
 import * as getSheets from "./get-sheets";
 import * as utils from "./utils";
-import * as ssUtils from "./ss-utils";
 
 function getJrctColIndexes_(): number[] {
   const jrctUminValues: any[][] = getSheets.getJrctUminValues_();
@@ -83,9 +81,22 @@ function getOutputJrctValues_(
           : jrctId.match(/jRCT[0-9]{10}/) && label === utils.dateLabel
           ? utils.dateLabel
           : label;
-      const target: string[][] = targetRecord.filter(
+      const temp_target: string[][] = targetRecord.filter(
         (jrctInfo: string[]) => jrctInfo[jrctLabelColIdx] === labelCondition
       );
+      const target: string[][] = temp_target.map((jrctInfo: string[]) => {
+        if (jrctInfo[jrctLabelColIdx] === utils.phaseLabel) {
+          if (isNaN(Number(jrctInfo[jrctValueColIdx]))) {
+            const res = [
+              jrctInfo[jrctLabelColIdx],
+              `'${jrctInfo[jrctValueColIdx]}`,
+              jrctInfo[jrctIdColIdx],
+            ];
+            return res;
+          }
+        }
+        return jrctInfo;
+      });
       res.push(target.length === 0 ? "" : target[0][jrctValueColIdx]);
     });
     return res;
