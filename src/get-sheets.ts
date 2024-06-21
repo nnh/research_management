@@ -1,8 +1,9 @@
 import * as utils from './utils';
+import * as ssUtils from './ss-utils';
 
 export function getDatacenterValues_(): any[][] {
     const datacenterId : string = utils.getProperty_("ss_research_management_id");
-    const sheet = new GetSheet_(datacenterId).getSheetByProperty_("datacenter_sheet_name");
+    const sheet = new ssUtils.GetSheet_(datacenterId).getSheetByProperty_("datacenter_sheet_name");
     return sheet.getDataRange().getValues();
 }
 
@@ -11,40 +12,42 @@ export function getHtmlSheet_(htmlSheetColumns: string[]): GoogleAppsScript.Spre
 }
 
 export function getExplanationValues_(): string[][] {
-    const sheet: GoogleAppsScript.Spreadsheet.Sheet = new GetSheet_().getSheetByName_("explanation");
+    const sheet: GoogleAppsScript.Spreadsheet.Sheet = new ssUtils.GetSheet_().getSheetByName_("explanation");
     return sheet.getDataRange().getValues();
 }
 
 export function getJrctUminValues_(): any[][] {
-    const sheet = new GetSheet_().getSheetByProperty_("jrct_umin_sheet_name");
+    const sheet = new ssUtils.GetSheet_().getSheetByProperty_("jrct_umin_sheet_name");
     return sheet.getDataRange().getValues();
 }
 
 export class GetHtmlSheet_ { 
   sheetName: string;
   trialTypeLabel: string;
+  inputColumnKey: string; 
   constructor() {
     this.sheetName = utils.getProperty_("html_sheet_name");
     this.trialTypeLabel = utils.getProperty_("trial_type_label");
+    this.inputColumnKey = 'inputColumn';
   }
   getColumnsList_(): string[]{ 
-    const sheet: GoogleAppsScript.Spreadsheet.Sheet = new GetSheet_().getSheetByName_(this.sheetName);
+    const sheet: GoogleAppsScript.Spreadsheet.Sheet = new ssUtils.GetSheet_().getSheetByName_(this.sheetName);
     const columnsList: string[] = sheet.getDataRange().getValues()[0];
     return columnsList;
   }
   addSheet_(htmlSheetColumns: string[]): GoogleAppsScript.Spreadsheet.Sheet {
-    const sheet : GoogleAppsScript.Spreadsheet.Sheet = new GetSheet_().addSheet_(this.sheetName, htmlSheetColumns);
+    const sheet : GoogleAppsScript.Spreadsheet.Sheet = new ssUtils.GetSheet_().addSheet_(this.sheetName, htmlSheetColumns);
     return sheet;
   }
   editColumnsIndexes_(): Map<string, number> {
     const columnsIndex: Map<string, number> = new Map();
-    ['key', 'inputColumnName', 'chikenColumnName', 'specificClinicalStudyColumnName'].forEach((value: string, idx: number) => columnsIndex.set(value, idx));
+    ['key', this.inputColumnKey, utils.chikenKey, utils.specificClinicalStudyKey].forEach((value: string, idx: number) => columnsIndex.set(value, idx));
     return columnsIndex;
   }
-  editColumnsList_() {
+  editColumnsList_() : (string | null)[][] {
     const columnsList : (string | null)[][] = [
       ['trialType', this.trialTypeLabel, null, null],
-      ['trialName', "研究名称", "治験名", "臨床研究名"],
+      ['trialName', utils.trialNameLabel, "治験名", "臨床研究名"],
       ['piName', "研究責任（代表）医師の氏名", "治験調整医師名", "研究代表医師"],
       ['piFacility', utils.piFacilityLabel, "治験調整医師所属", "研究代表医師所属"],
       ['date', utils.dateLabel, "届出日", "開始日"],
@@ -77,16 +80,16 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
   constructor() {
     super();
   }
-  editColumnsList_() {
+  editColumnsList_(): (string | null)[][] {
     const columnsList: (string | null)[][] = [
-      ["principalRole", "主導的な役割", "主導的な役割", "主導的な役割"],
-      ["drugLabel", "医薬品等区分", "医薬品等区分", "医薬品等区分"],
-      ["ageLabel", "小児／成人", "小児／成人", "小児／成人"],
-      ["diseaseLabel", "疾病等分類", "疾病等分類", "疾病等分類"],
-      ["facilityLabel", "実施施設数", "実施施設数", "実施施設数"],
-      ["attachment_2_1", "別添2-1", "別添2-1", "別添2-1"],
-      ["attachment_2_2", "別添2-2", "別添2-2", "別添2-2"],
-      ["attachment_3", "別添3", "別添3", "別添3"],
+      ["principalRole", utils.principalRoleLabel, utils.principalRoleLabel, utils.principalRoleLabel],
+      ["drugLabel", utils.drugLabel, utils.drugLabel, utils.drugLabel],
+      ["ageLabel", utils.ageLabel, utils.ageLabel, utils.ageLabel],
+      ["diseaseLabel", utils.diseaseCategoryLabel, utils.diseaseCategoryLabel, utils.diseaseCategoryLabel],
+      ["facilityLabel", utils.facilityLabel, utils.facilityLabel, utils.facilityLabel],
+      ["attachment_2_1", utils.attachment_2_1, utils.attachment_2_1, utils.attachment_2_1],
+      ["attachment_2_2", utils.attachment_2_2, utils.attachment_2_2, utils.attachment_2_2],
+      ["attachment_3", utils.attachment_3, utils.attachment_3, utils.attachment_3],
     ];
     return columnsList; 
   }
@@ -100,46 +103,31 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
   }
 }
 
-export class GetSheet_{
-  ss: GoogleAppsScript.Spreadsheet.Spreadsheet; // Declare the property outside the constructor
-  constructor(targetSsId: string | null = null) {
-    if (targetSsId === null) {
-      this.ss = SpreadsheetApp.getActiveSpreadsheet();
-    } else {
-      this.ss = this.getSpreadSheetById_(targetSsId);
-    }    
-  }
-  getSpreadSheetById_(ssId: string): GoogleAppsScript.Spreadsheet.Spreadsheet {
-    const ss = SpreadsheetApp.openById(ssId);
-    if (ss === null) {
-      throw new Error(`Spreadsheet ${ssId} does not exist.`);
+export function getHtmlSheetAndYoushikiColumns_(): (string | null)[][] {
+  const array1: (string | null)[][] = new GetHtmlSheet_().editColumnsList_();
+  const array2: (string | null)[][] = new GetHtmlSheetAddColumn_().editColumnsList_();
+  const columnsList: (string | null)[][] = [...array1, ...array2];
+  return columnsList;
+}
+
+export function getColumnsArrayByInputColNames_(targetIndexName: string, targetColumnNames: string[]): string[] {
+  const columnsList: (string | null)[][] = getHtmlSheetAndYoushikiColumns_();
+  const getHtmlSheet_ = new GetHtmlSheet_();
+  const columnsIndex: Map<string, number> = getHtmlSheet_.editColumnsIndexes_();
+  const keyIndex: number = columnsIndex.get(getHtmlSheet_.inputColumnKey) as number;
+  const targetIndex: number = columnsIndex.get(targetIndexName) as number;
+  const columnsArray: string[] = targetColumnNames.map((colname: string) => { 
+    if (colname === utils.seqColName) {
+      return utils.seqColName;
     }
-    return ss;
-  }
-  getSheetNameFromProperties_(key: string): string { 
-    return utils.getProperty_(key);
-  }
-  getSheetByProperty_(key: string): GoogleAppsScript.Spreadsheet.Sheet {
-    const sheetName = this.getSheetNameFromProperties_(key);
-    return this.getSheetByName_(sheetName);
-   }
-  getSheetByName_(sheetName: string): GoogleAppsScript.Spreadsheet.Sheet {
-    const sheet = this.ss.getSheetByName(sheetName);
-    if (sheet === null) {
-      throw new Error(`${sheetName} does not exist.`);
+    const target = columnsList.find((value: (string | null)[]) => value[keyIndex] === colname);
+    if (target === undefined) {
+      throw new Error(`not found at ${columnsArray}`);
     }
-    return sheet;
-  }
-  addSheet_(sheetName: string, colnames: string[] | null): GoogleAppsScript.Spreadsheet.Sheet {
-    const temp = this.ss.getSheetByName(sheetName);
-    if (temp === null) {
-      this.ss.insertSheet(sheetName);
+    if (target[targetIndex] === null) {
+      throw new Error(`null value found at ${columnsArray}`);
     }
-    const sheet = this.ss.getSheetByName(sheetName) as GoogleAppsScript.Spreadsheet.Sheet;
-    sheet.clearContents();
-    if (colnames !== null) {
-      sheet.getRange(1, 1, 1, colnames.length).setValues([colnames]);
-    }
-    return sheet;
-  }
+    return target[targetIndex] as string;
+  }); 
+  return columnsArray;
 }

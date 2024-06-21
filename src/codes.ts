@@ -1,39 +1,36 @@
 //import { getUminIds, getUminId, getJrctId } from './ctr-utils'
-import { getColIdx_ } from './ss-utils'
+import * as ssUtils from './ss-utils';
 import * as utils from './utils';
 import * as getSheets from './get-sheets';
 
-//import { getRecptNoFromHtml, getRecptDataFromHtml } from './umin'
-//import { searchUminHtml, getRecptHtml } from './crawler'
-const seqColName = "番号";
-
 function generateAttachment2_1_1(targetValues: string[][], outputSheetName: string) {
-  const input_colnames:string[] = [seqColName, "研究名称", utils.idLabel, "別添2-1"];
-  const inputColIndexes: number[] = input_colnames.map(colname => colname === seqColName ? utils.highValue : targetValues[0].indexOf(colname));
+  const input_colnames:string[] = [utils.seqColName, utils.trialNameLabel, utils.idLabel, utils.attachment_2_1];
+  const inputColIndexes: number[] = input_colnames.map(colname => colname === utils.seqColName ? utils.highValue : targetValues[0].indexOf(colname));
   if (inputColIndexes.includes(-1)) {
     return;
   }
   const inputBetten = targetValues.filter((_, idx) => idx !== 0); 
-  const outputColnames: string[] = [seqColName, "臨床研究名", "登録ID等", "研究概要"];
+  const outputColnames: string[] = [utils.seqColName, "臨床研究名", "登録ID等", "研究概要"];
   const outputBetten = editOutputForm2Values_(inputBetten, inputColIndexes);
-  const betten_sheet = new getSheets.GetSheet_().addSheet_(outputSheetName, outputColnames);
+  const betten_sheet = new ssUtils.GetSheet_().addSheet_(outputSheetName, outputColnames);
   const outputValues = [outputColnames, ...outputBetten];
   betten_sheet.getRange(1, 1, outputValues.length, outputValues[0].length).setValues(outputValues);
 }
+
 export function generateForm2() {
-  const youshiki2_2_colnames: string[] = [seqColName, "臨床研究名", "研究代表医師", "研究代表医師所属", "開始日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "フェーズ（Phase）"];
-  const youshiki2_1_colnames: string[] = [seqColName, "治験名", "治験調整医師名", "治験調整医師所属", "届出日", "登録ID等", "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "フェーズ（Phase）"];
-  const htmlSheet = new getSheets.GetSheet_().getSheetByProperty_("html_sheet_name");
+  const input_colnames: string[] = [utils.seqColName, utils.trialNameLabel, "研究責任（代表）医師の氏名", utils.piFacilityLabel, "初回公表日", utils.idLabel, "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "試験のフェーズ"];
+  const youshiki2_1_colnames: string[] = getSheets.getColumnsArrayByInputColNames_(utils.chikenKey, input_colnames);
+  const youshiki2_2_colnames: string[] = getSheets.getColumnsArrayByInputColNames_(utils.specificClinicalStudyKey, input_colnames);
+  const htmlSheet = new ssUtils.GetSheet_().getSheetByProperty_("html_sheet_name");
   const htmlItems = htmlSheet.getDataRange().getValues();
-  const input_colnames:string[] = [seqColName, "研究名称", "研究責任（代表）医師の氏名", utils.piFacilityLabel, "初回公表日", utils.idLabel, "主導的な役割", "医薬品等区分", "小児／成人", "疾病等分類", "実施施設数", "試験のフェーズ"];
-  const inputColIndexes: number[] = input_colnames.map(colname => colname === seqColName ? utils.highValue : htmlItems[0].indexOf(colname));
+  const inputColIndexes: number[] = input_colnames.map(colname => colname === utils.seqColName ? utils.highValue : htmlItems[0].indexOf(colname));
   if (inputColIndexes.includes(-1)) {
     throw new Error("One or more columns do not exist.");
   }
-  const youshiki2_1_Sheet = new getSheets.GetSheet_().addSheet_("様式第２-１（１）", youshiki2_1_colnames);
-  const youshiki2_2_Sheet = new getSheets.GetSheet_().addSheet_("様式第２-２（２）", youshiki2_2_colnames);
+  const youshiki2_1_Sheet = new ssUtils.GetSheet_().addSheet_("様式第２-１（１）", youshiki2_1_colnames);
+  const youshiki2_2_Sheet = new ssUtils.GetSheet_().addSheet_("様式第２-２（２）", youshiki2_2_colnames);
   const trialTypeLabel : string = utils.getProperty_("trial_type_label");
-  const trialTypeColIdx: number = getColIdx_(htmlSheet, trialTypeLabel);
+  const trialTypeColIdx: number = ssUtils.getColIdx_(htmlSheet, trialTypeLabel);
   if (trialTypeColIdx === -1) {
     throw new Error(`${trialTypeLabel} columns do not exist.`);
   }
