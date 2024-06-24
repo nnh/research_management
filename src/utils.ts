@@ -1,6 +1,7 @@
 import exp from "constants";
 
 export const highValue: number = 9999;
+export const errorIndex: number = -1;
 
 export const chikenKey = "chiken";
 export const specificClinicalStudyKey = "specificClinicalStudy";
@@ -33,6 +34,7 @@ export const phaseLabel = "試験のフェーズ";
 export const attachment_2_1 = "別添2-1";
 export const attachment_2_2 = "別添2-2";
 export const attachment_3 = "別添3";
+export const pmidLabel = "PMID";
 
 export const jrctUminColnames = ["Label", "Value", "jrctNo"];
 export const headerRowIndex = 0;
