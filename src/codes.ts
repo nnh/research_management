@@ -219,11 +219,25 @@ export function getDescriptionByJRCTID(jRctId: string): JRctDescription {
 */
 
 export function fillPublication() {
+  const targetPublicationIndexMap: Map<string, number> = new Map([
+    ["umin", 7],
+    ["jrct", 8],
+    ["protocolId", 9],
+    ["pmid", 12],
+  ]);
+  const publicationRawValues: string[][] = getSheets.getPublicationValues_();
+  // PubMed IDが空白ならば対象外とする
+  const targetValues = publicationRawValues.filter((row) =>
+    /^[0-9]{8}$/.test(row[targetPublicationIndexMap.get("pmid") || -1])
+  );
+  const targetPubmedIds: string[] = targetValues.map((row) =>
+    String(row[targetPublicationIndexMap.get("pmid") || -1])
+  );
   const pbmd = new pubmed.GetPubmedData();
-  const test = pbmd.getPubmedData_("34421094");
+  const pubmedDataList = pbmd.getPubmedData_(targetPubmedIds);
+
   console.log(test);
   return;
-  const publicationValues: string[][] = getSheets.getPublicationValues_();
   /*
   const publicationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Publication') as GoogleAppsScript.Spreadsheet.Sheet;
   const publicationValues = publicationSheet.getDataRange().getValues();
