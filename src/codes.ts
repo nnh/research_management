@@ -226,6 +226,12 @@ export function fillPublication() {
     ["protocolId", 9],
     [utils.pmidLabel, 12],
   ]);
+  const pmidColIdx: number =
+    targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex;
+  const jrctColIdx: number =
+    targetPublicationIndexMap.get("jrct") || utils.errorIndex;
+  const uminColIdx: number =
+    targetPublicationIndexMap.get("umin") || utils.errorIndex;
 
   const publicationRawValues: string[][] = getSheets.getPublicationValues_();
   // PubMed IDが空白ならば対象外とする
@@ -241,7 +247,9 @@ export function fillPublication() {
   );
   const pbmd: pubmed.GetPubmedData = new pubmed.GetPubmedData();
   const outputColIndexes: Map<string, number> = pbmd.getOutputColIndexes_();
-  const pmid = pbmd.getTargetPmids_(targetPubmedIds);
+  const outputJrctUminColIdx: number =
+    outputColIndexes.get(utils.idLabel) ?? utils.errorIndex;
+  const pmid: string = pbmd.getTargetPmids_(targetPubmedIds);
   if (pmid === "") {
     return;
   }
@@ -252,6 +260,21 @@ export function fillPublication() {
       const colIdx: number = outputColIndexes.get(key) ?? utils.errorIndex;
       if (colIdx > utils.errorIndex) {
         row[colIdx] = value;
+      }
+      // pubmedIdからjRCT番号を取得する
+      if (key === utils.pmidLabel) {
+        const targetRow: string[][] = targetValues.filter(
+          (row) => String(row[pmidColIdx]) === value
+        );
+        const uminJrctId: string =
+          targetRow.length === 0
+            ? ""
+            : targetRow[0][jrctColIdx] !== ""
+            ? targetRow[0][jrctColIdx]
+            : targetRow[0][uminColIdx] !== ""
+            ? targetRow[0][uminColIdx]
+            : "";
+        row[outputJrctUminColIdx] = uminJrctId;
       }
     });
     return row;

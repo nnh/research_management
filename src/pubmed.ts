@@ -15,8 +15,8 @@ export class GetPubmedData {
       ["authorFacilities", "発表者の所属"],
       ["role", "役割"],
       ["vancouver", "雑誌名・出版年月等"],
-      ["id", utils.idLabel],
-      ["pmid", utils.pmidLabel],
+      [utils.idLabel, utils.idLabel],
+      [utils.pmidLabel, utils.pmidLabel],
     ]);
     this.colnames = [
       this.colnamesMap.get("title") || "",
@@ -82,8 +82,8 @@ export class GetPubmedData {
 
       const medlineCitation: GoogleAppsScript.XML_Service.Element =
         article.getChild("MedlineCitation");
-      const pmid: string = medlineCitation.getChild("PMID").getText();
-      articleData.set("pmid", pmid);
+      const pmid: string = medlineCitation.getChild(utils.pmidLabel).getText();
+      articleData.set(utils.pmidLabel, pmid);
       const articleInfo: GoogleAppsScript.XML_Service.Element =
         medlineCitation.getChild("Article");
 
