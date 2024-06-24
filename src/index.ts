@@ -1,6 +1,5 @@
 import { generateForm2, fillPublication } from "./codes";
 import "./ctr-utils";
-import "./xml";
 import { getFromHtml } from "./youshiki-data";
 
 function onOpen() {
