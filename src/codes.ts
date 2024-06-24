@@ -1,9 +1,6 @@
-//import { getUminIds, getUminId, getJrctId } from './ctr-utils'
 import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
-import * as pubmed from "./pubmed";
-import { util } from "chai";
 
 class GenerateForm {
   inputColnames: string[];
@@ -219,71 +216,4 @@ export function getDescriptionByJRCTID(jRctId: string): JRctDescription {
 }
 */
 
-export function fillPublication() {
-  const targetPublicationIndexMap: Map<string, number> = new Map([
-    ["umin", 7],
-    ["jrct", 8],
-    ["protocolId", 9],
-    [utils.pmidLabel, 12],
-  ]);
-  const pmidColIdx: number =
-    targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex;
-  const jrctColIdx: number =
-    targetPublicationIndexMap.get("jrct") || utils.errorIndex;
-  const uminColIdx: number =
-    targetPublicationIndexMap.get("umin") || utils.errorIndex;
-
-  const publicationRawValues: string[][] = getSheets.getPublicationValues_();
-  // PubMed IDが空白ならば対象外とする
-  const targetValues: string[][] = publicationRawValues.filter((row) =>
-    /^[0-9]{8}$/.test(
-      row[targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex]
-    )
-  );
-  const targetPubmedIds: string[] = targetValues.map((row) =>
-    String(
-      row[targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex]
-    )
-  );
-  const pbmd: pubmed.GetPubmedData = new pubmed.GetPubmedData();
-  const outputColIndexes: Map<string, number> = pbmd.getOutputColIndexes_();
-  const outputJrctUminColIdx: number =
-    outputColIndexes.get(utils.idLabel) ?? utils.errorIndex;
-  const pmid: string = pbmd.getTargetPmids_(targetPubmedIds);
-  if (pmid === "") {
-    return;
-  }
-  const pubmedDataList: Map<string, string>[] = pbmd.getPubmedData_(pmid);
-  const outputValues: string[][] = pubmedDataList.map((pubmedData) => {
-    const row: string[] = Array(outputColIndexes.size).fill("");
-    pubmedData.forEach((value, key) => {
-      const colIdx: number = outputColIndexes.get(key) ?? utils.errorIndex;
-      if (colIdx > utils.errorIndex) {
-        row[colIdx] = value;
-      }
-      // pubmedIdからjRCT番号を取得する
-      if (key === utils.pmidLabel) {
-        const targetRow: string[][] = targetValues.filter(
-          (row) => String(row[pmidColIdx]) === value
-        );
-        const uminJrctId: string =
-          targetRow.length === 0
-            ? ""
-            : targetRow[0][jrctColIdx] !== ""
-            ? targetRow[0][jrctColIdx]
-            : targetRow[0][uminColIdx] !== ""
-            ? targetRow[0][uminColIdx]
-            : "";
-        row[outputJrctUminColIdx] = uminJrctId;
-      }
-    });
-    return row;
-  });
-  if (outputValues.length === 0) {
-    return;
-  }
-  const outputStartRow: number = pbmd.outputSheet.getLastRow() + 1;
-  pbmd.outputSheet
-    .getRange(outputStartRow, 1, outputValues.length, outputValues[0].length)
-    .setValues(outputValues);
-}
+export function fillPublication() {}
