@@ -131,10 +131,16 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
         utils.facilityLabel,
       ],
       [
-        "attachment_2_1",
-        utils.attachment_2_1,
-        utils.attachment_2_1,
-        utils.attachment_2_1,
+        "attachment_2_1_1",
+        utils.attachment_2_1_1,
+        utils.attachment_2_1_1,
+        utils.attachment_2_1_1,
+      ],
+      [
+        "attachment_2_1_2",
+        utils.attachment_2_1_2,
+        utils.attachment_2_1_2,
+        utils.attachment_2_1_2,
       ],
       [
         "attachment_2_2",

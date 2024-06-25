@@ -31,7 +31,8 @@ export const ageLabel = "小児／成人";
 export const diseaseCategoryLabel = "疾病等分類";
 export const facilityLabel = "実施施設数";
 export const phaseLabel = "試験のフェーズ";
-export const attachment_2_1 = "別添2-1";
+export const attachment_2_1_1 = "別添2-1(1)";
+export const attachment_2_1_2 = "別添2-1(2)";
 export const attachment_2_2 = "別添2-2";
 export const attachment_3 = "別添3";
 export const pmidLabel = "PMID";
@@ -43,6 +44,7 @@ export const itemsTrialTypeIdx: number = 7;
 export const itemsCtrIdx: number = 9;
 export const itemsFacilityIdx: number = 24;
 export const itemsStartDateIdx: number = 86;
+export const itemsDiseaseCategoryIdx: number = 88;
 export const limit_date = new Date(2021, 8, 1);
 
 export function getProperty_(key: string): string {

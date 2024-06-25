@@ -1,3 +1,4 @@
+import id from "date-fns/locale/id";
 import * as getSheets from "./get-sheets";
 import * as utils from "./utils";
 
@@ -147,8 +148,26 @@ function getExplanationMap_(): Map<string, string> {
   return explanationMap;
 }
 
-function getBudgetAndFacility_(): [string[][], string[][]] {
+function getBudgetAndFacilityAndDisease_(): [
+  string[][],
+  string[][],
+  string[][]
+] {
   const datacenterValues: any[][] = getSheets.getDatacenterValues_();
+  const datacentetIdAndDiseaseCategory: string[][] = datacenterValues.map(
+    (item) => [item[utils.itemsCtrIdx], item[utils.itemsDiseaseCategoryIdx]]
+  );
+  const idAndDiseaseCategory: string[][] =
+    datacentetIdAndDiseaseCategory.filter(
+      ([id, diseaseCategory]) =>
+        id !== "" &&
+        id !== undefined &&
+        typeof id === "string" &&
+        diseaseCategory !== "" &&
+        diseaseCategory !== undefined &&
+        typeof diseaseCategory === "string"
+    );
+
   const datacenterIdAndBudget: string[][] = datacenterValues.map((item) => [
     item[utils.itemsCtrIdx],
     item[utils.itemsTrialBudgetIdx],
@@ -175,7 +194,7 @@ function getBudgetAndFacility_(): [string[][], string[][]] {
       facility !== undefined &&
       typeof facility === "number"
   );
-  return [idAndBudget, idAndFacility];
+  return [idAndBudget, idAndFacility, idAndDiseaseCategory];
 }
 
 function editAddValues_(
@@ -192,8 +211,11 @@ function editAddValues_(
   ] = getHtmlSheetColumnsIndex_(htmlSheetColumns);
   const piFacility = new RegExp("名古屋医療センター");
   const explanationMap: Map<string, string> = getExplanationMap_();
-  const [idAndBudget, idAndFacility]: [string[][], string[][]] =
-    getBudgetAndFacility_();
+  const [idAndBudget, idAndFacility, idAndDiseaseCategory]: [
+    string[][],
+    string[][],
+    string[][]
+  ] = getBudgetAndFacilityAndDisease_();
   const addValues = outputJrctValues.map((jrctInfo: string[]) => {
     const inputId = new RegExp(jrctInfo[htmlIdColIdx]);
     const piNagoya = piFacility.test(jrctInfo[htmlPiFacilityColIdx]);
@@ -203,15 +225,30 @@ function editAddValues_(
     const overAge: number = editAge_(jrctInfo[htmlOverAgeColIdx]);
     const ageLabel: string =
       underAge > 18 ? "成人" : overAge < 18 ? "小児" : "小児・成人";
-    const diseaseCategoryLabel: string = "dummy";
-    const targetFacility = idAndFacility.filter(([id, _]) => inputId.test(id));
+    const targetDiseaseCategory: string[][] = idAndDiseaseCategory.filter(
+      ([id, _]) => inputId.test(id)
+    );
+    const diseaseCategoryLabel: string =
+      targetDiseaseCategory.length > 0 ? targetDiseaseCategory[0][1] : "dummy";
+    const targetFacility: string[][] = idAndFacility.filter(([id, _]) =>
+      inputId.test(id)
+    );
     const facilityLabel: string =
       targetFacility.length > 0 ? targetFacility[0][1] : "dummy";
-    const disease = jrctInfo[htmlDiseaseColIdx];
-    const intervention = jrctInfo[htmlInterventionColIdx];
-    const attachment_2_1: string = `本試験の対象は${disease}である。また「${intervention}」という一定の有害事象を伴う侵襲的な介入を行う。`;
-    const attachment_2_2: string = `本試験の対象は年間発症件数が1,500件に満たない(Int J Hematol. 2013 Jul;98(1):74-88.)希少疾病である小児造血器腫瘍に含まれる
-        ${disease}である。また「${intervention}」という一定の有害事象を伴う侵襲的な介入を行う試験であり、これによりQOL・生命予後の改善が期待できる。`;
+    const disease: string = jrctInfo[htmlDiseaseColIdx];
+    const intervention: string = jrctInfo[htmlInterventionColIdx].replace(
+      /\r?\n/g,
+      "、"
+    );
+    const diseaseString: string = disease.replace(/\r?\n/g, "、");
+    const tempAgeMax: string[] = jrctInfo[htmlOverAgeColIdx].split("/");
+    const ageMax: string =
+      tempAgeMax.length === 3
+        ? `${tempAgeMax[0]}${tempAgeMax[1].replace("years-old", "")}`
+        : jrctInfo[htmlOverAgeColIdx];
+    const attachment_2_1_1: string = `本試験の対象は${diseaseString}である。また「${intervention}」という一定の有害事象を伴う侵襲的な介入を行う。`;
+    const attachment_2_1_2: string = `本試験の対象は${diseaseString}である。また年齢基準は${ageMax}であり、主として未成年を対象とした試験である。この研究成果はより良い治療法のエビデンスを提供するという形で小児領域の患者に還元される。`;
+    const attachment_2_2: string = `年齢基準は${ageMax}であり、主として未成年を対象とした試験である。`;
     const attachment_3: string = editAttachment_3_text_(
       piNagoya,
       explanationMap,
@@ -225,7 +262,8 @@ function editAddValues_(
       ageLabel,
       diseaseCategoryLabel,
       facilityLabel,
-      attachment_2_1,
+      attachment_2_1_1,
+      attachment_2_1_2,
       attachment_2_2,
       attachment_3,
     ];
