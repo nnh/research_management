@@ -9,7 +9,9 @@ class GetPubmedData {
   outputSheetPmidIndex: number;
   colnamesMap: Map<string, string>;
   constructor() {
-    this.outputSheetName = "pubmed";
+    this.outputSheetName = new ssUtils.GetSheet_().getSheetNameFromProperties_(
+      "pubmed_sheet_name"
+    );
     this.colnamesMap = new Map([
       ["title", "題名"],
       ["authorName", "発表者氏名"],

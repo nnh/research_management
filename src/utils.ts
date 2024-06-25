@@ -1,5 +1,3 @@
-import exp from "constants";
-
 export const highValue: number = 9999;
 export const errorIndex: number = -1;
 
@@ -37,9 +35,11 @@ export const attachment_2_2 = "別添2-2";
 export const attachment_3 = "別添3";
 export const pmidLabel = "PMID";
 export const datacenterStartDateLabel = "研究管理：開始日";
+export const protocolIdLabel = "プロトコルID";
 
 export const jrctUminColnames = ["Label", "Value", "jrctNo"];
 export const headerRowIndex = 0;
+export const itemsProtocolIdIdx: number = 0;
 export const itemsTrialBudgetIdx: number = 6;
 export const itemsTrialTypeIdx: number = 7;
 export const itemsCtrIdx: number = 9;

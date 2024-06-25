@@ -152,9 +152,24 @@ function getDatacenterSheetValues_(): [
   string[][],
   string[][],
   string[][],
+  string[][],
   string[][]
 ] {
   const datacenterValues: any[][] = getSheets.getDatacenterValues_();
+  const datacenterIdAndProtocolId: string[][] = datacenterValues.map((item) => [
+    item[utils.itemsCtrIdx],
+    item[utils.itemsProtocolIdIdx],
+  ]);
+  const idAndProtocolId: string[][] = datacenterIdAndProtocolId.filter(
+    ([id, protocolId]) =>
+      id !== "" &&
+      id !== undefined &&
+      typeof id === "string" &&
+      protocolId !== "" &&
+      protocolId !== undefined &&
+      typeof protocolId === "string"
+  );
+
   const datacenterIdAndStartDate: string[][] = datacenterValues.map((item) => [
     item[utils.itemsCtrIdx],
     item[utils.itemsStartDateIdx],
@@ -207,7 +222,13 @@ function getDatacenterSheetValues_(): [
       facility !== undefined &&
       typeof facility === "number"
   );
-  return [idAndBudget, idAndFacility, idAndDiseaseCategory, idAndStartDate];
+  return [
+    idAndBudget,
+    idAndFacility,
+    idAndDiseaseCategory,
+    idAndStartDate,
+    idAndProtocolId,
+  ];
 }
 
 function editAddValues_(
@@ -224,12 +245,14 @@ function editAddValues_(
   ] = getHtmlSheetColumnsIndex_(htmlSheetColumns);
   const piFacility = new RegExp("名古屋医療センター");
   const explanationMap: Map<string, string> = getExplanationMap_();
-  const [idAndBudget, idAndFacility, idAndDiseaseCategory, idAndStartDate]: [
-    string[][],
-    string[][],
-    string[][],
-    string[][]
-  ] = getDatacenterSheetValues_();
+  const [
+    idAndBudget,
+    idAndFacility,
+    idAndDiseaseCategory,
+    idAndStartDate,
+    idAndProtocolId,
+  ]: [string[][], string[][], string[][], string[][], string[][]] =
+    getDatacenterSheetValues_();
   const addValues = outputJrctValues.map((jrctInfo: string[]) => {
     const inputId = new RegExp(jrctInfo[htmlIdColIdx]);
     const piNagoya = piFacility.test(jrctInfo[htmlPiFacilityColIdx]);
@@ -239,6 +262,11 @@ function editAddValues_(
     const overAge: number = editAge_(jrctInfo[htmlOverAgeColIdx]);
     const ageLabel: string =
       underAge > 18 ? "成人" : overAge < 18 ? "小児" : "小児・成人";
+    const targetProtocolId: string[][] = idAndProtocolId.filter(([id, _]) =>
+      inputId.test(id)
+    );
+    const protocolId: string =
+      targetProtocolId.length > 0 ? targetProtocolId[0][1] : "記載なし";
     const targetStartDate: string[][] = idAndStartDate.filter(([id, _]) =>
       inputId.test(id)
     );
@@ -288,6 +316,7 @@ function editAddValues_(
       attachment_2_2,
       attachment_3,
       datacenterStartDateLabel,
+      protocolId,
     ];
   });
   return addValues;

@@ -160,6 +160,12 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
         utils.datacenterStartDateLabel,
         utils.datacenterStartDateLabel,
       ],
+      [
+        "protocolId",
+        utils.protocolIdLabel,
+        utils.protocolIdLabel,
+        utils.protocolIdLabel,
+      ],
     ];
     return columnsList;
   }
