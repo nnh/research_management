@@ -1,44 +1,29 @@
-import {
-  getHtmlRootElement,
-  getHtmlElementsByTagName,
-  getInnerText,
-} from "./html";
-
-export function getRecptNoFromHtml(data: string): string | undefined {
-  var root = getHtmlRootElement(data);
-  var recptNo: string | undefined;
-  if (root) {
-    var linkArray = getHtmlElementsByTagName(root, "a");
-    for (var i = 0; i < linkArray.length; i++) {
-      var value = linkArray[i].attribs.href;
-      if (value.indexOf("recptno=") != -1) {
-        recptNo = value.split("=")[1];
-        break;
-      }
-    }
-  }
-  return recptNo;
+export function execGetRecptNoFromHtml(): string[] {
+  const uminIdList: string[] = ["UMIN000007237"];
+  const recptNoList: string[] = uminIdList.map((uminId) => {
+    const res: string = getRecptNoFromHtml_(uminId);
+    Utilities.sleep(1000);
+    return res;
+  });
+  console.log(recptNoList);
+  return recptNoList;
 }
-
-interface RecptDataType {
-  target?: string;
-  intervention?: string;
-}
-
-export function getRecptDataFromHtml(html: string): RecptDataType {
-  var root = getHtmlRootElement(html);
-  var data: RecptDataType = {};
-  if (root) {
-    var tds = getHtmlElementsByTagName(root, "td");
-    for (var i = 0; i < tds.length; i++) {
-      if (getInnerText(tds[i]).indexOf("対象疾患名/Condition") != -1) {
-        data.target = getInnerText(tds[i + 1]);
-      }
-      if (getInnerText(tds[i]).indexOf("介入1/Interventions/Control_1") != -1) {
-        data.intervention = getInnerText(tds[i + 1]);
-        break;
-      }
-    }
+function getRecptNoFromHtml_(uminId: string): string {
+  const url: string = `https://center6.umin.ac.jp/cgi-open-bin/ctr/index.cgi?sort=03&function=04&ctrno=${uminId}`;
+  const data: string = UrlFetchApp.fetch(url).getContentText("UTF-8");
+  // Extract all <a> tags from the data
+  const anchorTags: RegExpMatchArray | null = data.match(
+    /<a\s+[^>]*href="([^"]*?recptno=[^"]*)"/gi
+  );
+  if (!anchorTags) {
+    return "";
   }
-  return data;
+  const recptnoList: (RegExpExecArray | null)[] = anchorTags
+    .map((text) => /R[0-9]{9}/.exec(text))
+    .filter((x) => x !== null);
+  if (recptnoList.length === 0) {
+    return "";
+  }
+  const recptNo: string[] = Array.from(new Set(recptnoList.map((x) => x![0])));
+  return recptNo[0];
 }
