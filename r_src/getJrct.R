@@ -92,6 +92,7 @@ ExecGetJrctList <- function() {
   return(jrctList)
 }
 # ------ main ------
+targetJrctNoList <- targetList$jRCT %>% setdiff(existJrctUminNoList$jRCT)
 jrctList <- ExecGetJrctList()
 df_jrctList <- bind_rows(jrctList)
 AddOutputSheet(df_jrctList)

@@ -2,7 +2,7 @@
 #' description
 #' @file getUmin.R
 #' @author Mariko Ohtsuka
-#' @date 2024.6.12
+#' @date 2024.6.25
 rm(list=ls())
 # ------ libraries ------
 library(here)
