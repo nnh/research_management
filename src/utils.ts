@@ -36,6 +36,7 @@ export const attachment_2_1_2 = "別添2-1(2)";
 export const attachment_2_2 = "別添2-2";
 export const attachment_3 = "別添3";
 export const pmidLabel = "PMID";
+export const datacenterStartDateLabel = "研究管理：開始日";
 
 export const jrctUminColnames = ["Label", "Value", "jrctNo"];
 export const headerRowIndex = 0;

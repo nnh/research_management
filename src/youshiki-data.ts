@@ -148,12 +148,25 @@ function getExplanationMap_(): Map<string, string> {
   return explanationMap;
 }
 
-function getBudgetAndFacilityAndDisease_(): [
+function getDatacenterSheetValues_(): [
+  string[][],
   string[][],
   string[][],
   string[][]
 ] {
   const datacenterValues: any[][] = getSheets.getDatacenterValues_();
+  const datacenterIdAndStartDate: string[][] = datacenterValues.map((item) => [
+    item[utils.itemsCtrIdx],
+    item[utils.itemsStartDateIdx],
+  ]);
+  const idAndStartDate: string[][] = datacenterIdAndStartDate.filter(
+    ([id, startDate]) =>
+      id !== "" &&
+      id !== undefined &&
+      typeof id === "string" &&
+      startDate !== "" &&
+      startDate !== undefined
+  );
   const datacentetIdAndDiseaseCategory: string[][] = datacenterValues.map(
     (item) => [item[utils.itemsCtrIdx], item[utils.itemsDiseaseCategoryIdx]]
   );
@@ -194,7 +207,7 @@ function getBudgetAndFacilityAndDisease_(): [
       facility !== undefined &&
       typeof facility === "number"
   );
-  return [idAndBudget, idAndFacility, idAndDiseaseCategory];
+  return [idAndBudget, idAndFacility, idAndDiseaseCategory, idAndStartDate];
 }
 
 function editAddValues_(
@@ -211,11 +224,12 @@ function editAddValues_(
   ] = getHtmlSheetColumnsIndex_(htmlSheetColumns);
   const piFacility = new RegExp("名古屋医療センター");
   const explanationMap: Map<string, string> = getExplanationMap_();
-  const [idAndBudget, idAndFacility, idAndDiseaseCategory]: [
+  const [idAndBudget, idAndFacility, idAndDiseaseCategory, idAndStartDate]: [
+    string[][],
     string[][],
     string[][],
     string[][]
-  ] = getBudgetAndFacilityAndDisease_();
+  ] = getDatacenterSheetValues_();
   const addValues = outputJrctValues.map((jrctInfo: string[]) => {
     const inputId = new RegExp(jrctInfo[htmlIdColIdx]);
     const piNagoya = piFacility.test(jrctInfo[htmlPiFacilityColIdx]);
@@ -225,16 +239,23 @@ function editAddValues_(
     const overAge: number = editAge_(jrctInfo[htmlOverAgeColIdx]);
     const ageLabel: string =
       underAge > 18 ? "成人" : overAge < 18 ? "小児" : "小児・成人";
+    const targetStartDate: string[][] = idAndStartDate.filter(([id, _]) =>
+      inputId.test(id)
+    );
+    const datacenterStartDateLabel: string =
+      targetStartDate.length > 0 ? targetStartDate[0][1] : "記載なし";
     const targetDiseaseCategory: string[][] = idAndDiseaseCategory.filter(
       ([id, _]) => inputId.test(id)
     );
     const diseaseCategoryLabel: string =
-      targetDiseaseCategory.length > 0 ? targetDiseaseCategory[0][1] : "dummy";
+      targetDiseaseCategory.length > 0
+        ? targetDiseaseCategory[0][1]
+        : "記載なし";
     const targetFacility: string[][] = idAndFacility.filter(([id, _]) =>
       inputId.test(id)
     );
     const facilityLabel: string =
-      targetFacility.length > 0 ? targetFacility[0][1] : "dummy";
+      targetFacility.length > 0 ? targetFacility[0][1] : "記載なし";
     const disease: string = jrctInfo[htmlDiseaseColIdx];
     const intervention: string = jrctInfo[htmlInterventionColIdx].replace(
       /\r?\n/g,
@@ -266,6 +287,7 @@ function editAddValues_(
       attachment_2_1_2,
       attachment_2_2,
       attachment_3,
+      datacenterStartDateLabel,
     ];
   });
   return addValues;

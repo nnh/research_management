@@ -99,19 +99,23 @@ class GenerateForm {
 }
 
 export function generateForm2() {
-  const form2 = new GenerateForm();
-  const chikenText = utils.trialTypeListJrct.get(utils.chikenKey);
-  const youshiki2_1 = form2.htmlItems.filter(
-    (item) => item[form2.trialTypeColIdx] === chikenText
+  const form2: GenerateForm = new GenerateForm();
+  const specificClinicalStudyText: string = utils.trialTypeListJrct.get(
+    utils.specificClinicalStudyKey
+  )!;
+  const datacenterStartDateColIdx: number = ssUtils.getColIdx_(
+    form2.htmlSheet,
+    utils.datacenterStartDateLabel
   );
-  const youshiki2_2 = form2.htmlItems.filter(
-    (item) =>
-      item[form2.trialTypeColIdx] !== chikenText &&
-      item[form2.trialTypeColIdx] !== form2.trialTypeLabel
-  );
-  form2.generateForm("様式第２-１（１）", utils.chikenKey, youshiki2_1);
+  const youshiki2_2: string[][] = form2.htmlItems.filter((item) => {
+    const itemDate = new Date(item[datacenterStartDateColIdx]);
+    return (
+      item[form2.trialTypeColIdx] === specificClinicalStudyText &&
+      itemDate >= utils.limit_date
+    );
+  });
   form2.generateForm(
-    "様式第２-1（２）",
+    "様式第２-１（２）",
     utils.specificClinicalStudyKey,
     youshiki2_2
   );

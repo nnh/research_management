@@ -154,6 +154,12 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
         utils.attachment_3,
         utils.attachment_3,
       ],
+      [
+        "datacenterStartDateLabel",
+        utils.datacenterStartDateLabel,
+        utils.datacenterStartDateLabel,
+        utils.datacenterStartDateLabel,
+      ],
     ];
     return columnsList;
   }
