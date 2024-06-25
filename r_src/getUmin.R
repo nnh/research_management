@@ -119,18 +119,18 @@ ExecGetUminInfo <- function(recptNoList){
 # ------ main ------
 targetUminNoList <- targetList$umin %>% setdiff(existJrctUminNoList$umin)
 if (length(targetUminNoList) > 0) {
-  uminAndRecptNoList <- execGetRecptNoFromHtml(targetUminNoList[1:2])
+  uminAndRecptNoList <- execGetRecptNoFromHtml(targetUminNoList)
   recptNoList <- uminAndRecptNoList %>% map_vec( ~ .$recptNo) %>% str_extract(kRecptNo) %>% unique()
   uminData <- ExecGetUminInfo(recptNoList)
+  df_uminList <- uminData %>% map_df( ~ {
+    values <- .
+    temp <- tibble()
+    temp_col <- values %>% names()
+    temp[1:length(temp_col) , 1] <- temp_col
+    temp[ , 2] <- values %>% flatten_chr()
+    temp[ , 3] <- values[[kUminIdLabel]]
+    colnames(temp) <- kOutputHeader
+    return(temp)
+  }) %>% filter(Label != "dummy")
+  AddOutputSheet(df_uminList)
 }
-df_uminList <- uminData %>% map_df( ~ {
-  values <- .
-  temp <- tibble()
-  temp_col <- values %>% names()
-  temp[1:length(temp_col) , 1] <- temp_col
-  temp[ , 2] <- values %>% flatten_chr()
-  temp[ , 3] <- values[[kUminIdLabel]]
-  colnames(temp) <- kOutputHeader
-  return(temp)
-}) %>% filter(Label != "dummy")
-AddOutputSheet(df_uminList)

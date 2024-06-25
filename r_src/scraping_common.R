@@ -122,5 +122,3 @@ existJrctUminNoList <- GetJrctUminNoListBySheet(kOutputSheetName, "C:C")
 pubmedJrctUminNoList <- GetJrctUminNoListBySheet(kPubmedSheetName, "G:G")
 inputJrctUminNoList <- GetJrctUminNoListBySheet(kInputSheetName, "A:A")
 targetList <- modifyList(inputJrctUminNoList, pubmedJrctUminNoList)
-targetJrctNoList <- targetList$jRCT %>% setdiff(existJrctUminNoList$jRCT)
-

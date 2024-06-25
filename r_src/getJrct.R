@@ -2,7 +2,7 @@
 #' description
 #' @file getJrct.R
 #' @author Mariko Ohtsuka
-#' @date 2024.06.18
+#' @date 2024.06.25
 # ------ libraries ------
 source(here("r_src", "scraping_common.R"), encoding="utf-8")
 # ------ constants ------
@@ -41,43 +41,12 @@ GetJrctTables <- function(jrctNo) {
   res <- GetBaseDataJrct(webpage)
   return(res)
 }
-GetTargetJrctNoList <- function(){
-  temp <- tryCatch(
-    {
-      sheetid %>% read_sheet(sheet=kInputSheetName, range="A:A", col_names=T) %>% flatten_chr()
-    },
-    error = function(e) {
-      NA  # エラーが発生した場合にNAを返す
-    }
-  )
-  if (length(temp) == 0) {
-    return(NULL)
-  }
-  jrctNoList <- temp %>% str_extract_all(kJRCTNo) %>% flatten_chr()
-  if (length(jrctNoList) == 0) {
-    return(NULL)
-  }
-  return(jrctNoList)
-}
-ExecGetJrctList <- function() {
-  if (is.na(sheetid)) {
-    return(NULL)
-  }
-  AddSheet(kOutputSheetName)
-  inputJrctNoList <- GetTargetJrctNoList()
-  if (is.null(inputJrctNoList)) {
-    return(NULL)
-  }
-  # 取得済みのjRCT番号は対象外とする
-  retrievedJrctNo <- sheetid %>%
-    read_sheet(sheet=kOutputSheetName, range="C:C", col_names=T) %>% flatten_chr() %>% unique()
-  jrctNoList <- setdiff(inputJrctNoList, retrievedJrctNo) %>% unique()
-  if (length(jrctNoList) == 0) {
-    return(NULL)
-  }
+# ------ main ------
+targetJrctNoList <- targetList$jRCT %>% setdiff(existJrctUminNoList$jRCT)
+if (length(targetJrctNoList) > 0) {
   jrctList <- list()
-  for (i in 1:length(jrctNoList)){
-    jrctNo <- jrctNoList[i]
+  for (i in 1:length(targetJrctNoList)){
+    jrctNo <- targetJrctNoList[i]
     temp <- tryCatch(
       {
         GetJrctTables(jrctNo)
@@ -88,11 +57,7 @@ ExecGetJrctList <- function() {
     )
     jrctList[[i]] <- temp
   }
-  names(jrctList) <- jrctNoList
-  return(jrctList)
+  names(jrctList) <- targetJrctNoList
 }
-# ------ main ------
-targetJrctNoList <- targetList$jRCT %>% setdiff(existJrctUminNoList$jRCT)
-jrctList <- ExecGetJrctList()
 df_jrctList <- bind_rows(jrctList)
 AddOutputSheet(df_jrctList)
