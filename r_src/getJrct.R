@@ -53,7 +53,7 @@ GetTargetJrctNoList <- function(){
   if (length(temp) == 0) {
     return(NULL)
   }
-  jrctNoList <- temp %>% str_extract_all("jRCT[0-9]{10}|jRCTs[0-9]{9}") %>% flatten_chr()
+  jrctNoList <- temp %>% str_extract_all(kJRCTNo) %>% flatten_chr()
   if (length(jrctNoList) == 0) {
     return(NULL)
   }

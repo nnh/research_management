@@ -16,59 +16,10 @@ kNameTarget3 <- "\n英語"
 kUminRNoLabel <- "UMIN受付番号"
 kNameOfPi <- "責任研究者/Name of lead principal investigator"
 kUminIdLabel <- kIdLabel
+kRecptNo <- "R[0-9]{9}"
 # ------ functions ------
-GetTargetUminRNoList <- function(){
-  temp <- tryCatch(
-    {
-      sheetid %>% read_sheet(sheet=kInputSheetName, range="A:A", col_names=T) %>% flatten_chr()
-    },
-    error = function(e) {
-      NA  # エラーが発生した場合にNAを返す
-    }
-  )
-  if (length(temp) == 0) {
-    return(NULL)
-  }
-  uminRNoList <- temp %>% str_extract_all("^R[0-9]{9}") %>% flatten_chr()
-  if (length(uminRNoList) == 0) {
-    return(NULL)
-  }
-  return(uminRNoList)
-}
-ExecGetUminList <- function() {
-  if (is.na(sheetid)) {
-    return(NULL)
-  }
-  AddSheet(kOutputSheetName)
-  inputUminRNoList <- GetTargetUminRNoList()
-  if (is.null(inputUminRNoList)) {
-    return(NULL)
-  }
-  # 取得済みのUMIN番号は対象外とする
-  retrievedUminRNo <- sheetid %>%
-    read_sheet(sheet=kOutputSheetName, range="A:C", col_names=T) %>% filter(Label == kUminRNoLabel) %>% select(Value) %>% flatten_chr() %>% unique()
-  uminRNoList <- setdiff(inputUminRNoList, retrievedUminRNo) %>% unique()
-  if (length(uminRNoList) == 0) {
-    return(NULL)
-  }
-  uminList <- list()
-  for (i in 1:length(uminRNoList)){
-    uminRNo <- uminRNoList[i]
-    temp <- tryCatch(
-      {
-        GetUminInfo(uminRNo)
-      },
-      error = function(e) {
-        NA  # エラーが発生した場合にNAを返す
-      }
-    )
-    uminList[[i]] <- temp
-  }
-  names(uminList) <- uminRNoList
-  return(uminList)
-}
 GetUminInfo <- function(uminRNo) {
-  url <- str_c(kUminUrlHead, uminRNo)
+  url <- str_c(kUminRecptNUrlHead, uminRNo)
   webpage <- GetWebPageData(url)
   basetable <- webpage %>% html_nodes(xpath = '/html/body/div/table[1]/tbody/tr') %>% html_text()
   uminId <- NULL
@@ -148,8 +99,30 @@ GetUminInfo <- function(uminRNo) {
   trList$初回公開日 <- trList$`登録日時/Registered date`
   return(trList)
 }
+ExecGetUminInfo <- function(recptNoList){
+  uminList <- list()
+  for (i in 1:length(recptNoList)){
+    uminRNo <- recptNoList[i]
+    temp <- tryCatch(
+      {
+        GetUminInfo(uminRNo)
+      },
+      error = function(e) {
+        NA  # エラーが発生した場合にNAを返す
+      }
+    )
+    uminList[[i]] <- temp
+  }
+  names(uminList) <- recptNoList
+  return(uminList)
+}
 # ------ main ------
-uminData <- ExecGetUminList()
+targetUminNoList <- targetList$umin %>% setdiff(existJrctUminNoList$umin)
+if (length(targetUminNoList) > 0) {
+  uminAndRecptNoList <- execGetRecptNoFromHtml(targetUminNoList[1:2])
+  recptNoList <- uminAndRecptNoList %>% map_vec( ~ .$recptNo) %>% str_extract(kRecptNo) %>% unique()
+  uminData <- ExecGetUminInfo(recptNoList)
+}
 df_uminList <- uminData %>% map_df( ~ {
   values <- .
   temp <- tibble()
