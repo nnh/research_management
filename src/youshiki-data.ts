@@ -195,6 +195,7 @@ function editAddValues_(
   const [idAndBudget, idAndFacility]: [string[][], string[][]] =
     getBudgetAndFacility_();
   const addValues = outputJrctValues.map((jrctInfo: string[]) => {
+    const inputId = new RegExp(jrctInfo[htmlIdColIdx]);
     const piNagoya = piFacility.test(jrctInfo[htmlPiFacilityColIdx]);
     const principalRole: string = piNagoya ? "１" : "２";
     const drugLabel: string = "医薬品";
@@ -203,9 +204,7 @@ function editAddValues_(
     const ageLabel: string =
       underAge > 18 ? "成人" : overAge < 18 ? "小児" : "小児・成人";
     const diseaseCategoryLabel: string = "dummy";
-    const targetFacility = idAndFacility.filter(
-      ([id, _]) => id === jrctInfo[htmlIdColIdx]
-    );
+    const targetFacility = idAndFacility.filter(([id, _]) => inputId.test(id));
     const facilityLabel: string =
       targetFacility.length > 0 ? targetFacility[0][1] : "dummy";
     const disease = jrctInfo[htmlDiseaseColIdx];

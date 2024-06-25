@@ -2,7 +2,6 @@ import { generateForm2, fillPublication } from "./codes";
 import "./ctr-utils";
 import { getFromHtml } from "./youshiki-data";
 import { getPubmed } from "./pubmed";
-import { execGetRecptNoFromHtml } from "./umin";
 
 function onOpen() {
   var arr = [
@@ -27,4 +26,3 @@ global.generateForm2 = generateForm2;
 global.fillPublication = fillPublication;
 global.getFromHtml = getFromHtml;
 global.getPubmed = getPubmed;
-global.execGetRecptNoFromHtml = execGetRecptNoFromHtml;
