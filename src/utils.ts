@@ -3,6 +3,7 @@ export const errorIndex: number = -1;
 
 export const chikenKey = "chiken";
 export const specificClinicalStudyKey = "specificClinicalStudy";
+export const publicationKey = "publication";
 const trialTypeList = new Map([
   [chikenKey, "特定臨床(治験)"],
   [specificClinicalStudyKey, "特定臨床(臨床研究法)"],
@@ -36,6 +37,7 @@ export const attachment_3 = "別添3";
 export const pmidLabel = "PMID";
 export const datacenterStartDateLabel = "研究管理：開始日";
 export const protocolIdLabel = "プロトコルID";
+export const phaseOutputLabel = "フェーズ（Phase）";
 
 export const jrctUminColnames = ["Label", "Value", "jrctNo"];
 export const headerRowIndex = 0;

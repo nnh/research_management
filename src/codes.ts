@@ -1,6 +1,7 @@
 import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
+import * as pubmed from "./pubmed";
 
 class GenerateForm {
   inputColnames: string[];
@@ -97,6 +98,33 @@ class GenerateForm {
     return inputColumns;
   }
 }
+class GeneratePublicationForm extends GenerateForm {
+  constructor() {
+    super();
+  }
+  private getOutputSheetPub_(outputSheetName: string, colnames: string[]) {
+    const sheet = new ssUtils.GetSheet_().createSheet_(
+      outputSheetName,
+      colnames
+    );
+    return sheet;
+  }
+  generateFormPub(
+    outputSheetName: string,
+    outputValues: string[][],
+    colnames: string[]
+  ) {
+    const outputSheet = this.getOutputSheetPub_(outputSheetName, colnames);
+    outputSheet
+      .getRange(
+        2,
+        1,
+        outputValues.length,
+        outputValues[utils.headerRowIndex].length
+      )
+      .setValues(outputValues);
+  }
+}
 
 function generateForm2_1_(form2: GenerateForm) {
   const specificClinicalStudyText: string = utils.trialTypeListJrct.get(
@@ -120,16 +148,69 @@ function generateForm2_1_(form2: GenerateForm) {
   );
 }
 
-function generateForm2_2_(form2: GenerateForm) {
-  const pubmedSheet: GoogleAppsScript.Spreadsheet.Sheet =
-    new ssUtils.GetSheet_().getSheetByProperty_("pubmed_sheet_name");
-  const pubmedValues: string[][] = pubmedSheet.getDataRange().getValues();
+function generateForm2_2_(form2: GeneratePublicationForm) {
+  const pbmd = new pubmed.GetPubmedData();
+  const pubmedValues: string[][] = pbmd.outputSheet.getDataRange().getValues();
+  const pubmedColnames: string[] = pbmd.colnames;
+  const outputPubmedColnames: string[] = pubmedColnames.filter(
+    (colname) => colname !== utils.pmidLabel && colname !== utils.idLabel
+  );
+  const outputPubmedColIndexes: number[] = outputPubmedColnames.map((colname) =>
+    pubmedColnames.indexOf(colname)
+  );
+  const idColIdxPubmedSheet: number = pubmedColnames.indexOf(utils.idLabel);
+  const htmlValues: string[][] = form2.htmlItems;
+  const htmlColnames: string[] = htmlValues[utils.headerRowIndex];
+  const idColIdxHtmlSheet: number = htmlColnames.indexOf(utils.idLabel);
+  const protocolIdColIdxHtmlSheet: number = htmlColnames.indexOf(
+    utils.protocolIdLabel
+  );
+  const outputHtmlColIndexes: number[] = [
+    utils.drugLabel,
+    utils.ageLabel,
+    utils.diseaseCategoryLabel,
+    utils.facilityLabel,
+    utils.phaseLabel,
+  ].map((colname) => htmlColnames.indexOf(colname));
+  if (
+    idColIdxHtmlSheet === -1 ||
+    protocolIdColIdxHtmlSheet === -1 ||
+    outputPubmedColIndexes.includes(-1) ||
+    outputHtmlColIndexes.includes(-1)
+  ) {
+    throw new Error("One or more columns do not exist.");
+  }
+  const dummyHtmlRow: string[] = new Array(htmlValues[0].length).fill("");
+  const outputValues: string[][] = pubmedValues.map((pubmedRow) => {
+    const id: string = pubmedRow[idColIdxPubmedSheet];
+    const htmlRow: string[] | undefined = htmlValues.find(
+      (htmlRow) => htmlRow[idColIdxHtmlSheet] === id
+    );
+    const outputPubmedRow: string[] = outputPubmedColIndexes.map(
+      (index) => pubmedRow[index]
+    );
+    const targetRow: string[] = htmlRow === undefined ? dummyHtmlRow : htmlRow;
+    const protocolId: string = targetRow[protocolIdColIdxHtmlSheet];
+    const outputHtmlRow: string[] = outputHtmlColIndexes.map(
+      (index) => targetRow[index]
+    );
+    const res: string[] = [protocolId, ...outputPubmedRow, ...outputHtmlRow];
+    return res;
+  });
+  const outputColumns = outputValues[0].map((colname) =>
+    colname === utils.phaseLabel
+      ? utils.phaseOutputLabel
+      : colname === utils.protocolIdLabel
+      ? utils.seqColName
+      : colname
+  );
+  const outputBody = outputValues.filter((_, idx) => idx !== 0);
+  form2.generateFormPub("様式第２-２(２)", outputBody, outputColumns);
 }
 
 export function generateForm2() {
-  const form2: GenerateForm = new GenerateForm();
-  generateForm2_2_(form2);
-  //  generateForm2_1_(form2);
+  generateForm2_1_(new GenerateForm());
+  generateForm2_2_(new GeneratePublicationForm());
 }
 
 export function generateForm3() {}

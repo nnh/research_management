@@ -178,7 +178,8 @@ function getDatacenterSheetValues_(): Map<string, string[][]> {
   );
   const idAndStartDate: string[][] = filterDatacenterValues_(
     datacenterValues,
-    utils.itemsStartDateIdx
+    utils.itemsStartDateIdx,
+    "object"
   );
   const idAndDiseaseCategory: string[][] = filterDatacenterValues_(
     datacenterValues,

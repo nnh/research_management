@@ -1,5 +1,6 @@
 import * as utils from "./utils";
 import * as ssUtils from "./ss-utils";
+import { util } from "chai";
 
 export function getPublicationValues_(): string[][] {
   const publicationId: string = utils.getProperty_("ss_publication_id");
@@ -62,29 +63,43 @@ export class GetHtmlSheet_ {
       this.inputColumnKey,
       utils.chikenKey,
       utils.specificClinicalStudyKey,
+      utils.publicationKey,
     ].forEach((value: string, idx: number) => columnsIndex.set(value, idx));
     return columnsIndex;
   }
   editColumnsList_(): (string | null)[][] {
     const columnsList: (string | null)[][] = [
-      ["trialType", this.trialTypeLabel, null, null],
-      ["trialName", utils.trialNameLabel, "治験名", "臨床研究名"],
-      ["piName", utils.piNameLabel, "治験調整医師名", "研究代表医師"],
+      ["trialType", this.trialTypeLabel, null, null, null],
+      ["trialName", utils.trialNameLabel, "治験名", "臨床研究名", null],
+      ["piName", utils.piNameLabel, "治験調整医師名", "研究代表医師", null],
       [
         "piFacility",
         utils.piFacilityLabel,
         "治験調整医師所属",
         "研究代表医師所属",
+        null,
       ],
-      ["date", utils.dateLabel, "届出日", "開始日"],
-      ["id", utils.idLabel, "登録ID等", "登録ID等"],
-      ["underAge", utils.underAgeLabel, null, null],
-      ["overAge", utils.overAgeLabel, null, null],
-      ["intervention", "介入の有無", null, null],
-      ["interventionContent", utils.interventionLabel, null, null],
-      ["phase", utils.phaseLabel, "フェーズ（Phase）", "フェーズ（Phase）"],
-      ["disease", utils.diseaseLabel, utils.diseaseLabel, utils.diseaseLabel],
-      ["trialPurpose", utils.trialPurposeLabel, null, null],
+      ["date", utils.dateLabel, "届出日", "開始日", null],
+      ["id", utils.idLabel, "登録ID等", "登録ID等", null],
+      ["underAge", utils.underAgeLabel, null, null, null],
+      ["overAge", utils.overAgeLabel, null, null, null],
+      ["intervention", "介入の有無", null, null, null],
+      ["interventionContent", utils.interventionLabel, null, null, null],
+      [
+        "phase",
+        utils.phaseLabel,
+        utils.phaseOutputLabel,
+        utils.phaseOutputLabel,
+        null,
+      ],
+      [
+        "disease",
+        utils.diseaseLabel,
+        utils.diseaseLabel,
+        utils.diseaseLabel,
+        null,
+      ],
+      ["trialPurpose", utils.trialPurposeLabel, null, null, null],
     ];
     return columnsList;
   }
@@ -115,11 +130,25 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
         utils.principalRoleLabel,
         utils.principalRoleLabel,
         utils.principalRoleLabel,
+        utils.principalRoleLabel,
       ],
-      ["drugLabel", utils.drugLabel, utils.drugLabel, utils.drugLabel],
-      ["ageLabel", utils.ageLabel, utils.ageLabel, utils.ageLabel],
+      [
+        "drugLabel",
+        utils.drugLabel,
+        utils.drugLabel,
+        utils.drugLabel,
+        utils.drugLabel,
+      ],
+      [
+        "ageLabel",
+        utils.ageLabel,
+        utils.ageLabel,
+        utils.ageLabel,
+        utils.ageLabel,
+      ],
       [
         "diseaseLabel",
+        utils.diseaseCategoryLabel,
         utils.diseaseCategoryLabel,
         utils.diseaseCategoryLabel,
         utils.diseaseCategoryLabel,
@@ -129,24 +158,28 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
         utils.facilityLabel,
         utils.facilityLabel,
         utils.facilityLabel,
+        utils.facilityLabel,
       ],
       [
         "attachment_2_1_1",
         utils.attachment_2_1_1,
         utils.attachment_2_1_1,
         utils.attachment_2_1_1,
+        null,
       ],
       [
         "attachment_2_1_2",
         utils.attachment_2_1_2,
         utils.attachment_2_1_2,
         utils.attachment_2_1_2,
+        null,
       ],
       [
         "attachment_2_2",
         utils.attachment_2_2,
         utils.attachment_2_2,
         utils.attachment_2_2,
+        null,
       ],
       [
         "attachment_3",

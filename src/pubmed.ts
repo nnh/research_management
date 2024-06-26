@@ -2,7 +2,7 @@ import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 
-class GetPubmedData {
+export class GetPubmedData {
   outputSheetName: string;
   colnames: string[];
   outputSheet: GoogleAppsScript.Spreadsheet.Sheet;
