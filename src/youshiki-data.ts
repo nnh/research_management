@@ -148,87 +148,67 @@ function getExplanationMap_(): Map<string, string> {
   return explanationMap;
 }
 
-function getDatacenterSheetValues_(): [
-  string[][],
-  string[][],
-  string[][],
-  string[][],
-  string[][]
-] {
+function filterDatacenterValues_(
+  inputValues: any[][],
+  targetIdx: number,
+  valueType: string = "string"
+): string[][] {
+  const idAndTarget: string[][] = inputValues.map((item) => [
+    item[utils.itemsCtrIdx],
+    item[targetIdx],
+  ]);
+  const filterValues: string[][] = idAndTarget.filter(
+    ([id, value]) =>
+      id !== "" &&
+      id !== undefined &&
+      typeof id === "string" &&
+      value !== "" &&
+      value !== undefined &&
+      typeof value === valueType
+  );
+  return filterValues;
+}
+
+function getDatacenterSheetValues_(): Map<string, string[][]> {
+  const res: Map<string, string[][]> = new Map();
   const datacenterValues: any[][] = getSheets.getDatacenterValues_();
-  const datacenterIdAndProtocolId: string[][] = datacenterValues.map((item) => [
-    item[utils.itemsCtrIdx],
-    item[utils.itemsProtocolIdIdx],
-  ]);
-  const idAndProtocolId: string[][] = datacenterIdAndProtocolId.filter(
-    ([id, protocolId]) =>
-      id !== "" &&
-      id !== undefined &&
-      typeof id === "string" &&
-      protocolId !== "" &&
-      protocolId !== undefined &&
-      typeof protocolId === "string"
+  const idAndProtocolId: string[][] = filterDatacenterValues_(
+    datacenterValues,
+    utils.itemsProtocolIdIdx
   );
+  const idAndStartDate: string[][] = filterDatacenterValues_(
+    datacenterValues,
+    utils.itemsStartDateIdx
+  );
+  const idAndDiseaseCategory: string[][] = filterDatacenterValues_(
+    datacenterValues,
+    utils.itemsDiseaseCategoryIdx
+  );
+  const idAndBudget: string[][] = filterDatacenterValues_(
+    datacenterValues,
+    utils.itemsTrialBudgetIdx
+  );
+  const idAndFacility: string[][] = filterDatacenterValues_(
+    datacenterValues,
+    utils.itemsFacilityIdx,
+    "number"
+  );
+  res.set("idAndProtocolId", idAndProtocolId);
+  res.set("idAndStartDate", idAndStartDate);
+  res.set("idAndDiseaseCategory", idAndDiseaseCategory);
+  res.set("idAndBudget", idAndBudget);
+  res.set("idAndFacility", idAndFacility);
+  return res;
+}
 
-  const datacenterIdAndStartDate: string[][] = datacenterValues.map((item) => [
-    item[utils.itemsCtrIdx],
-    item[utils.itemsStartDateIdx],
-  ]);
-  const idAndStartDate: string[][] = datacenterIdAndStartDate.filter(
-    ([id, startDate]) =>
-      id !== "" &&
-      id !== undefined &&
-      typeof id === "string" &&
-      startDate !== "" &&
-      startDate !== undefined
-  );
-  const datacentetIdAndDiseaseCategory: string[][] = datacenterValues.map(
-    (item) => [item[utils.itemsCtrIdx], item[utils.itemsDiseaseCategoryIdx]]
-  );
-  const idAndDiseaseCategory: string[][] =
-    datacentetIdAndDiseaseCategory.filter(
-      ([id, diseaseCategory]) =>
-        id !== "" &&
-        id !== undefined &&
-        typeof id === "string" &&
-        diseaseCategory !== "" &&
-        diseaseCategory !== undefined &&
-        typeof diseaseCategory === "string"
-    );
-
-  const datacenterIdAndBudget: string[][] = datacenterValues.map((item) => [
-    item[utils.itemsCtrIdx],
-    item[utils.itemsTrialBudgetIdx],
-  ]);
-  const idAndBudget: string[][] = datacenterIdAndBudget.filter(
-    ([id, budget]) =>
-      id !== "" &&
-      id !== undefined &&
-      typeof id === "string" &&
-      budget !== "" &&
-      budget !== undefined &&
-      typeof budget === "string"
-  );
-  const datacenterIdAndFacility: string[][] = datacenterValues.map((item) => [
-    item[utils.itemsCtrIdx],
-    item[utils.itemsFacilityIdx],
-  ]);
-  const idAndFacility: string[][] = datacenterIdAndFacility.filter(
-    ([id, facility]) =>
-      id !== "" &&
-      id !== undefined &&
-      typeof id === "string" &&
-      facility !== "" &&
-      facility !== undefined &&
-      typeof facility === "number"
-  );
-  return [
-    idAndBudget,
-    idAndFacility,
-    idAndDiseaseCategory,
-    idAndStartDate,
-    idAndProtocolId,
-  ];
+function getTargetValueById_(
+  inputValues: string[][] | undefined,
+  inputId: RegExp
+): string {
+  const target: string[][] =
+    inputValues?.filter(([id, _]) => inputId.test(id)) || [];
+  const res: string = target.length > 0 ? target[0][1] : "記載なし";
+  return res;
 }
 
 function editAddValues_(
@@ -245,14 +225,7 @@ function editAddValues_(
   ] = getHtmlSheetColumnsIndex_(htmlSheetColumns);
   const piFacility = new RegExp("名古屋医療センター");
   const explanationMap: Map<string, string> = getExplanationMap_();
-  const [
-    idAndBudget,
-    idAndFacility,
-    idAndDiseaseCategory,
-    idAndStartDate,
-    idAndProtocolId,
-  ]: [string[][], string[][], string[][], string[][], string[][]] =
-    getDatacenterSheetValues_();
+  const dc: Map<string, string[][]> = getDatacenterSheetValues_();
   const addValues = outputJrctValues.map((jrctInfo: string[]) => {
     const inputId = new RegExp(jrctInfo[htmlIdColIdx]);
     const piNagoya = piFacility.test(jrctInfo[htmlPiFacilityColIdx]);
@@ -262,28 +235,22 @@ function editAddValues_(
     const overAge: number = editAge_(jrctInfo[htmlOverAgeColIdx]);
     const ageLabel: string =
       underAge > 18 ? "成人" : overAge < 18 ? "小児" : "小児・成人";
-    const targetProtocolId: string[][] = idAndProtocolId.filter(([id, _]) =>
-      inputId.test(id)
+    const protocolId: string = getTargetValueById_(
+      dc.get("idAndProtocolId"),
+      inputId
     );
-    const protocolId: string =
-      targetProtocolId.length > 0 ? targetProtocolId[0][1] : "記載なし";
-    const targetStartDate: string[][] = idAndStartDate.filter(([id, _]) =>
-      inputId.test(id)
+    const datacenterStartDateLabel: string = getTargetValueById_(
+      dc.get("idAndStartDate"),
+      inputId
     );
-    const datacenterStartDateLabel: string =
-      targetStartDate.length > 0 ? targetStartDate[0][1] : "記載なし";
-    const targetDiseaseCategory: string[][] = idAndDiseaseCategory.filter(
-      ([id, _]) => inputId.test(id)
+    const diseaseCategoryLabel: string = getTargetValueById_(
+      dc.get("idAndDiseaseCategory"),
+      inputId
     );
-    const diseaseCategoryLabel: string =
-      targetDiseaseCategory.length > 0
-        ? targetDiseaseCategory[0][1]
-        : "記載なし";
-    const targetFacility: string[][] = idAndFacility.filter(([id, _]) =>
-      inputId.test(id)
+    const facilityLabel: string = getTargetValueById_(
+      dc.get("idAndFacility"),
+      inputId
     );
-    const facilityLabel: string =
-      targetFacility.length > 0 ? targetFacility[0][1] : "記載なし";
     const disease: string = jrctInfo[htmlDiseaseColIdx];
     const intervention: string = jrctInfo[htmlInterventionColIdx].replace(
       /\r?\n/g,
@@ -301,7 +268,7 @@ function editAddValues_(
     const attachment_3: string = editAttachment_3_text_(
       piNagoya,
       explanationMap,
-      idAndBudget,
+      dc.get("idAndBudget") || [],
       jrctInfo,
       htmlIdColIdx
     );
