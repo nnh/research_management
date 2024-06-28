@@ -38,6 +38,8 @@ export const pmidLabel = "PMID";
 export const datacenterStartDateLabel = "研究管理：開始日";
 export const protocolIdLabel = "プロトコルID";
 export const phaseOutputLabel = "フェーズ（Phase）";
+export const titlePubmedLabel = "題名";
+export const registIdLabel = "登録ID等";
 
 export const jrctUminColnames = ["Label", "Value", "jrctNo"];
 export const headerRowIndex = 0;

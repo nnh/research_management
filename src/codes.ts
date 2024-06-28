@@ -2,14 +2,15 @@ import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 import * as pubmed from "./pubmed";
+import { ta } from "date-fns/locale";
 
 class GenerateForm {
   inputColnames: string[];
   inputColIndexes: number[];
   htmlSheet: GoogleAppsScript.Spreadsheet.Sheet;
   htmlItems: string[][];
-  trialTypeLabel: string;
   trialTypeColIdx: number;
+  idColIdx: number;
   constructor() {
     this.inputColnames = this.getInputColumns();
     this.htmlSheet = new ssUtils.GetSheet_().getSheetByProperty_(
@@ -17,18 +18,17 @@ class GenerateForm {
     );
     this.htmlItems = this.htmlSheet.getDataRange().getValues();
     this.inputColIndexes = this.getInputColIndexes();
-    this.trialTypeLabel = utils.getProperty_("trial_type_label");
-    this.trialTypeColIdx = this.getTrialTypeColIdx_();
-  }
-  private getTrialTypeColIdx_(): number {
-    const trialTypeColIdx: number = ssUtils.getColIdx_(
-      this.htmlSheet,
-      this.trialTypeLabel
+    this.trialTypeColIdx = this.getColIdxByColName_(
+      utils.getProperty_("trial_type_label")
     );
-    if (trialTypeColIdx === -1) {
-      throw new Error(`${this.trialTypeLabel} columns do not exist.`);
+    this.idColIdx = this.getColIdxByColName_(utils.idLabel);
+  }
+  private getColIdxByColName_(colName: string): number {
+    const colIdx = ssUtils.getColIdx_(this.htmlSheet, colName);
+    if (colIdx === -1) {
+      throw new Error(`${colName} columns do not exist.`);
     }
-    return trialTypeColIdx;
+    return colIdx;
   }
   private getOutputColnames_(targetKey: string): string[] {
     return getSheets.getColumnsArrayByInputColNames_(
@@ -97,6 +97,61 @@ class GenerateForm {
     ];
     return inputColumns;
   }
+  getAttachmentData(
+    targetColumnName: string,
+    inputValues: string[][],
+    titleText: string
+  ): string[][] {
+    const attachmentIdAndData: string[][] =
+      this.getIdAndAttachmentData(targetColumnName);
+    const attachmentIdColIdx: number = attachmentIdAndData[0].indexOf(
+      utils.idLabel
+    );
+    const attachmentValueIdx: number =
+      attachmentIdAndData[0].indexOf(targetColumnName);
+    const inputValuesIdColIdx: number = inputValues[0].indexOf(utils.idLabel);
+    const inputValuesTitleColIdx: number = inputValues[0].indexOf(titleText);
+    const inputValuesSeqColIdx: number = inputValues[0].indexOf(
+      utils.seqColName
+    );
+    if (
+      attachmentIdColIdx === -1 ||
+      inputValuesIdColIdx === -1 ||
+      attachmentValueIdx === -1 ||
+      inputValuesTitleColIdx === -1 ||
+      inputValuesSeqColIdx === -1
+    ) {
+      throw new Error("The column does not exist.");
+    }
+    const outputValues: string[][] = inputValues.map((inputRow) => {
+      const inputValuesid: string = inputRow[inputValuesIdColIdx];
+      const attachmentData: string[] | undefined = attachmentIdAndData.find(
+        (idAndData) => idAndData[attachmentIdColIdx] === inputValuesid
+      );
+      const attachmentValue: string =
+        attachmentData === undefined ? "" : attachmentData[attachmentValueIdx];
+      return [
+        inputRow[inputValuesSeqColIdx],
+        inputRow[inputValuesTitleColIdx],
+        inputRow[inputValuesIdColIdx],
+        attachmentValue,
+      ];
+    });
+    const outputBody: string[][] = outputValues.filter((_, idx) => idx !== 0);
+    return outputBody;
+  }
+  getIdAndAttachmentData(targetColumnName: string): string[][] {
+    const targetColIdx = this.getColIdxByColName_(targetColumnName);
+    if (targetColIdx === -1) {
+      throw new Error("The column does not exist.");
+    }
+    const res = this.htmlItems.map((item) => {
+      const id = item[this.idColIdx];
+      const targetData = item[targetColIdx];
+      return [id, targetData];
+    });
+    return res;
+  }
 }
 class GeneratePublicationForm extends GenerateForm {
   constructor() {
@@ -161,11 +216,12 @@ function generateForm2_2_(form2: GeneratePublicationForm) {
   const idColIdxPubmedSheet: number = pubmedColnames.indexOf(utils.idLabel);
   const htmlValues: string[][] = form2.htmlItems;
   const htmlColnames: string[] = htmlValues[utils.headerRowIndex];
-  const idColIdxHtmlSheet: number = htmlColnames.indexOf(utils.idLabel);
+  const idColIdxHtmlSheet: number = form2.idColIdx;
   const protocolIdColIdxHtmlSheet: number = htmlColnames.indexOf(
     utils.protocolIdLabel
   );
   const outputHtmlColIndexes: number[] = [
+    utils.trialNameLabel,
     utils.drugLabel,
     utils.ageLabel,
     utils.diseaseCategoryLabel,
@@ -181,7 +237,7 @@ function generateForm2_2_(form2: GeneratePublicationForm) {
     throw new Error("One or more columns do not exist.");
   }
   const dummyHtmlRow: string[] = new Array(htmlValues[0].length).fill("");
-  const outputValues: string[][] = pubmedValues.map((pubmedRow) => {
+  const idAndOutputValues: string[][] = pubmedValues.map((pubmedRow, idx) => {
     const id: string = pubmedRow[idColIdxPubmedSheet];
     const htmlRow: string[] | undefined = htmlValues.find(
       (htmlRow) => htmlRow[idColIdxHtmlSheet] === id
@@ -190,13 +246,34 @@ function generateForm2_2_(form2: GeneratePublicationForm) {
       (index) => pubmedRow[index]
     );
     const targetRow: string[] = htmlRow === undefined ? dummyHtmlRow : htmlRow;
-    const protocolId: string = targetRow[protocolIdColIdxHtmlSheet];
     const outputHtmlRow: string[] = outputHtmlColIndexes.map(
       (index) => targetRow[index]
     );
-    const res: string[] = [protocolId, ...outputPubmedRow, ...outputHtmlRow];
+    const res: string[] = [
+      id,
+      idx === 0 ? utils.seqColName : String(idx),
+      ...outputPubmedRow,
+      ...outputHtmlRow,
+    ];
     return res;
   });
+  // 別添２-２
+  const attachment_2_2 = form2.getAttachmentData(
+    utils.attachment_2_2,
+    idAndOutputValues,
+    utils.trialNameLabel
+  );
+  form2.generateFormPub("別添２-２", attachment_2_2, [
+    utils.seqColName,
+    "治験・臨床研究名",
+    utils.registIdLabel,
+    "研究概要",
+    "特定臨床研究の実施に伴い発表した論文であることの説明",
+  ]);
+  // 様式第２-２(２)
+  const outputValues = idAndOutputValues.map((row) =>
+    row.filter((_, idx) => idx !== 0)
+  );
   const outputColumns = outputValues[0].map((colname) =>
     colname === utils.phaseLabel
       ? utils.phaseOutputLabel

@@ -80,7 +80,7 @@ export class GetHtmlSheet_ {
         null,
       ],
       ["date", utils.dateLabel, "届出日", "開始日", null],
-      ["id", utils.idLabel, "登録ID等", "登録ID等", null],
+      ["id", utils.idLabel, utils.registIdLabel, utils.registIdLabel, null],
       ["underAge", utils.underAgeLabel, null, null, null],
       ["overAge", utils.overAgeLabel, null, null, null],
       ["intervention", "介入の有無", null, null, null],

@@ -13,7 +13,7 @@ export class GetPubmedData {
       "pubmed_sheet_name"
     );
     this.colnamesMap = new Map([
-      ["title", "題名"],
+      ["title", utils.titlePubmedLabel],
       ["authorName", "発表者氏名"],
       ["authorFacilities", "発表者の所属"],
       ["role", "役割"],
