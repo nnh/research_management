@@ -98,17 +98,18 @@ class GenerateForm {
     return inputColumns;
   }
   getAttachmentData(
-    targetColumnName: string,
+    targetColumnNames: string[],
     inputValues: string[][],
     titleText: string
   ): string[][] {
     const attachmentIdAndData: string[][] =
-      this.getIdAndAttachmentData(targetColumnName);
+      this.getIdAndAttachmentData(targetColumnNames);
     const attachmentIdColIdx: number = attachmentIdAndData[0].indexOf(
       utils.idLabel
     );
-    const attachmentValueIdx: number =
-      attachmentIdAndData[0].indexOf(targetColumnName);
+    const attachmentValueIdxes: number[] = targetColumnNames.map(
+      (targetColumnName) => attachmentIdAndData[0].indexOf(targetColumnName)
+    );
     const inputValuesIdColIdx: number = inputValues[0].indexOf(utils.idLabel);
     const inputValuesTitleColIdx: number = inputValues[0].indexOf(titleText);
     const inputValuesSeqColIdx: number = inputValues[0].indexOf(
@@ -117,9 +118,9 @@ class GenerateForm {
     if (
       attachmentIdColIdx === -1 ||
       inputValuesIdColIdx === -1 ||
-      attachmentValueIdx === -1 ||
       inputValuesTitleColIdx === -1 ||
-      inputValuesSeqColIdx === -1
+      inputValuesSeqColIdx === -1 ||
+      attachmentValueIdxes.includes(-1)
     ) {
       throw new Error("The column does not exist.");
     }
@@ -128,27 +129,36 @@ class GenerateForm {
       const attachmentData: string[] | undefined = attachmentIdAndData.find(
         (idAndData) => idAndData[attachmentIdColIdx] === inputValuesid
       );
-      const attachmentValue: string =
-        attachmentData === undefined ? "" : attachmentData[attachmentValueIdx];
+      const attachmentValues: string[] = attachmentValueIdxes.map((idx) =>
+        attachmentData
+          ? attachmentData[idx] === undefined
+            ? ""
+            : attachmentData[idx]
+          : ""
+      );
       return [
         inputRow[inputValuesSeqColIdx],
         inputRow[inputValuesTitleColIdx],
         inputRow[inputValuesIdColIdx],
-        attachmentValue,
+        ...attachmentValues,
       ];
     });
     const outputBody: string[][] = outputValues.filter((_, idx) => idx !== 0);
     return outputBody;
   }
-  getIdAndAttachmentData(targetColumnName: string): string[][] {
-    const targetColIdx = this.getColIdxByColName_(targetColumnName);
-    if (targetColIdx === -1) {
+  getIdAndAttachmentData(targetColumnNames: string[]): string[][] {
+    const targetColIdxs: number[] = targetColumnNames.map((targetColumnName) =>
+      this.getColIdxByColName_(targetColumnName)
+    );
+    if (targetColIdxs.includes(-1)) {
       throw new Error("The column does not exist.");
     }
-    const res = this.htmlItems.map((item) => {
-      const id = item[this.idColIdx];
-      const targetData = item[targetColIdx];
-      return [id, targetData];
+    const res: string[][] = this.htmlItems.map((item) => {
+      const id: string = item[this.idColIdx];
+      const targetDatas: string[] = targetColIdxs.map(
+        (targetColIdx) => item[targetColIdx]
+      );
+      return [id, ...targetDatas];
     });
     return res;
   }
@@ -259,7 +269,7 @@ function generateForm2_2_(form2: GeneratePublicationForm) {
   });
   // 別添２-２
   const attachment_2_2 = form2.getAttachmentData(
-    utils.attachment_2_2,
+    [utils.attachment_2_1_1, utils.attachment_2_2],
     idAndOutputValues,
     utils.trialNameLabel
   );
