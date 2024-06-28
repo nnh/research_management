@@ -2,7 +2,7 @@ import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 import * as pubmed from "./pubmed";
-import { ta } from "date-fns/locale";
+import { id } from "date-fns/locale";
 
 class GenerateForm {
   inputColnames: string[];
@@ -36,14 +36,6 @@ class GenerateForm {
       this.inputColnames
     );
   }
-  private getOutputSheet_(outputSheetName: string, targetKey: string) {
-    const outputColnames: string[] = this.getOutputColnames_(targetKey);
-    const sheet = new ssUtils.GetSheet_().createSheet_(
-      outputSheetName,
-      outputColnames
-    );
-    return sheet;
-  }
   private getOutputValues_(values: string[][]): string[][] {
     const res = values.map((item, rowIdx) =>
       this.inputColIndexes.map((idx) =>
@@ -52,13 +44,35 @@ class GenerateForm {
     );
     return res;
   }
+  private getOutputSheetBySheetName_(
+    outputSheetName: string,
+    colnames: string[]
+  ) {
+    const sheet = new ssUtils.GetSheet_().createSheet_(
+      outputSheetName,
+      colnames
+    );
+    return sheet;
+  }
+  generateFormYoushiki(
+    outputSheetName: string,
+    inputValues: string[][],
+    targetKey: string
+  ): string[][] {
+    const outputColnames: string[] = this.getOutputColnames_(targetKey);
+    const outputValues: string[][] = this.getOutputValues_(inputValues);
+    this.generateForm(outputSheetName, outputValues, outputColnames);
+    return [outputColnames, ...outputValues];
+  }
   generateForm(
     outputSheetName: string,
-    targetKey: string,
-    inputValues: string[][]
+    outputValues: string[][],
+    colnames: string[]
   ) {
-    const outputSheet = this.getOutputSheet_(outputSheetName, targetKey);
-    const outputValues = this.getOutputValues_(inputValues);
+    const outputSheet = this.getOutputSheetBySheetName_(
+      outputSheetName,
+      colnames
+    );
     outputSheet
       .getRange(
         2,
@@ -68,7 +82,6 @@ class GenerateForm {
       )
       .setValues(outputValues);
   }
-
   private getInputColIndexes(): number[] {
     const inputColIndexes: number[] = this.inputColnames.map((colname) =>
       colname === utils.seqColName
@@ -97,17 +110,18 @@ class GenerateForm {
     ];
     return inputColumns;
   }
-  getAttachmentData(
+
+  private getAttachment2_2_ColIdx_(
+    attachmentIdAndData: string[][],
     targetColumnNames: string[],
     inputValues: string[][],
     titleText: string
-  ): string[][] {
-    const attachmentIdAndData: string[][] =
-      this.getIdAndAttachmentData(targetColumnNames);
+  ): [Map<string, number>, number[]] {
+    const res: Map<string, number> = new Map();
     const attachmentIdColIdx: number = attachmentIdAndData[0].indexOf(
       utils.idLabel
     );
-    const attachmentValueIdxes: number[] = targetColumnNames.map(
+    const attachmentValueIdxies: number[] = targetColumnNames.map(
       (targetColumnName) => attachmentIdAndData[0].indexOf(targetColumnName)
     );
     const inputValuesIdColIdx: number = inputValues[0].indexOf(utils.idLabel);
@@ -120,16 +134,36 @@ class GenerateForm {
       inputValuesIdColIdx === -1 ||
       inputValuesTitleColIdx === -1 ||
       inputValuesSeqColIdx === -1 ||
-      attachmentValueIdxes.includes(-1)
+      attachmentValueIdxies.includes(-1)
     ) {
       throw new Error("The column does not exist.");
     }
-    const outputValues: string[][] = inputValues.map((inputRow) => {
-      const inputValuesid: string = inputRow[inputValuesIdColIdx];
-      const attachmentData: string[] | undefined = attachmentIdAndData.find(
-        (idAndData) => idAndData[attachmentIdColIdx] === inputValuesid
+    res.set("attachmentId", attachmentIdColIdx);
+    res.set("inputValuesId", inputValuesIdColIdx);
+    res.set("inputValuesTitle", inputValuesTitleColIdx);
+    res.set("inputValuesSeq", inputValuesSeqColIdx);
+    return [res, attachmentValueIdxies];
+  }
+  getAttachmentPublicationData(
+    targetColumnNames: string[],
+    inputValues: string[][],
+    titleText: string
+  ): string[][] {
+    const attachmentIdAndData: string[][] =
+      this.getIdAndAttachmentData(targetColumnNames);
+    const [idxies, attachmentValueIdxies]: [Map<string, number>, number[]] =
+      this.getAttachment2_2_ColIdx_(
+        attachmentIdAndData,
+        targetColumnNames,
+        inputValues,
+        titleText
       );
-      const attachmentValues: string[] = attachmentValueIdxes.map((idx) =>
+    const outputValues: string[][] = inputValues.map((inputRow) => {
+      const inputValuesid: string = inputRow[idxies.get("inputValuesId")!];
+      const attachmentData: string[] | undefined = attachmentIdAndData.find(
+        (idAndData) => idAndData[idxies.get("attachmentId")!] === inputValuesid
+      );
+      const attachmentValues: string[] = attachmentValueIdxies.map((idx) =>
         attachmentData
           ? attachmentData[idx] === undefined
             ? ""
@@ -137,9 +171,9 @@ class GenerateForm {
           : ""
       );
       return [
-        inputRow[inputValuesSeqColIdx],
-        inputRow[inputValuesTitleColIdx],
-        inputRow[inputValuesIdColIdx],
+        inputRow[idxies.get("inputValuesSeq")!],
+        inputRow[idxies.get("inputValuesTitle")!],
+        inputRow[idxies.get("inputValuesId")!],
         ...attachmentValues,
       ];
     });
@@ -163,33 +197,6 @@ class GenerateForm {
     return res;
   }
 }
-class GeneratePublicationForm extends GenerateForm {
-  constructor() {
-    super();
-  }
-  private getOutputSheetPub_(outputSheetName: string, colnames: string[]) {
-    const sheet = new ssUtils.GetSheet_().createSheet_(
-      outputSheetName,
-      colnames
-    );
-    return sheet;
-  }
-  generateFormPub(
-    outputSheetName: string,
-    outputValues: string[][],
-    colnames: string[]
-  ) {
-    const outputSheet = this.getOutputSheetPub_(outputSheetName, colnames);
-    outputSheet
-      .getRange(
-        2,
-        1,
-        outputValues.length,
-        outputValues[utils.headerRowIndex].length
-      )
-      .setValues(outputValues);
-  }
-}
 
 function generateForm2_1_(form2: GenerateForm) {
   const specificClinicalStudyText: string = utils.trialTypeListJrct.get(
@@ -206,14 +213,50 @@ function generateForm2_1_(form2: GenerateForm) {
       itemDate >= utils.limit_date
     );
   });
-  form2.generateForm(
+  const outputYoushiki_2_1_2: string[][] = form2.generateFormYoushiki(
     "様式第２-１（２）",
-    utils.specificClinicalStudyKey,
-    youshiki2_1_2
+    youshiki2_1_2,
+    utils.specificClinicalStudyKey
   );
+  const attachment_2_2 = form2.getAttachmentPublicationData(
+    [utils.attachment_2_1_1],
+    outputYoushiki_2_1_2,
+    utils.trialNameLabel
+  );
+  console.log(attachment_2_2);
+
+  /*
+  // 別添２-１（１）
+  const attachment_2_1_1 = form2.getAttachmentData(
+    [utils.attachment_2_1_1],
+    youshiki2_1_2,
+    utils.trialNameLabel
+  );
+  form2.generateForm("別添２-１（１）", attachment_2_1_1, [
+    utils.seqColName,
+    "臨床研究名",
+    utils.registIdLabel,
+    "研究概要",
+  ]);
+  */
+  /*
+  // 別添２-１（２）
+  const attachment_2_1_2 = form2.getAttachmentData(
+    [utils.attachment_2_1_1, utils.attachment_2_2],
+    idAndOutputValues,
+    utils.trialNameLabel
+  );
+  form2.generateFormPub("別添２-２", attachment_2_2, [
+    utils.seqColName,
+    "治験・臨床研究名",
+    utils.registIdLabel,
+    "研究概要",
+    "特定臨床研究の実施に伴い発表した論文であることの説明",
+  ]);
+  */
 }
 
-function generateForm2_2_(form2: GeneratePublicationForm) {
+function generateForm2_2_(form2: GenerateForm) {
   const pbmd = new pubmed.GetPubmedData();
   const pubmedValues: string[][] = pbmd.outputSheet.getDataRange().getValues();
   const pubmedColnames: string[] = pbmd.colnames;
@@ -268,12 +311,12 @@ function generateForm2_2_(form2: GeneratePublicationForm) {
     return res;
   });
   // 別添２-２
-  const attachment_2_2 = form2.getAttachmentData(
+  const attachment_2_2 = form2.getAttachmentPublicationData(
     [utils.attachment_2_1_1, utils.attachment_2_2],
     idAndOutputValues,
     utils.trialNameLabel
   );
-  form2.generateFormPub("別添２-２", attachment_2_2, [
+  form2.generateForm("別添２-２", attachment_2_2, [
     utils.seqColName,
     "治験・臨床研究名",
     utils.registIdLabel,
@@ -292,12 +335,13 @@ function generateForm2_2_(form2: GeneratePublicationForm) {
       : colname
   );
   const outputBody = outputValues.filter((_, idx) => idx !== 0);
-  form2.generateFormPub("様式第２-２(２)", outputBody, outputColumns);
+  form2.generateForm("様式第２-２(２)", outputBody, outputColumns);
 }
 
 export function generateForm2() {
-  generateForm2_1_(new GenerateForm());
-  generateForm2_2_(new GeneratePublicationForm());
+  const form2 = new GenerateForm();
+  generateForm2_1_(form2);
+  generateForm2_2_(form2);
 }
 
 export function generateForm3() {}
