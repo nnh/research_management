@@ -40,6 +40,7 @@ export const protocolIdLabel = "プロトコルID";
 export const phaseOutputLabel = "フェーズ（Phase）";
 export const titlePubmedLabel = "題名";
 export const registIdLabel = "登録ID等";
+export const abstractLabel = "研究概要";
 
 export const jrctUminColnames = ["Label", "Value", "jrctNo"];
 export const headerRowIndex = 0;

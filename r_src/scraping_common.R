@@ -2,7 +2,7 @@
 #' description
 #' @file scraping_common.r
 #' @author Mariko Ohtsuka
-#' @date 2024.6.20
+#' @date 2024.7.1
 # ------ libraries ------
 # ------ constants ------
 kUrlHead <- "https://jrct.niph.go.jp/latest-detail/"
@@ -121,4 +121,6 @@ getRecptNoFromHtml_ <- function(uminId) {
 existJrctUminNoList <- GetJrctUminNoListBySheet(kOutputSheetName, "C:C")
 pubmedJrctUminNoList <- GetJrctUminNoListBySheet(kPubmedSheetName, "G:G")
 inputJrctUminNoList <- GetJrctUminNoListBySheet(kInputSheetName, "A:A")
-targetList <- modifyList(inputJrctUminNoList, pubmedJrctUminNoList)
+targetList <- list()
+targetList$jRCT <- c(inputJrctUminNoList$jRCT, pubmedJrctUminNoList$jRCT)
+targetList$umin <- c(inputJrctUminNoList$umin, pubmedJrctUminNoList$umin)

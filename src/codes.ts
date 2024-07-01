@@ -30,13 +30,13 @@ class GenerateForm {
     }
     return colIdx;
   }
-  private getOutputColnames_(targetKey: string): string[] {
+  protected getOutputColnames_(targetKey: string): string[] {
     return getSheets.getColumnsArrayByInputColNames_(
       targetKey,
       this.inputColnames
     );
   }
-  private getOutputValues_(values: string[][]): string[][] {
+  getOutputValues_(values: string[][]): string[][] {
     const res = values.map((item, rowIdx) =>
       this.inputColIndexes.map((idx) =>
         idx === utils.highValue ? String(rowIdx) : `'${item[idx]}`
@@ -58,15 +58,10 @@ class GenerateForm {
     outputSheetName: string,
     inputValues: string[][],
     targetKey: string
-  ): Map<string, string[][]> {
+  ) {
     const outputColnames: string[] = this.getOutputColnames_(targetKey);
-    const outputValues: string[][] = this.getOutputValues_(inputValues);
-    const outputBody: string[][] = outputValues.filter((_, idx) => idx !== 0);
+    const outputBody: string[][] = inputValues.filter((_, idx) => idx !== 0);
     this.generateForm(outputSheetName, outputBody, outputColnames);
-    const res: Map<string, string[][]> = new Map();
-    res.set("outputColnames", [outputColnames]);
-    res.set("outputValues", outputValues);
-    return res;
   }
   generateForm(
     outputSheetName: string,
@@ -86,7 +81,7 @@ class GenerateForm {
       )
       .setValues(outputValues);
   }
-  private getInputColIndexes(): number[] {
+  protected getInputColIndexes(): number[] {
     const inputColIndexes: number[] = this.inputColnames.map((colname) =>
       colname === utils.seqColName
         ? utils.highValue
@@ -98,6 +93,9 @@ class GenerateForm {
     return inputColIndexes;
   }
   private getInputColumns(): string[] {
+    return this.getInputColumnsCommon();
+  }
+  protected getInputColumnsCommon(): string[] {
     const inputColumns: string[] = [
       utils.seqColName,
       utils.trialNameLabel,
@@ -111,9 +109,6 @@ class GenerateForm {
       utils.diseaseCategoryLabel,
       utils.facilityLabel,
       utils.phaseLabel,
-      utils.attachment_2_1_1,
-      utils.attachment_2_1_2,
-      utils.attachment_2_2,
     ];
     return inputColumns;
   }
@@ -123,7 +118,7 @@ class GenerateForm {
       utils.seqColName,
       utils.trialNameLabel,
       utils.registIdLabel,
-      "研究概要",
+      utils.abstractLabel,
     ];
     const targetColIdxes = targetInputColNames.map((targetColName) =>
       inputValues[0].indexOf(targetColName)
@@ -232,8 +227,43 @@ class GenerateForm {
     return res;
   }
 }
+class GenerateForm2_1 extends GenerateForm {
+  attachmentColnames: string[];
+  constructor() {
+    super();
+    this.attachmentColnames = [utils.attachment_2_1_2];
+    this.inputColnames = this.getInputColnames_();
+    this.inputColIndexes = this.getInputColIndexes();
+  }
+  private getInputColnames_(): string[] {
+    const inputColumns: string[] = this.getInputColumnsCommon();
+    const res: string[] = [...inputColumns, ...this.attachmentColnames];
+    return res;
+  }
+  private getTargetColnames_(
+    inputColnames: string[],
+    excludeColumns: string[]
+  ): string[] {
+    return inputColnames.filter(
+      (colname) => !excludeColumns.includes(`'${colname}`)
+    );
+  }
+  getTargetColIdxies_(inputColnames: string[], excludeColumns: string[]) {
+    const targetColnames: string[] = this.getTargetColnames_(
+      inputColnames,
+      excludeColumns
+    );
+    const temp: (number | null)[] = inputColnames.map((colname) =>
+      excludeColumns.includes(`'${colname}`)
+        ? null
+        : targetColnames.indexOf(colname)
+    );
+    const res: number[] = temp.filter((value) => value !== null) as number[];
+    return res;
+  }
+}
 
-function generateForm2_1_(form2: GenerateForm) {
+function generateForm2_1_(form2: GenerateForm2_1) {
   const specificClinicalStudyText: string = utils.trialTypeListJrct.get(
     utils.specificClinicalStudyKey
   )!;
@@ -249,105 +279,25 @@ function generateForm2_1_(form2: GenerateForm) {
       idx === 0
     );
   });
-  const outputYoushiki_2_1_2: Map<string, string[][]> =
-    form2.generateFormYoushiki(
-      "様式第２-１（２）",
-      youshiki2_1_2,
-      utils.specificClinicalStudyKey
-    );
-  console.log(0);
-  const attachment_2_2 = form2.getAttachmentData(outputYoushiki_2_1_2);
-  console.log(attachment_2_2);
-}
+  const inputValues: string[][] = form2.getOutputValues_(youshiki2_1_2);
+  const test = form2.getTargetColIdxies_(
+    inputValues[0],
+    form2.attachmentColnames
+  );
 
-function generateForm2_2_(form2: GenerateForm) {
-  const pbmd = new pubmed.GetPubmedData();
-  const pubmedValues: string[][] = pbmd.outputSheet.getDataRange().getValues();
-  const pubmedColnames: string[] = pbmd.colnames;
-  const outputPubmedColnames: string[] = pubmedColnames.filter(
-    (colname) => colname !== utils.pmidLabel && colname !== utils.idLabel
+  const inputValuesYoushiki2_1_2: string[][] = inputValues.map(
+    (values, idx) => values
   );
-  const outputPubmedColIndexes: number[] = outputPubmedColnames.map((colname) =>
-    pubmedColnames.indexOf(colname)
+  form2.generateFormYoushiki(
+    "様式第２-１（２）",
+    inputValuesYoushiki2_1_2,
+    utils.specificClinicalStudyKey
   );
-  const idColIdxPubmedSheet: number = pubmedColnames.indexOf(utils.idLabel);
-  const htmlValues: string[][] = form2.htmlItems;
-  const htmlColnames: string[] = htmlValues[utils.headerRowIndex];
-  const idColIdxHtmlSheet: number = form2.idColIdx;
-  const protocolIdColIdxHtmlSheet: number = htmlColnames.indexOf(
-    utils.protocolIdLabel
-  );
-  const outputHtmlColIndexes: number[] = [
-    utils.trialNameLabel,
-    utils.drugLabel,
-    utils.ageLabel,
-    utils.diseaseCategoryLabel,
-    utils.facilityLabel,
-    utils.phaseLabel,
-  ].map((colname) => htmlColnames.indexOf(colname));
-  if (
-    idColIdxHtmlSheet === -1 ||
-    protocolIdColIdxHtmlSheet === -1 ||
-    outputPubmedColIndexes.includes(-1) ||
-    outputHtmlColIndexes.includes(-1)
-  ) {
-    throw new Error("One or more columns do not exist.");
-  }
-  const dummyHtmlRow: string[] = new Array(htmlValues[0].length).fill("");
-  const idAndOutputValues: string[][] = pubmedValues.map((pubmedRow, idx) => {
-    const id: string = pubmedRow[idColIdxPubmedSheet];
-    const htmlRow: string[] | undefined = htmlValues.find(
-      (htmlRow) => htmlRow[idColIdxHtmlSheet] === id
-    );
-    const outputPubmedRow: string[] = outputPubmedColIndexes.map(
-      (index) => pubmedRow[index]
-    );
-    const targetRow: string[] = htmlRow === undefined ? dummyHtmlRow : htmlRow;
-    const outputHtmlRow: string[] = outputHtmlColIndexes.map(
-      (index) => targetRow[index]
-    );
-    const res: string[] = [
-      id,
-      idx === 0 ? utils.seqColName : String(idx),
-      ...outputPubmedRow,
-      ...outputHtmlRow,
-    ];
-    return res;
-  });
-  /*
-  // 別添２-２
-  const attachment_2_2 = form2.getAttachmentPublicationData(
-    [utils.attachment_2_1_1, utils.attachment_2_2],
-    idAndOutputValues,
-    utils.trialNameLabel
-  );
-  form2.generateForm("別添２-２", attachment_2_2, [
-    utils.seqColName,
-    "治験・臨床研究名",
-    utils.registIdLabel,
-    "研究概要",
-    "特定臨床研究の実施に伴い発表した論文であることの説明",
-  ]);
-  // 様式第２-２(２)
-  const outputValues = idAndOutputValues.map((row) =>
-    row.filter((_, idx) => idx !== 0)
-  );
-  const outputColumns = outputValues[0].map((colname) =>
-    colname === utils.phaseLabel
-      ? utils.phaseOutputLabel
-      : colname === utils.protocolIdLabel
-      ? utils.seqColName
-      : colname
-  );
-  const outputBody = outputValues.filter((_, idx) => idx !== 0);
-  form2.generateForm("様式第２-２(２)", outputBody, outputColumns);
-  */
+  console.log(222);
 }
 
 export function generateForm2() {
-  const form2 = new GenerateForm();
-  generateForm2_1_(form2);
-  //  generateForm2_2_(form2);
+  generateForm2_1_(new GenerateForm2_1());
 }
 
 export function generateForm3() {}

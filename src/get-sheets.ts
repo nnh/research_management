@@ -164,25 +164,26 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
         "attachment_2_1_1",
         utils.attachment_2_1_1,
         utils.attachment_2_1_1,
+        utils.abstractLabel,
         utils.attachment_2_1_1,
-        null,
       ],
       [
         "attachment_2_1_2",
         utils.attachment_2_1_2,
         utils.attachment_2_1_2,
         utils.attachment_2_1_2,
-        null,
+        utils.attachment_2_1_2,
       ],
       [
         "attachment_2_2",
         utils.attachment_2_2,
         utils.attachment_2_2,
         utils.attachment_2_2,
-        null,
+        utils.attachment_2_2,
       ],
       [
         "attachment_3",
+        utils.attachment_3,
         utils.attachment_3,
         utils.attachment_3,
         utils.attachment_3,
@@ -190,15 +191,11 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
       [
         "datacenterStartDateLabel",
         utils.datacenterStartDateLabel,
-        utils.datacenterStartDateLabel,
-        utils.datacenterStartDateLabel,
+        null,
+        null,
+        null,
       ],
-      [
-        "protocolId",
-        utils.protocolIdLabel,
-        utils.protocolIdLabel,
-        utils.protocolIdLabel,
-      ],
+      ["protocolId", utils.protocolIdLabel, null, null, null],
     ];
     return columnsList;
   }
@@ -212,7 +209,8 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
   }
 }
 
-export function getHtmlSheetAndYoushikiColumns_(): (string | null)[][] {
+function getHtmlSheetAndYoushikiColumns_(): (string | null)[][] {
+  console.log(111);
   const array1: (string | null)[][] = new GetHtmlSheet_().editColumnsList_();
   const array2: (string | null)[][] =
     new GetHtmlSheetAddColumn_().editColumnsList_();
