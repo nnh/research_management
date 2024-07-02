@@ -18,6 +18,7 @@ export class GetPubmedData {
       ["authorFacilities", "発表者の所属"],
       ["role", "役割"],
       ["vancouver", "雑誌名・出版年月等"],
+      ["type", "論文種別"],
       [utils.idLabel, utils.idLabel],
       [utils.pmidLabel, utils.pmidLabel],
     ]);
@@ -27,7 +28,7 @@ export class GetPubmedData {
       this.colnamesMap.get("authorFacilities") || "",
       this.colnamesMap.get("role") || "",
       this.colnamesMap.get("vancouver") || "",
-      "論文種別",
+      this.colnamesMap.get("type") || "",
       utils.idLabel,
       utils.pmidLabel,
     ];
@@ -186,7 +187,13 @@ export class GetPubmedData {
 }
 
 export function getPubmed() {
+  const typeMap: Map<string, string> = new Map([
+    ["主", "主解析論文"],
+    ["副", "サブ解析論文"],
+    ["プ", "プロトコール論文"],
+  ]);
   const targetPublicationIndexMap: Map<string, number> = new Map([
+    ["type", 4],
     ["umin", 7],
     ["jrct", 8],
     ["protocolId", 9],
@@ -198,6 +205,8 @@ export function getPubmed() {
     targetPublicationIndexMap.get("jrct") || utils.errorIndex;
   const uminColIdx: number =
     targetPublicationIndexMap.get("umin") || utils.errorIndex;
+  const typeColIdx: number =
+    targetPublicationIndexMap.get("type") || utils.errorIndex;
 
   const publicationRawValues: string[][] = getSheets.getPublicationValues_();
   // PubMed IDが空白ならば対象外とする
@@ -213,8 +222,6 @@ export function getPubmed() {
   );
   const pbmd: GetPubmedData = new GetPubmedData();
   const outputColIndexes: Map<string, number> = pbmd.getOutputColIndexes_();
-  const outputJrctUminColIdx: number =
-    outputColIndexes.get(utils.idLabel) ?? utils.errorIndex;
   const pmid: string = pbmd.getTargetPmids_(targetPubmedIds);
   if (pmid === "") {
     return;
@@ -240,7 +247,12 @@ export function getPubmed() {
             : targetRow[0][uminColIdx] !== ""
             ? targetRow[0][uminColIdx]
             : "";
-        row[outputJrctUminColIdx] = uminJrctId;
+        row[outputColIndexes.get(utils.idLabel)!] = uminJrctId;
+        row[outputColIndexes.get("type")!] = typeMap.has(
+          targetRow[0][typeColIdx]
+        )
+          ? typeMap.get(targetRow[0][typeColIdx])!
+          : "その他";
       }
     });
     return row;
