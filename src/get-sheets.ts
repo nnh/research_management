@@ -210,7 +210,6 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
 }
 
 function getHtmlSheetAndYoushikiColumns_(): (string | null)[][] {
-  console.log(111);
   const array1: (string | null)[][] = new GetHtmlSheet_().editColumnsList_();
   const array2: (string | null)[][] =
     new GetHtmlSheetAddColumn_().editColumnsList_();
