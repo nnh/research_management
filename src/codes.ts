@@ -242,6 +242,18 @@ function generateForm2_1_(form2: GenerateForm2_1) {
     inputValuesAttachment2_1_1,
     utils.specificClinicalStudyKey
   );
+  const inputValuesAttachment2_1_2 = form2.editInputAttachment(inputValues, [
+    utils.seqColName,
+    utils.trialNameLabel,
+    utils.idLabel,
+    utils.attachment_2_1_2,
+  ]);
+  form2.generateForm(
+    "別添２-１（２）",
+    inputValuesAttachment2_1_2,
+    utils.specificClinicalStudyKey
+  );
+
   console.log(333);
 }
 

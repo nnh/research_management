@@ -171,7 +171,7 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
         "attachment_2_1_2",
         utils.attachment_2_1_2,
         utils.attachment_2_1_2,
-        utils.attachment_2_1_2,
+        "特定領域に係る特定臨床研究であることの説明",
         utils.attachment_2_1_2,
       ],
       [
