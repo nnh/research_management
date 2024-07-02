@@ -28,7 +28,7 @@ class GenerateForm {
     }
     return colIdx;
   }
-  protected getOutputValues_(values: string[][]): string[][] {
+  getOutputValues_(values: string[][]): string[][] {
     const res = values.map((item, rowIdx) =>
       this.inputColIndexes.map((idx) =>
         idx === utils.highValue ? String(rowIdx) : `'${item[idx]}`
@@ -97,40 +97,9 @@ class GenerateForm {
     ];
     return inputColumns;
   }
-  protected getTargetColnames_(
-    inputColnames: string[],
-    excludeColumns: string[]
-  ): string[] {
-    return inputColnames.filter((colname) => !excludeColumns.includes(colname));
-  }
-  protected editColnames_(inputColnames: string[]): string[] {
-    const res: string[] = inputColnames.map((colname) =>
-      colname.replace(/'/, "")
-    );
-    return res;
-  }
   protected getTargetColnamesByIdx_(colnames: string[], idxies: number[]) {
     const res: string[] = idxies.map((idx) => colnames[idx]);
     return res;
-  }
-  protected getTargetColIdxies_(colnames: string[], excludeColumns: string[]) {
-    const inputColnames: string[] = this.editColnames_(colnames);
-    const targetColnames: string[] = this.getTargetColnames_(
-      inputColnames,
-      excludeColumns
-    );
-    const temp: (number | null)[] = inputColnames.map((colname) =>
-      excludeColumns.includes(colname)
-        ? null
-        : colname === utils.seqColName
-        ? utils.highValue
-        : targetColnames.indexOf(colname)
-    );
-    const outputColIndexes: number[] = temp.filter(
-      (value) => value !== null
-    ) as number[];
-
-    return outputColIndexes;
   }
   protected editInputValues(header: string[], body: string[][]): string[][] {
     const res: string[][] = [header, ...body];
@@ -150,10 +119,9 @@ class GenerateForm2_1 extends GenerateForm {
     const res: string[] = [...inputColumns, ...this.attachmentColnames];
     return res;
   }
-  editInputYoushiki(values: string[][]): string[][] {
-    const inputValues: string[][] = this.getOutputValues_(values);
-    const outputColIndexes = this.getTargetColIdxies_(
-      inputValues[utils.headerRowIndex],
+  editInputYoushiki(inputValues: string[][]): string[][] {
+    const getColIdx_ = new GetColIdx(inputValues[utils.headerRowIndex]);
+    const outputColIndexes = getColIdx_.byExcludeColumns_(
       this.attachmentColnames
     );
     const inputHeader: string[] = this.getTargetColnamesByIdx_(
@@ -169,6 +137,59 @@ class GenerateForm2_1 extends GenerateForm {
       outputColIndexes.map((idx) => values[idx])
     );
     return outputValues;
+  }
+  editInputAttachment(values: string[][], inputColnames: string[]) {
+    //const outputColIndexes = this.
+  }
+}
+class GetColIdx {
+  inputColnames: string[];
+  constructor(inputColnames: string[]) {
+    this.inputColnames = this.editInputColnames_(inputColnames);
+  }
+  private editInputColnames_(inputColnames: string[]): string[] {
+    const res: string[] = inputColnames.map((colname) =>
+      colname.replace(/'/, "")
+    );
+    return res;
+  }
+  private editOutputColIdxies_(outputColIndexes: (number | null)[]): number[] {
+    const res: number[] = outputColIndexes.filter(
+      (value) => value !== null
+    ) as number[];
+    return res;
+  }
+  private getTargetColnamesExcludeColumns_(
+    inputColnames: string[],
+    excludeColumns: string[]
+  ): string[] {
+    return inputColnames.filter((colname) => !excludeColumns.includes(colname));
+  }
+  byincludeColumns_(targetColumns: string[]): number[] {
+    const temp: (number | null)[] = this.inputColnames.map((colname) =>
+      targetColumns.includes(colname)
+        ? colname === utils.seqColName
+          ? utils.highValue
+          : targetColumns.indexOf(colname)
+        : null
+    );
+    const outputColIndexes: number[] = this.editOutputColIdxies_(temp);
+    return outputColIndexes;
+  }
+  byExcludeColumns_(excludeColumns: string[]): number[] {
+    const targetColnames: string[] = this.getTargetColnamesExcludeColumns_(
+      this.inputColnames,
+      excludeColumns
+    );
+    const temp: (number | null)[] = this.inputColnames.map((colname) =>
+      excludeColumns.includes(colname)
+        ? null
+        : colname === utils.seqColName
+        ? utils.highValue
+        : targetColnames.indexOf(colname)
+    );
+    const outputColIndexes: number[] = this.editOutputColIdxies_(temp);
+    return outputColIndexes;
   }
 }
 
@@ -188,16 +209,20 @@ function generateForm2_1_(form2: GenerateForm2_1) {
       idx === 0
     );
   });
-  const inputValuesYoushiki2_1_2 = form2.editInputYoushiki(youshiki2_1_2);
+  const inputValues: string[][] = form2.getOutputValues_(youshiki2_1_2);
+  const inputValuesYoushiki2_1_2 = form2.editInputYoushiki(inputValues);
   form2.generateForm(
     "様式第２-１（２）",
     inputValuesYoushiki2_1_2,
     utils.specificClinicalStudyKey
   );
+  console.log(333);
 }
 
 export function generateForm2() {
-  generateForm2_1_(new GenerateForm2_1([utils.attachment_2_1_2]));
+  generateForm2_1_(
+    new GenerateForm2_1([utils.attachment_2_1_1, utils.attachment_2_1_2])
+  );
 }
 
 export function generateForm3() {}
