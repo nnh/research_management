@@ -1,6 +1,10 @@
 import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
+import * as pbmd from "./pubmed";
+import * as youshikiData from "./youshiki-data";
+import { util } from "chai";
+import { ta } from "date-fns/locale";
 
 class GenerateForm {
   inputColnames: string[];
@@ -21,12 +25,18 @@ class GenerateForm {
     );
     this.idColIdx = this.getColIdxByColName_(utils.idLabel);
   }
-  private getColIdxByColName_(colName: string): number {
-    const colIdx = ssUtils.getColIdx_(this.htmlSheet, colName);
+  protected getColIdxByColNameSheet_(
+    colName: string,
+    sheet: GoogleAppsScript.Spreadsheet.Sheet
+  ): number {
+    const colIdx = ssUtils.getColIdx_(sheet, colName);
     if (colIdx === -1) {
       throw new Error(`${colName} columns do not exist.`);
     }
     return colIdx;
+  }
+  private getColIdxByColName_(colName: string): number {
+    return this.getColIdxByColNameSheet_(colName, this.htmlSheet);
   }
   getOutputValues_(values: string[][]): string[][] {
     const res = values.map((item, rowIdx) =>
@@ -36,7 +46,7 @@ class GenerateForm {
     );
     return res;
   }
-  private getOutputSheetBySheetName_(
+  protected getOutputSheetBySheetName_(
     outputSheetName: string,
     colnames: string[]
   ) {
@@ -105,6 +115,24 @@ class GenerateForm {
     const res: string[][] = [header, ...body];
     return res;
   }
+  protected editInputValuesCommon_(
+    inputValues: string[][],
+    outputColIndexes: number[],
+    inputColnames: string[] = this.inputColnames
+  ): string[][] {
+    const inputHeader: string[] = this.getTargetColnamesByIdx_(
+      inputColnames,
+      outputColIndexes
+    );
+    const inputBody: string[][] = inputValues
+      .filter((_, idx) => idx !== 0)
+      .map((values) => outputColIndexes.map((idx) => values[idx]));
+    const outputValues: string[][] = this.editInputValues(
+      inputHeader,
+      inputBody
+    );
+    return outputValues;
+  }
 }
 class GenerateForm2_1 extends GenerateForm {
   attachmentColnames: string[];
@@ -118,23 +146,6 @@ class GenerateForm2_1 extends GenerateForm {
     const inputColumns: string[] = this.getInputColumnsCommon();
     const res: string[] = [...inputColumns, ...this.attachmentColnames];
     return res;
-  }
-  private editInputValuesCommon_(
-    inputValues: string[][],
-    outputColIndexes: number[]
-  ): string[][] {
-    const inputHeader: string[] = this.getTargetColnamesByIdx_(
-      this.inputColnames,
-      outputColIndexes
-    );
-    const inputBody: string[][] = inputValues
-      .filter((_, idx) => idx !== 0)
-      .map((values) => outputColIndexes.map((idx) => values[idx]));
-    const outputValues: string[][] = this.editInputValues(
-      inputHeader,
-      inputBody
-    );
-    return outputValues;
   }
   editInputYoushiki(inputValues: string[][]): string[][] {
     const outputColIndexes: number[] = new GetColIdx(
@@ -155,6 +166,109 @@ class GenerateForm2_1 extends GenerateForm {
       outputColIndexes
     );
     return outputValues;
+  }
+}
+class GenerateForm2_2 extends GenerateForm {
+  pubmed: pbmd.GetPubmedData;
+  constructor() {
+    super();
+    this.pubmed = new pbmd.GetPubmedData();
+    this.inputColnames = this.htmlItems[utils.headerRowIndex];
+  }
+  mergePubmedAndHtml_(): string[][] {
+    const pubmedItems: string[][] = this.pubmed.getPubmedSheetValues();
+    const pubmedGetColIdx = new GetColIdx(pubmedItems[utils.headerRowIndex]);
+    const outputPubmedColIndexes: number[] = pubmedGetColIdx.byExcludeColumns_([
+      utils.pmidLabel,
+    ]);
+    const inputPubmedColnames: string[] = pubmedItems[
+      utils.headerRowIndex
+    ].filter((value) => value !== utils.pmidLabel);
+    const pubmedItemsIdColIdx: number = this.getColIdxByColNameSheet_(
+      utils.idLabel,
+      this.pubmed.outputSheet
+    );
+    const inputHtmlColnames: string[] = [
+      utils.idLabel,
+      utils.drugLabel,
+      utils.ageLabel,
+      utils.diseaseCategoryLabel,
+      utils.facilityLabel,
+      utils.phaseLabel,
+      utils.attachment_2_1_1,
+      utils.attachment_2_2,
+    ];
+    const htmlGetColIdx = new GetColIdx(this.inputColnames);
+    const outputHtmlColIndexes: number[] =
+      htmlGetColIdx.byIncludeColumns_(inputHtmlColnames);
+    const dummyArray: string[] = Array(
+      this.htmlItems[utils.headerRowIndex].length
+    ).fill("");
+    const temp: string[][] = pubmedItems.map((pubmedItem) => {
+      const htmlRow: string[][] = this.htmlItems.filter(
+        (htmlItem) =>
+          htmlItem[this.idColIdx] === pubmedItem[pubmedItemsIdColIdx]
+      );
+      const targetHtmlValues: string[] =
+        htmlRow.length === 0 ? dummyArray : htmlRow[0];
+      const outputHtmlValues: string[] = targetHtmlValues
+        .map((value, idx) =>
+          outputHtmlColIndexes.includes(idx) ? value : null
+        )
+        .filter((value): value is string => value !== null) as string[];
+      const outputPubmedValues: string[] = pubmedItem
+        .map((value, idx) =>
+          outputPubmedColIndexes.includes(idx) ? value : null
+        )
+        .filter((value): value is string => value !== null) as string[];
+      return [...outputPubmedValues, ...outputHtmlValues];
+    });
+    const removeColIdxies: number[] = temp[utils.headerRowIndex]
+      .map((value, idx) => (value === utils.idLabel ? idx : utils.errorIndex))
+      .filter((value) => value !== utils.errorIndex);
+    const outputValues: string[][] = temp.map((item) =>
+      item.filter((_, idx) => !removeColIdxies.includes(idx))
+    );
+    const res: string[][] = outputValues.map((item, idx) => [
+      idx === 0 ? utils.seqColName : String(idx),
+      ...item,
+    ]);
+    return res;
+  }
+  generateForm2_2(
+    outputSheetName: string,
+    inputValues: string[][],
+    colnamesMap: Map<string, string>
+  ) {
+    let inputColnames: string[] = [];
+    let outputColnames: string[] = [];
+    colnamesMap.forEach((outputColname, inputColname) => {
+      inputColnames.push(inputColname);
+      outputColnames.push(outputColname);
+    });
+    const colIdxies: number[] = new GetColIdx(
+      inputValues[utils.headerRowIndex]
+    ).byIncludeColumns_(inputColnames);
+    const targetValues: string[][] = inputValues.map((row) => {
+      const items: string[] = row
+        .map((value, idx) => (colIdxies.includes(idx) ? value : null))
+        .filter((value) => value !== null) as string[];
+      return items;
+    });
+    const outputBody: string[][] = targetValues.filter((_, idx) => idx !== 0);
+    const outputSheet = this.getOutputSheetBySheetName_(
+      outputSheetName,
+      outputColnames
+    );
+    outputSheet
+      .getRange(
+        2,
+        1,
+        outputBody.length,
+        outputBody[utils.headerRowIndex].length
+      )
+      .setValues(outputBody);
+    console.log(888);
   }
 }
 class GetColIdx {
@@ -253,14 +367,44 @@ function generateForm2_1_(form2: GenerateForm2_1) {
     inputValuesAttachment2_1_2,
     utils.specificClinicalStudyKey
   );
+}
 
-  console.log(333);
+function generateForm2_2() {
+  const form2 = new GenerateForm2_2();
+  const inputValuesYoushiki2_2: string[][] = form2.mergePubmedAndHtml_();
+  const pubmed = new pbmd.GetPubmedData();
+  const colnamesMap: Map<string, string> = pubmed.getColnamesMap();
+  const youshiki2_2Colnames = new Map([
+    [utils.seqColName, utils.seqColName],
+    [utils.titlePubmedLabel, utils.titlePubmedLabel],
+    [colnamesMap.get("authorName")!, colnamesMap.get("authorName")!],
+    [
+      colnamesMap.get("authorFacilities")!,
+      colnamesMap.get("authorFacilities")!,
+    ],
+    [colnamesMap.get("role")!, colnamesMap.get("role")!],
+    [colnamesMap.get("vancouver")!, colnamesMap.get("vancouver")!],
+    [colnamesMap.get("type")!, colnamesMap.get("type")!],
+    [utils.drugLabel, utils.drugLabel],
+    [utils.ageLabel, utils.ageLabel],
+    [utils.diseaseCategoryLabel, utils.diseaseCategoryLabel],
+    [utils.facilityLabel, utils.facilityLabel],
+    [utils.phaseLabel, utils.phaseOutputLabel],
+  ]);
+  form2.generateForm2_2(
+    "様式第２-２（２）",
+    inputValuesYoushiki2_2,
+    youshiki2_2Colnames
+  );
 }
 
 export function generateForm2() {
+  youshikiData.getFromHtml();
+  pbmd.getPubmed();
   generateForm2_1_(
     new GenerateForm2_1([utils.attachment_2_1_1, utils.attachment_2_1_2])
   );
+  generateForm2_2();
 }
 
 export function generateForm3() {}

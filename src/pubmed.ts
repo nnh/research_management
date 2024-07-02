@@ -38,6 +38,12 @@ export class GetPubmedData {
       this.colnames
     );
   }
+  getColnamesMap(): Map<string, string> {
+    return this.colnamesMap;
+  }
+  getPubmedSheetValues(): string[][] {
+    return this.outputSheet.getDataRange().getValues();
+  }
   getOutputColIndexes_(): Map<string, number> {
     const outputColIndexes: Map<string, number> = new Map();
     this.colnamesMap.forEach((value, key) => {

@@ -1,4 +1,3 @@
-import id from "date-fns/locale/id";
 import * as getSheets from "./get-sheets";
 import * as utils from "./utils";
 
