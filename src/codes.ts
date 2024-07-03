@@ -294,12 +294,9 @@ class GenerateForm2_2 extends GenerateForm {
     const colIdxies: number[] = new GetColIdx(
       inputValues[utils.headerRowIndex]
     ).byIncludeColumns_(inputColnames);
-    const targetValues: string[][] = inputValues.map((row) => {
-      const items: string[] = row
-        .map((value, idx) => (colIdxies.includes(idx) ? value : null))
-        .filter((value) => value !== null) as string[];
-      return items;
-    });
+    const targetValues: string[][] = inputValues.map((row) =>
+      colIdxies.map((idx) => row[idx])
+    );
     const outputBody: string[][] = targetValues.filter((_, idx) => idx !== 0);
     const outputSheet = this.getOutputSheetBySheetName_(
       outputSheetName,
