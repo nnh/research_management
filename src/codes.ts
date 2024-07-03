@@ -424,9 +424,6 @@ function generateForm2_2() {
     inputValuesAttachment2_2,
     utils.publicationKey
   );
-  console.log(888);
-
-  return;
   const pubmed = new pbmd.GetPubmedData();
   const colnamesMap: Map<string, string> = pubmed.getColnamesMap();
   const youshiki2_2Colnames = new Map([
