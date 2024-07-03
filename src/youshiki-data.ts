@@ -229,7 +229,7 @@ function editAddValues_(
   const addValues = outputJrctValues.map((jrctInfo: string[]) => {
     const inputId = new RegExp(jrctInfo[htmlIdColIdx]);
     const piNagoya = piFacility.test(jrctInfo[htmlPiFacilityColIdx]);
-    const principalRole: string = piNagoya ? "１" : "２";
+    const principalRole: string = piNagoya ? "1" : "2";
     const drugLabel: string = "医薬品";
     const underAge: number = editAge_(jrctInfo[htmlUnderAgeColIdx]);
     const overAge: number = editAge_(jrctInfo[htmlOverAgeColIdx]);

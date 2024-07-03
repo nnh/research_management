@@ -160,6 +160,27 @@ class GenerateForm2_1 extends GenerateForm {
     const res: string[] = [...inputColumns, ...this.attachmentColnames];
     return res;
   }
+  getYoushikiInputValues(): string[][] {
+    const specificClinicalStudyText: string = utils.trialTypeListJrct.get(
+      utils.specificClinicalStudyKey
+    )!;
+    const datacenterStartDateColIdx: number = ssUtils.getColIdx_(
+      this.htmlSheet,
+      utils.datacenterStartDateLabel
+    );
+    const youshikiInputValues: string[][] = this.htmlItems.filter(
+      (item, idx) => {
+        const itemDate = new Date(item[datacenterStartDateColIdx]);
+        return (
+          (item[this.trialTypeColIdx] === specificClinicalStudyText &&
+            itemDate >= utils.limit_date) ||
+          idx === 0
+        );
+      }
+    );
+    return youshikiInputValues;
+  }
+
   editInputYoushiki(inputValues: string[][]): string[][] {
     const outputColIndexes: number[] = new GetColIdx(
       inputValues[utils.headerRowIndex]
@@ -345,22 +366,13 @@ class GetColIdx {
   }
 }
 
+function generateForm3_1_(form2: GenerateForm2_1) {
+  const youshiki3: string[][] = form2.getYoushikiInputValues();
+  console.log(888);
+}
+
 function generateForm2_1_(form2: GenerateForm2_1) {
-  const specificClinicalStudyText: string = utils.trialTypeListJrct.get(
-    utils.specificClinicalStudyKey
-  )!;
-  const datacenterStartDateColIdx: number = ssUtils.getColIdx_(
-    form2.htmlSheet,
-    utils.datacenterStartDateLabel
-  );
-  const youshiki2_1_2: string[][] = form2.htmlItems.filter((item, idx) => {
-    const itemDate = new Date(item[datacenterStartDateColIdx]);
-    return (
-      (item[form2.trialTypeColIdx] === specificClinicalStudyText &&
-        itemDate >= utils.limit_date) ||
-      idx === 0
-    );
-  });
+  const youshiki2_1_2: string[][] = form2.getYoushikiInputValues();
   const inputValues: string[][] = form2.getOutputValues_(youshiki2_1_2);
   const inputValuesYoushiki2_1_2 = form2.editInputYoushiki(inputValues);
   form2.generateForm(
@@ -460,7 +472,16 @@ export function generateForm2() {
   generateForm2_2();
 }
 
-export function generateForm3() {}
+export function generateForm3() {
+  utils.outputYoushiki3SheetNames.forEach((outputSheetName, _) => {
+    const sheet = new ssUtils.GetSheet_().getSheetByName_(outputSheetName);
+    if (sheet !== null) {
+      sheet.clearContents();
+    }
+  });
+  youshikiData.getFromHtml();
+  generateForm3_1_(new GenerateForm2_1([utils.attachment_3]));
+}
 
 export function generateForm4() {}
 

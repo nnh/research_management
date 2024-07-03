@@ -1,4 +1,4 @@
-import { generateForm2 } from "./codes";
+import { generateForm2, generateForm3 } from "./codes";
 import "./ctr-utils";
 import { getFromHtml } from "./youshiki-data";
 import { getPubmed } from "./pubmed";
@@ -6,8 +6,8 @@ import { getPubmed } from "./pubmed";
 function onOpen() {
   var arr = [
     { name: "様式第２、別添２作成", functionName: "generateForm2" },
-    /*    {name: "様式第３、別添３作成", functionName: "generateForm3"},
-    {name: "様式第４", functionName: "generateForm4"},
+    { name: "様式第３、別添３作成", functionName: "generateForm3" },
+    /*  {name: "様式第４", functionName: "generateForm4"},
     {name: "Publication", functionName: "fillPublication"},
 */
   ];
@@ -21,7 +21,7 @@ declare const global: {
 
 global.onOpen = onOpen;
 global.generateForm2 = generateForm2;
-//global.generateForm3 = generateForm3
+global.generateForm3 = generateForm3;
 //global.generateForm4 = generateForm4
 //global.fillPublication = fillPublication;
 global.getFromHtml = getFromHtml;

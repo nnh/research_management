@@ -50,6 +50,11 @@ export const outputYoushiki2SheetNames: Map<string, string> = new Map([
   ["attachment2_2", attachment_2_2],
 ]);
 
+export const outputYoushiki3SheetNames: Map<string, string> = new Map([
+  ["youshiki3_1", "様式第3-1(2)"],
+  ["attachment3", attachment_3],
+]);
+
 export const jrctUminColnames: string[] = ["Label", "Value", "jrctNo"];
 export const headerRowIndex: number = 0;
 export const itemsProtocolIdIdx: number = 0;
