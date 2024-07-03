@@ -5,6 +5,7 @@ import * as pbmd from "./pubmed";
 import * as youshikiData from "./youshiki-data";
 import { util } from "chai";
 import { ta } from "date-fns/locale";
+import { html } from "cheerio/lib/api/manipulation";
 
 class GenerateForm {
   inputColnames: string[];
@@ -118,7 +119,7 @@ class GenerateForm {
   protected editInputValuesCommon_(
     inputValues: string[][],
     outputColIndexes: number[],
-    inputColnames: string[] = this.inputColnames
+    inputColnames: string[]
   ): string[][] {
     const inputHeader: string[] = this.getTargetColnamesByIdx_(
       inputColnames,
@@ -130,6 +131,21 @@ class GenerateForm {
     const outputValues: string[][] = this.editInputValues(
       inputHeader,
       inputBody
+    );
+    return outputValues;
+  }
+  editInputAttachment(
+    inputValues: string[][],
+    inputColnames: string[],
+    targetInputColnames: string[]
+  ) {
+    const outputColIndexes = new GetColIdx(
+      inputValues[utils.headerRowIndex]
+    ).byIncludeColumns_(inputColnames);
+    const outputValues: string[][] = this.editInputValuesCommon_(
+      inputValues,
+      outputColIndexes,
+      targetInputColnames
     );
     return outputValues;
   }
@@ -153,17 +169,8 @@ class GenerateForm2_1 extends GenerateForm {
     ).byExcludeColumns_(this.attachmentColnames);
     const outputValues: string[][] = this.editInputValuesCommon_(
       inputValues,
-      outputColIndexes
-    );
-    return outputValues;
-  }
-  editInputAttachment(inputValues: string[][], inputColnames: string[]) {
-    const outputColIndexes = new GetColIdx(
-      inputValues[utils.headerRowIndex]
-    ).byIncludeColumns_(inputColnames);
-    const outputValues: string[][] = this.editInputValuesCommon_(
-      inputValues,
-      outputColIndexes
+      outputColIndexes,
+      this.inputColnames
     );
     return outputValues;
   }
@@ -181,14 +188,16 @@ class GenerateForm2_2 extends GenerateForm {
     const outputPubmedColIndexes: number[] = pubmedGetColIdx.byExcludeColumns_([
       utils.pmidLabel,
     ]);
-    const inputPubmedColnames: string[] = pubmedItems[
-      utils.headerRowIndex
-    ].filter((value) => value !== utils.pmidLabel);
     const pubmedItemsIdColIdx: number = this.getColIdxByColNameSheet_(
       utils.idLabel,
       this.pubmed.outputSheet
     );
+    const pubmedPmidColIdx: number = this.getColIdxByColNameSheet_(
+      utils.pmidLabel,
+      this.pubmed.outputSheet
+    );
     const inputHtmlColnames: string[] = [
+      utils.trialNameLabel,
       utils.idLabel,
       utils.drugLabel,
       utils.ageLabel,
@@ -201,17 +210,42 @@ class GenerateForm2_2 extends GenerateForm {
     const htmlGetColIdx = new GetColIdx(this.inputColnames);
     const outputHtmlColIndexes: number[] =
       htmlGetColIdx.byIncludeColumns_(inputHtmlColnames);
+    // jRCT番号、UMIN番号が空白ならば暫定でPMIDを入れる
+    const htmlJrctUminNoList: Set<string> = new Set(
+      this.htmlItems.map((item) => item[this.idColIdx])
+    );
     const dummyArray: string[] = Array(
       this.htmlItems[utils.headerRowIndex].length
     ).fill("");
-    const temp: string[][] = pubmedItems.map((pubmedItem) => {
-      const htmlRow: string[][] = this.htmlItems.filter(
+    const targetPubmedValues: string[][] = pubmedItems.map((item) => {
+      if (item[pubmedItemsIdColIdx] !== "") {
+        return item;
+      }
+      let res = [...item];
+      res[pubmedItemsIdColIdx] = item[pubmedPmidColIdx];
+      return res;
+    });
+    const targetHtmlValues: string[][] = targetPubmedValues.map(
+      (pubmedItem) => {
+        if (htmlJrctUminNoList.has(pubmedItem[pubmedItemsIdColIdx])) {
+          const htmlRows: string[][] = this.htmlItems.filter(
+            (htmlItem) =>
+              htmlItem[this.idColIdx] === pubmedItem[pubmedItemsIdColIdx]
+          );
+          return htmlRows[0];
+        }
+        let res = [...dummyArray];
+        res[this.idColIdx] = pubmedItem[pubmedItemsIdColIdx];
+        return res;
+      }
+    );
+    console.log(777);
+    const temp: string[][] = targetPubmedValues.map((pubmedItem) => {
+      const htmlRow: string[][] = targetHtmlValues.filter(
         (htmlItem) =>
           htmlItem[this.idColIdx] === pubmedItem[pubmedItemsIdColIdx]
       );
-      const targetHtmlValues: string[] =
-        htmlRow.length === 0 ? dummyArray : htmlRow[0];
-      const outputHtmlValues: string[] = targetHtmlValues
+      const outputHtmlValues: string[] = htmlRow[0]
         .map((value, idx) =>
           outputHtmlColIndexes.includes(idx) ? value : null
         )
@@ -223,17 +257,12 @@ class GenerateForm2_2 extends GenerateForm {
         .filter((value): value is string => value !== null) as string[];
       return [...outputPubmedValues, ...outputHtmlValues];
     });
-    const removeColIdxies: number[] = temp[utils.headerRowIndex]
-      .map((value, idx) => (value === utils.idLabel ? idx : utils.errorIndex))
-      .filter((value) => value !== utils.errorIndex);
-    const outputValues: string[][] = temp.map((item) =>
-      item.filter((_, idx) => !removeColIdxies.includes(idx))
-    );
-    const res: string[][] = outputValues.map((item, idx) => [
+    console.log(666);
+    const youshikiValues: string[][] = temp.map((item, idx) => [
       idx === 0 ? utils.seqColName : String(idx),
       ...item,
     ]);
-    return res;
+    return youshikiValues;
   }
   generateForm2_2(
     outputSheetName: string,
@@ -268,7 +297,6 @@ class GenerateForm2_2 extends GenerateForm {
         outputBody[utils.headerRowIndex].length
       )
       .setValues(outputBody);
-    console.log(888);
   }
 }
 class GetColIdx {
@@ -345,23 +373,31 @@ function generateForm2_1_(form2: GenerateForm2_1) {
     inputValuesYoushiki2_1_2,
     utils.specificClinicalStudyKey
   );
-  const inputValuesAttachment2_1_1 = form2.editInputAttachment(inputValues, [
-    utils.seqColName,
-    utils.trialNameLabel,
-    utils.idLabel,
-    utils.attachment_2_1_1,
-  ]);
+  const inputValuesAttachment2_1_1 = form2.editInputAttachment(
+    inputValues,
+    [
+      utils.seqColName,
+      utils.trialNameLabel,
+      utils.idLabel,
+      utils.attachment_2_1_1,
+    ],
+    form2.inputColnames
+  );
   form2.generateForm(
     "別添２-１（１）",
     inputValuesAttachment2_1_1,
     utils.specificClinicalStudyKey
   );
-  const inputValuesAttachment2_1_2 = form2.editInputAttachment(inputValues, [
-    utils.seqColName,
-    utils.trialNameLabel,
-    utils.idLabel,
-    utils.attachment_2_1_2,
-  ]);
+  const inputValuesAttachment2_1_2 = form2.editInputAttachment(
+    inputValues,
+    [
+      utils.seqColName,
+      utils.trialNameLabel,
+      utils.idLabel,
+      utils.attachment_2_1_2,
+    ],
+    form2.inputColnames
+  );
   form2.generateForm(
     "別添２-１（２）",
     inputValuesAttachment2_1_2,
@@ -372,6 +408,25 @@ function generateForm2_1_(form2: GenerateForm2_1) {
 function generateForm2_2() {
   const form2 = new GenerateForm2_2();
   const inputValuesYoushiki2_2: string[][] = form2.mergePubmedAndHtml_();
+  const inputValuesAttachment2_2 = form2.editInputAttachment(
+    inputValuesYoushiki2_2,
+    [
+      utils.seqColName,
+      utils.trialNameLabel,
+      utils.idLabel,
+      utils.attachment_2_1_1,
+      utils.attachment_2_2,
+    ],
+    inputValuesYoushiki2_2[utils.headerRowIndex]
+  );
+  form2.generateForm(
+    "別添２-２",
+    inputValuesAttachment2_2,
+    utils.publicationKey
+  );
+  console.log(888);
+
+  return;
   const pubmed = new pbmd.GetPubmedData();
   const colnamesMap: Map<string, string> = pubmed.getColnamesMap();
   const youshiki2_2Colnames = new Map([

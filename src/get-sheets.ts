@@ -70,7 +70,7 @@ export class GetHtmlSheet_ {
   editColumnsList_(): (string | null)[][] {
     const columnsList: (string | null)[][] = [
       ["trialType", this.trialTypeLabel, null, null, null],
-      ["trialName", utils.trialNameLabel, "治験名", "臨床研究名", null],
+      ["trialName", utils.trialNameLabel, "治験名", "臨床研究名", "臨床研究名"],
       ["piName", utils.piNameLabel, "治験調整医師名", "研究代表医師", null],
       [
         "piFacility",
@@ -80,7 +80,13 @@ export class GetHtmlSheet_ {
         null,
       ],
       ["date", utils.dateLabel, "届出日", "開始日", null],
-      ["id", utils.idLabel, utils.registIdLabel, utils.registIdLabel, null],
+      [
+        "id",
+        utils.idLabel,
+        utils.registIdLabel,
+        utils.registIdLabel,
+        utils.registIdLabel,
+      ],
       ["underAge", utils.underAgeLabel, null, null, null],
       ["overAge", utils.overAgeLabel, null, null, null],
       ["intervention", "介入の有無", null, null, null],
