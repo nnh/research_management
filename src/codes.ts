@@ -3,9 +3,6 @@ import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 import * as pbmd from "./pubmed";
 import * as youshikiData from "./youshiki-data";
-import { util } from "chai";
-import { ta } from "date-fns/locale";
-import { html } from "cheerio/lib/api/manipulation";
 
 class GenerateForm {
   inputColnames: string[];
@@ -239,7 +236,6 @@ class GenerateForm2_2 extends GenerateForm {
         return res;
       }
     );
-    console.log(777);
     const temp: string[][] = targetPubmedValues.map((pubmedItem) => {
       const htmlRow: string[][] = targetHtmlValues.filter(
         (htmlItem) =>
@@ -257,7 +253,6 @@ class GenerateForm2_2 extends GenerateForm {
         .filter((value): value is string => value !== null) as string[];
       return [...outputPubmedValues, ...outputHtmlValues];
     });
-    console.log(666);
     const youshikiValues: string[][] = temp.map((item, idx) => [
       idx === 0 ? utils.seqColName : String(idx),
       ...item,
@@ -369,7 +364,7 @@ function generateForm2_1_(form2: GenerateForm2_1) {
   const inputValues: string[][] = form2.getOutputValues_(youshiki2_1_2);
   const inputValuesYoushiki2_1_2 = form2.editInputYoushiki(inputValues);
   form2.generateForm(
-    "様式第２-１（２）",
+    utils.outputYoushiki2SheetNames.get("youshiki2_1_2")!,
     inputValuesYoushiki2_1_2,
     utils.specificClinicalStudyKey
   );
@@ -384,7 +379,7 @@ function generateForm2_1_(form2: GenerateForm2_1) {
     form2.inputColnames
   );
   form2.generateForm(
-    "別添２-１（１）",
+    utils.outputYoushiki2SheetNames.get("attachment2_1_1")!,
     inputValuesAttachment2_1_1,
     utils.specificClinicalStudyKey
   );
@@ -399,7 +394,7 @@ function generateForm2_1_(form2: GenerateForm2_1) {
     form2.inputColnames
   );
   form2.generateForm(
-    "別添２-１（２）",
+    utils.outputYoushiki2SheetNames.get("attachment2_1_2")!,
     inputValuesAttachment2_1_2,
     utils.specificClinicalStudyKey
   );
@@ -420,7 +415,7 @@ function generateForm2_2() {
     inputValuesYoushiki2_2[utils.headerRowIndex]
   );
   form2.generateForm(
-    "別添２-２",
+    utils.outputYoushiki2SheetNames.get("attachment2_2")!,
     inputValuesAttachment2_2,
     utils.publicationKey
   );
@@ -444,13 +439,19 @@ function generateForm2_2() {
     [utils.phaseLabel, utils.phaseOutputLabel],
   ]);
   form2.generateForm2_2(
-    "様式第２-２（２）",
+    utils.outputYoushiki2SheetNames.get("youshiki2_2_2")!,
     inputValuesYoushiki2_2,
     youshiki2_2Colnames
   );
 }
 
 export function generateForm2() {
+  utils.outputYoushiki2SheetNames.forEach((outputSheetName, _) => {
+    const sheet = new ssUtils.GetSheet_().getSheetByName_(outputSheetName);
+    if (sheet !== null) {
+      sheet.clearContents();
+    }
+  });
   youshikiData.getFromHtml();
   pbmd.getPubmed();
   generateForm2_1_(

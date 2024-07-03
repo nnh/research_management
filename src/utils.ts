@@ -1,49 +1,57 @@
 export const highValue: number = 9999;
 export const errorIndex: number = -1;
 
-export const chikenKey = "chiken";
-export const specificClinicalStudyKey = "specificClinicalStudy";
-export const publicationKey = "publication";
-const trialTypeList = new Map([
+export const chikenKey: string = "chiken";
+export const specificClinicalStudyKey: string = "specificClinicalStudy";
+export const publicationKey: string = "publication";
+const trialTypeList: Map<string, string> = new Map([
   [chikenKey, "特定臨床(治験)"],
   [specificClinicalStudyKey, "特定臨床(臨床研究法)"],
 ]);
-export const trialTypeListJrct = new Map([
+export const trialTypeListJrct: Map<string, string> = new Map([
   [chikenKey, "医師主導治験"],
   [specificClinicalStudyKey, "特定臨床研究"],
 ]);
-export const seqColName = "番号";
+export const seqColName: string = "番号";
 
-export const trialNameLabel = "研究名称";
-export const idLabel = "臨床研究実施計画番号";
-export const underAgeLabel = "年齢下限/AgeMinimum";
-export const overAgeLabel = "年齢上限/AgeMaximum";
-export const piNameLabel = "研究責任（代表）医師の氏名";
-export const piFacilityLabel = "研究責任（代表）医師の所属機関";
-export const trialPurposeLabel = "研究・治験の目的";
-export const interventionLabel = "介入の内容/Intervention(s)";
-export const diseaseLabel = "対象疾患名";
-export const dateLabel = "初回公表日";
-export const principalRoleLabel = "主導的な役割";
-export const drugLabel = "医薬品等区分";
-export const ageLabel = "小児／成人";
-export const diseaseCategoryLabel = "疾病等分類";
-export const facilityLabel = "実施施設数";
-export const phaseLabel = "試験のフェーズ";
-export const attachment_2_1_1 = "別添2-1(1)";
-export const attachment_2_1_2 = "別添2-1(2)";
-export const attachment_2_2 = "別添2-2";
-export const attachment_3 = "別添3";
-export const pmidLabel = "PMID";
-export const datacenterStartDateLabel = "研究管理：開始日";
-export const protocolIdLabel = "プロトコルID";
-export const phaseOutputLabel = "フェーズ（Phase）";
-export const titlePubmedLabel = "題名";
-export const registIdLabel = "登録ID等";
-export const abstractLabel = "研究概要";
+export const trialNameLabel: string = "研究名称";
+export const idLabel: string = "臨床研究実施計画番号";
+export const underAgeLabel: string = "年齢下限/AgeMinimum";
+export const overAgeLabel: string = "年齢上限/AgeMaximum";
+export const piNameLabel: string = "研究責任（代表）医師の氏名";
+export const piFacilityLabel: string = "研究責任（代表）医師の所属機関";
+export const trialPurposeLabel: string = "研究・治験の目的";
+export const interventionLabel: string = "介入の内容/Intervention(s)";
+export const diseaseLabel: string = "対象疾患名";
+export const dateLabel: string = "初回公表日";
+export const principalRoleLabel: string = "主導的な役割";
+export const drugLabel: string = "医薬品等区分";
+export const ageLabel: string = "小児／成人";
+export const diseaseCategoryLabel: string = "疾病等分類";
+export const facilityLabel: string = "実施施設数";
+export const phaseLabel: string = "試験のフェーズ";
+export const attachment_2_1_1: string = "別添2-1(1)";
+export const attachment_2_1_2: string = "別添2-1(2)";
+export const attachment_2_2: string = "別添2-2";
+export const attachment_3: string = "別添3";
+export const pmidLabel: string = "PMID";
+export const datacenterStartDateLabel: string = "研究管理：開始日";
+export const protocolIdLabel: string = "プロトコルID";
+export const phaseOutputLabel: string = "フェーズ（Phase）";
+export const titlePubmedLabel: string = "題名";
+export const registIdLabel: string = "登録ID等";
+export const abstractLabel: string = "研究概要";
 
-export const jrctUminColnames = ["Label", "Value", "jrctNo"];
-export const headerRowIndex = 0;
+export const outputYoushiki2SheetNames: Map<string, string> = new Map([
+  ["youshiki2_1_2", "様式第2-1(2)"],
+  ["youshiki2_2_2", "様式第2-2(2)"],
+  ["attachment2_1_1", attachment_2_1_1],
+  ["attachment2_1_2", attachment_2_1_2],
+  ["attachment2_2", attachment_2_2],
+]);
+
+export const jrctUminColnames: string[] = ["Label", "Value", "jrctNo"];
+export const headerRowIndex: number = 0;
 export const itemsProtocolIdIdx: number = 0;
 export const itemsTrialBudgetIdx: number = 6;
 export const itemsTrialTypeIdx: number = 7;
