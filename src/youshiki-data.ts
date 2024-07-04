@@ -333,7 +333,7 @@ function editAge_(ageString: string): number {
   if (ageString === "") {
     return utils.highValue;
   }
-  if (ageString === "上限なし") {
+  if (ageString === utils.overAgeNoLimit) {
     return utils.highValue;
   }
   if (ageString === "下限なし") {

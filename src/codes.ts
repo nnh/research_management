@@ -392,8 +392,15 @@ function generateForm2_1_(form2: GenerateForm2_1) {
     inputValuesAttachment2_1_1,
     utils.specificClinicalStudyKey
   );
+  const overAgeColIdx = inputValues[0].findIndex((label) =>
+    label.includes(utils.overAgeLabel)
+  );
+  const attachment2_1_2_Values: string[][] = inputValues.filter(
+    (values) =>
+      !new RegExp(`^.${utils.overAgeNoLimit}$`).test(values[overAgeColIdx])
+  );
   const inputValuesAttachment2_1_2 = form2.editInputAttachment(
-    inputValues,
+    attachment2_1_2_Values,
     [
       utils.seqColName,
       utils.trialNameLabel,
@@ -455,6 +462,17 @@ function generateForm2_2() {
 }
 
 export function generateForm2() {
+  //teststart
+  generateForm2_1_(
+    new GenerateForm2_1([
+      utils.attachment_2_1_1,
+      utils.attachment_2_1_2,
+      utils.overAgeLabel,
+    ])
+  );
+
+  return;
+  //testend
   utils.outputYoushiki2SheetNames.forEach((outputSheetName, _) => {
     const sheet = new ssUtils.GetSheet_().getSheetByName_(outputSheetName);
     if (sheet !== null) {
@@ -464,7 +482,11 @@ export function generateForm2() {
   youshikiData.getFromHtml();
   pbmd.getPubmed();
   generateForm2_1_(
-    new GenerateForm2_1([utils.attachment_2_1_1, utils.attachment_2_1_2])
+    new GenerateForm2_1([
+      utils.attachment_2_1_1,
+      utils.attachment_2_1_2,
+      utils.overAgeLabel,
+    ])
   );
   generateForm2_2();
 }

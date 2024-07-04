@@ -41,6 +41,7 @@ export const phaseOutputLabel: string = "フェーズ（Phase）";
 export const titlePubmedLabel: string = "題名";
 export const registIdLabel: string = "登録ID等";
 export const abstractLabel: string = "研究概要";
+export const overAgeNoLimit: string = "上限なし";
 
 export const outputYoushiki2SheetNames: Map<string, string> = new Map([
   ["youshiki2_1_2", "様式第2-1(2)"],
