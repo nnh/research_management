@@ -18,6 +18,14 @@ export class GetSheet_ {
       this.ss = this.getSpreadSheetById_(targetSsId);
     }
   }
+  targetSheetsClearContents_(sheetNames: string[]): void {
+    const sheets: GoogleAppsScript.Spreadsheet.Sheet[] = sheetNames.map(
+      (sheetName) => this.getSheetByName_(sheetName)
+    );
+    sheets.forEach((sheet) => {
+      sheet.clearContents();
+    });
+  }
   getSpreadSheetById_(ssId: string): GoogleAppsScript.Spreadsheet.Spreadsheet {
     const ss = SpreadsheetApp.openById(ssId);
     if (ss === null) {

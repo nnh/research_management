@@ -363,9 +363,25 @@ class GetColIdx {
   }
 }
 
-function generateForm3_1_(form2: GenerateForm2_1) {
-  const youshiki3: string[][] = form2.getYoushikiInputValues();
-  console.log(888);
+function generateForm3_1_(form3: GenerateForm2_1) {
+  const youshiki3: string[][] = form3.getYoushikiInputValues();
+  const inputValues: string[][] = form3.getOutputValues_(youshiki3);
+  const inputValuesYoushiki3 = form3.editInputYoushiki(inputValues);
+  form3.generateForm(
+    utils.outputYoushiki3SheetNames.get("youshiki3_1")!,
+    inputValuesYoushiki3,
+    utils.specificClinicalStudyKey
+  );
+  const inputValuesAttachment3 = form3.editInputAttachment(
+    inputValues,
+    [utils.seqColName, utils.trialNameLabel, utils.idLabel, utils.attachment_3],
+    form3.inputColnames
+  );
+  form3.generateForm(
+    utils.outputYoushiki3SheetNames.get("attachment3")!,
+    inputValuesAttachment3,
+    utils.specificClinicalStudyKey
+  );
 }
 
 function generateForm2_1_(form2: GenerateForm2_1) {
@@ -462,23 +478,8 @@ function generateForm2_2() {
 }
 
 export function generateForm2() {
-  //teststart
-  generateForm2_1_(
-    new GenerateForm2_1([
-      utils.attachment_2_1_1,
-      utils.attachment_2_1_2,
-      utils.overAgeLabel,
-    ])
-  );
-
-  return;
-  //testend
-  utils.outputYoushiki2SheetNames.forEach((outputSheetName, _) => {
-    const sheet = new ssUtils.GetSheet_().getSheetByName_(outputSheetName);
-    if (sheet !== null) {
-      sheet.clearContents();
-    }
-  });
+  const sheetNames = Array.from(utils.outputYoushiki2SheetNames.values());
+  new ssUtils.GetSheet_().targetSheetsClearContents_(sheetNames);
   youshikiData.getFromHtml();
   pbmd.getPubmed();
   generateForm2_1_(
@@ -492,16 +493,8 @@ export function generateForm2() {
 }
 
 export function generateForm3() {
-  utils.outputYoushiki3SheetNames.forEach((outputSheetName, _) => {
-    const sheet = new ssUtils.GetSheet_().getSheetByName_(outputSheetName);
-    if (sheet !== null) {
-      sheet.clearContents();
-    }
-  });
+  const sheetNames = Array.from(utils.outputYoushiki3SheetNames.values());
+  new ssUtils.GetSheet_().targetSheetsClearContents_(sheetNames);
   youshikiData.getFromHtml();
   generateForm3_1_(new GenerateForm2_1([utils.attachment_3]));
 }
-
-export function generateForm4() {}
-
-export function fillPublication() {}

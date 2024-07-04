@@ -190,9 +190,9 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
       [
         "attachment_3",
         utils.attachment_3,
-        utils.attachment_3,
-        utils.attachment_3,
-        utils.attachment_3,
+        null,
+        "主導的な役割を果たした実績の詳細",
+        null,
       ],
       [
         "datacenterStartDateLabel",
