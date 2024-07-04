@@ -1,5 +1,6 @@
 import * as getSheets from "./get-sheets";
 import * as utils from "./utils";
+import * as editAttachment from "./edit-attachment";
 
 function getJrctColIndexes_(): number[] {
   const jrctUminValues: any[][] = getSheets.getJrctUminValues_();
@@ -67,6 +68,7 @@ function getOutputJrctValues_(
   );
   const [targetValues, targetIds]: [string[][], string[]] =
     getTargetValuesAndIds_(existingIDList, jrctInfoValues, jrctIdColIdx);
+  const jrctRegex: RegExp = new RegExp("jRCT[0-9]{10}");
   const outputJrctValues: any[][] = targetIds.map((jrctId: string) => {
     const targetRecord: string[][] = targetValues.filter(
       (jrctInfo: string[]) => jrctInfo[jrctIdColIdx] === jrctId
@@ -74,11 +76,11 @@ function getOutputJrctValues_(
     const res: string[] = [];
     targetLabels.forEach((label: string) => {
       const labelCondition: string =
-        jrctId.match(/jRCT[0-9]{10}/) && label === utils.idLabel
+        jrctId.match(jrctRegex) && label === utils.idLabel
           ? "jRCT番号"
-          : jrctId.match(/jRCT[0-9]{10}/) && label === utils.trialPurposeLabel
+          : jrctId.match(jrctRegex) && label === utils.trialPurposeLabel
           ? "試験等の目的"
-          : jrctId.match(/jRCT[0-9]{10}/) && label === utils.dateLabel
+          : jrctId.match(jrctRegex) && label === utils.dateLabel
           ? utils.dateLabel
           : label;
       const temp_target: string[][] = targetRecord.filter(
@@ -251,21 +253,13 @@ function editAddValues_(
       dc.get("idAndFacility"),
       inputId
     );
-    const disease: string = jrctInfo[htmlDiseaseColIdx];
-    const intervention: string = jrctInfo[htmlInterventionColIdx].replace(
-      /\r?\n/g,
-      "、"
-    );
-    const diseaseString: string = disease.replace(/\r?\n/g, "、");
-    const tempAgeMax: string[] = jrctInfo[htmlOverAgeColIdx].split("/");
-    const ageMax: string =
-      tempAgeMax.length === 3
-        ? `${tempAgeMax[0]}${tempAgeMax[1].replace("years-old", "")}`
-        : jrctInfo[htmlOverAgeColIdx];
-    const attachment_2_1_1: string = `本試験の対象は${diseaseString}である。また「${intervention}」という一定の有害事象を伴う侵襲的な介入を行う。`;
-    const attachment_2_1_2: string = `本試験の対象は${diseaseString}である。また年齢基準は${ageMax}であり、主として未成年を対象とした試験である。この研究成果はより良い治療法のエビデンスを提供するという形で小児領域の患者に還元される。`;
-    const attachment_2_2: string = `年齢基準は${ageMax}であり、主として未成年を対象とした試験である。`;
-    const attachment_3: string = editAttachment_3_text_(
+    const [attachment_2_1_1, attachment_2_1_2, attachment_2_2]: string[] =
+      editAttachment.editAttachment_2_text(
+        jrctInfo[htmlDiseaseColIdx],
+        jrctInfo[htmlOverAgeColIdx],
+        jrctInfo[htmlInterventionColIdx]
+      );
+    const attachment_3: string = editAttachment.editAttachment_3_text(
       piNagoya,
       explanationMap,
       dc.get("idAndBudget") || [],
@@ -287,40 +281,6 @@ function editAddValues_(
     ];
   });
   return addValues;
-}
-
-function editAttachment_3_text_(
-  piNagoya: boolean,
-  explanationMap: Map<string, string>,
-  idAndBudget: string[][],
-  jrctInfo: string[],
-  htmlIdColIdx: number
-): string {
-  const attachment_3_text1: string = "当該試験は";
-  let attachment_3_text2: any = "";
-  if (piNagoya) {
-    attachment_3_text2 = explanationMap.has("PI")
-      ? explanationMap.get("PI")
-      : "";
-  } else {
-    const targetBudget = idAndBudget.filter(
-      ([id, _]) => id === jrctInfo[htmlIdColIdx]
-    );
-    if (targetBudget.length > 0) {
-      const budget = targetBudget[0][1];
-      if (budget === "JPLSG" || budget === "NHOネットワーク") {
-        attachment_3_text2 = explanationMap.has(budget)
-          ? explanationMap.get(budget)
-          : "";
-      } else {
-        attachment_3_text2 = explanationMap.has("Others")
-          ? explanationMap.get("Others")
-          : "";
-      }
-    }
-  }
-  const attachment_3: string = `${attachment_3_text1}${attachment_3_text2}`;
-  return attachment_3;
 }
 
 function editAge_(ageString: string): number {

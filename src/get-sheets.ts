@@ -1,6 +1,5 @@
 import * as utils from "./utils";
 import * as ssUtils from "./ss-utils";
-import { util } from "chai";
 
 export function getPublicationValues_(): string[][] {
   const publicationId: string = utils.getProperty_("ss_publication_id");
@@ -39,18 +38,18 @@ export function getJrctUminValues_(): any[][] {
 }
 
 export class GetHtmlSheet_ {
+  sheet: GoogleAppsScript.Spreadsheet.Sheet;
   sheetName: string;
   trialTypeLabel: string;
   inputColumnKey: string;
   constructor() {
     this.sheetName = utils.getProperty_("html_sheet_name");
+    this.sheet = new ssUtils.GetSheet_().getSheetByName_(this.sheetName);
     this.trialTypeLabel = utils.getProperty_("trial_type_label");
     this.inputColumnKey = "inputColumn";
   }
   getColumnsList_(): string[] {
-    const sheet: GoogleAppsScript.Spreadsheet.Sheet =
-      new ssUtils.GetSheet_().getSheetByName_(this.sheetName);
-    const columnsList: string[] = sheet.getDataRange().getValues()[0];
+    const columnsList: string[] = this.sheet.getDataRange().getValues()[0];
     return columnsList;
   }
   addSheet_(htmlSheetColumns: string[]): GoogleAppsScript.Spreadsheet.Sheet {
