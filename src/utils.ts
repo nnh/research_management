@@ -4,10 +4,6 @@ export const errorIndex: number = -1;
 export const chikenKey: string = "chiken";
 export const specificClinicalStudyKey: string = "specificClinicalStudy";
 export const publicationKey: string = "publication";
-const trialTypeList: Map<string, string> = new Map([
-  [chikenKey, "特定臨床(治験)"],
-  [specificClinicalStudyKey, "特定臨床(臨床研究法)"],
-]);
 export const trialTypeListJrct: Map<string, string> = new Map([
   [chikenKey, "医師主導治験"],
   [specificClinicalStudyKey, "特定臨床研究"],
@@ -58,6 +54,7 @@ export const outputYoushiki3SheetNames: Map<string, string> = new Map([
 
 export const jrctUminColnames: string[] = ["Label", "Value", "jrctNo"];
 export const headerRowIndex: number = 0;
+// datacenterシートの列番号
 export const itemsProtocolIdIdx: number = 0;
 export const itemsTrialBudgetIdx: number = 6;
 export const itemsTrialTypeIdx: number = 7;
@@ -65,6 +62,7 @@ export const itemsCtrIdx: number = 9;
 export const itemsFacilityIdx: number = 24;
 export const itemsStartDateIdx: number = 86;
 export const itemsDiseaseCategoryIdx: number = 88;
+
 export const limit_date = new Date(2021, 8, 1);
 
 export function getProperty_(key: string): string {

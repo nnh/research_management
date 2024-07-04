@@ -63,7 +63,6 @@ function getOutputJrctValues_(
   const existingIDList: string[] = getExistingIDList_(
     htmlSheet,
     htmlSheetColumns,
-    utils.idLabel,
     lastRow
   );
   const [targetValues, targetIds]: [string[][], string[]] =
@@ -138,15 +137,6 @@ function getHtmlSheetColumnsIndex_(htmlSheetColumns: string[]): number[] {
     htmlUnderAgeColIdx,
     htmlOverAgeColIdx,
   ];
-}
-
-function getExplanationMap_(): Map<string, string> {
-  const explanationValues: string[][] | null =
-    getSheets.getExplanationValues_();
-  const explanationMap: Map<string, string> = new Map(
-    explanationValues.map((item) => [item[0], item[1]])
-  );
-  return explanationMap;
 }
 
 function filterDatacenterValues_(
@@ -226,7 +216,6 @@ function editAddValues_(
     htmlOverAgeColIdx,
   ] = getHtmlSheetColumnsIndex_(htmlSheetColumns);
   const piFacility = new RegExp("名古屋医療センター");
-  const explanationMap: Map<string, string> = getExplanationMap_();
   const dc: Map<string, string[][]> = getDatacenterSheetValues_();
   const addValues = outputJrctValues.map((jrctInfo: string[]) => {
     const inputId = new RegExp(jrctInfo[htmlIdColIdx]);
@@ -259,13 +248,7 @@ function editAddValues_(
         jrctInfo[htmlOverAgeColIdx],
         jrctInfo[htmlInterventionColIdx]
       );
-    const attachment_3: string = editAttachment.editAttachment_3_text(
-      piNagoya,
-      explanationMap,
-      dc.get("idAndBudget") || [],
-      jrctInfo,
-      htmlIdColIdx
-    );
+    const attachment_3: string = editAttachment.editAttachment_3_text();
     return [
       principalRole,
       drugLabel,
@@ -316,7 +299,6 @@ function editAge_(ageString: string): number {
 function getExistingIDList_(
   htmlSheet: GoogleAppsScript.Spreadsheet.Sheet,
   htmlSheetColumns: string[],
-  idLabel: string,
   lastRow: number
 ): string[] {
   const [htmlIdColIdx, _dummy1, _dummy2, _dummy3, _dummy4, _dummy5] =
