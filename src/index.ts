@@ -6,15 +6,19 @@ import { rewriteAttachment2, rewriteAttachment3 } from "./edit-attachment";
 import { generateFormAll } from "./generate-form-main";
 
 function onOpen() {
-  const arr = [
-    { name: "様式第２、３、別添２、３作成", functionName: "generateFormAll" },
-    { name: "様式第２、別添２作成", functionName: "generateForm2" },
-    { name: "様式第３、別添３作成", functionName: "generateForm3" },
+  const arr1 = [
+    { name: "CTR情報取得", functionName: "getFromHtml" },
     { name: "別添２テキスト再作成", functionName: "rewriteAttachment2" },
     { name: "別添３テキスト再作成", functionName: "rewriteAttachment3" },
   ];
+  const arr2 = [
+    { name: "様式第２、３、別添２、３作成", functionName: "generateFormAll" },
+    { name: "様式第２、別添２作成", functionName: "generateForm2" },
+    { name: "様式第３、別添３作成", functionName: "generateForm3" },
+  ];
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  spreadsheet.addMenu("様式作成", arr);
+  spreadsheet.addMenu("事前作業", arr1);
+  spreadsheet.addMenu("様式作成", arr2);
 }
 
 declare const global: {
