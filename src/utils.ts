@@ -38,6 +38,7 @@ export const titlePubmedLabel: string = "題名";
 export const registIdLabel: string = "登録ID等";
 export const abstractLabel: string = "研究概要";
 export const overAgeNoLimit: string = "上限なし";
+export const inputSheetName: string = "入力シート";
 
 export const outputYoushiki2SheetNames: Map<string, string> = new Map([
   ["youshiki2_1_2", "様式第2-1(2)"],
@@ -63,7 +64,7 @@ export const itemsFacilityIdx: number = 24;
 export const itemsStartDateIdx: number = 86;
 export const itemsDiseaseCategoryIdx: number = 88;
 
-export const limit_date = new Date(2021, 8, 1);
+//export const limit_date = new Date(2021, 8, 1);
 
 export function getProperty_(key: string): string {
   const value = PropertiesService.getScriptProperties().getProperty(key);

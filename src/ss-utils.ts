@@ -1,14 +1,5 @@
 import * as utils from "./utils";
 
-export function getColIdx_(
-  sheet: GoogleAppsScript.Spreadsheet.Sheet,
-  targetLabel: string
-): number {
-  const colnames = sheet.getDataRange().getValues()[0];
-  const colIdx = colnames.indexOf(targetLabel);
-  return colIdx;
-}
-
 export class GetSheet_ {
   ss: GoogleAppsScript.Spreadsheet.Spreadsheet; // Declare the property outside the constructor
   constructor(targetSsId: string | null = null) {
@@ -17,6 +8,18 @@ export class GetSheet_ {
     } else {
       this.ss = this.getSpreadSheetById_(targetSsId);
     }
+  }
+  getColIdx_(
+    sheet: GoogleAppsScript.Spreadsheet.Sheet,
+    targetLabel: string
+  ): number {
+    const colnames = sheet.getDataRange().getValues()[0];
+    const colIdx = colnames.indexOf(targetLabel);
+    return colIdx;
+  }
+  getColIdxFromSheetName_(sheetName: string, targetLabel: string): number {
+    const sheet = this.getSheetByName_(sheetName);
+    return this.getColIdx_(sheet, targetLabel);
   }
   targetSheetsClearContents_(sheetNames: string[]): void {
     const sheets: GoogleAppsScript.Spreadsheet.Sheet[] = sheetNames.map(
@@ -80,5 +83,23 @@ export class GetSheet_ {
     }
     sheet.getRange(1, 1, 1, colnames.length).setValues([colnames]);
     return sheet;
+  }
+  setBodyValuesBySheetName_(sheetName: string, values: string[][]): void {
+    const sheet = this.getSheetByName_(sheetName);
+    this.setBodyValues_(sheet, values);
+  }
+  setBodyValues_(
+    sheet: GoogleAppsScript.Spreadsheet.Sheet,
+    values: string[][]
+  ): void {
+    const outputValues: string[][] = values.map((row) =>
+      row.map((item) => `'${item}`)
+    );
+    const outputBody: string[][] = outputValues.filter(
+      (_, idx) => idx !== utils.headerRowIndex
+    );
+    sheet
+      .getRange(2, 1, outputBody.length, outputBody[0].length)
+      .setValues(outputBody);
   }
 }

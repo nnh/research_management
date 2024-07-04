@@ -1,5 +1,6 @@
 import * as getSheets from "./get-sheets";
 import * as utils from "./utils";
+import * as ssUtils from "./ss-utils";
 
 class EditHtmlSheetAttachment {
   htmlSheet: getSheets.GetHtmlSheet_;
@@ -18,17 +19,7 @@ class EditHtmlSheetAttachment {
     return colIdxMap;
   }
   protected setBodyValues_(outputValues: string[][]): void {
-    const outputBody: string[][] = outputValues.filter(
-      (_, idx) => idx !== utils.headerRowIndex
-    );
-    this.sheet
-      .getRange(
-        2,
-        1,
-        outputBody.length,
-        outputBody[utils.headerRowIndex].length
-      )
-      .setValues(outputBody);
+    new ssUtils.GetSheet_().setBodyValues_(this.sheet, outputValues);
   }
 }
 class EditHtmlSheetAttachment2 extends EditHtmlSheetAttachment {

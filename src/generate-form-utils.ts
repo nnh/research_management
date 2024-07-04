@@ -3,7 +3,48 @@ import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 import * as pbmd from "./pubmed";
 
+export class GetTargetDate {
+  startDatePropertyKey: string;
+  endDatePropertyKey: string;
+  constructor() {
+    this.startDatePropertyKey = "startDate";
+    this.endDatePropertyKey = "endDate";
+    this.registProperties();
+  }
+  private registProperties() {
+    const inputSheet = new ssUtils.GetSheet_().getSheetByName_(
+      utils.inputSheetName
+    );
+    if (inputSheet === null) {
+      throw new Error(`${utils.inputSheetName} does not exist.`);
+    }
+    const startDateValue: Date = this.isValidDate(
+      inputSheet.getRange("B2").getValue()
+    );
+    const endDateValue: Date = this.isValidDate(
+      inputSheet.getRange("B3").getValue()
+    );
+    this.setDate(startDateValue, this.startDatePropertyKey);
+    this.setDate(endDateValue, this.endDatePropertyKey);
+  }
+  private isValidDate(date: any): Date {
+    if (date instanceof Date && !isNaN(date.getTime())) {
+      return date;
+    }
+    throw new Error(`${date} is not date`);
+  }
+  getDate(key: string): Date {
+    const date = utils.getProperty_(key);
+    return this.isValidDate(new Date(date));
+  }
+  private setDate(date: Date, key: string): void {
+    PropertiesService.getScriptProperties().setProperty(key, String(date));
+  }
+}
+
 class GenerateForm {
+  startDate: Date;
+  endDate: Date;
   inputColnames: string[];
   inputColIndexes: number[];
   htmlSheet: GoogleAppsScript.Spreadsheet.Sheet;
@@ -21,12 +62,15 @@ class GenerateForm {
       utils.getProperty_("trial_type_label")
     );
     this.idColIdx = this.getColIdxByColName_(utils.idLabel);
+    const targetDate: GetTargetDate = new GetTargetDate();
+    this.startDate = targetDate.getDate(targetDate.startDatePropertyKey);
+    this.endDate = targetDate.getDate(targetDate.endDatePropertyKey);
   }
   protected getColIdxByColNameSheet_(
     colName: string,
     sheet: GoogleAppsScript.Spreadsheet.Sheet
   ): number {
-    const colIdx = ssUtils.getColIdx_(sheet, colName);
+    const colIdx = new ssUtils.GetSheet_().getColIdx_(sheet, colName);
     if (colIdx === -1) {
       throw new Error(`${colName} columns do not exist.`);
     }
@@ -163,16 +207,18 @@ export class GenerateForm2_1 extends GenerateForm {
     const specificClinicalStudyText: string = utils.trialTypeListJrct.get(
       utils.specificClinicalStudyKey
     )!;
-    const datacenterStartDateColIdx: number = ssUtils.getColIdx_(
-      this.htmlSheet,
-      utils.datacenterStartDateLabel
-    );
+    const datacenterStartDateColIdx: number =
+      new ssUtils.GetSheet_().getColIdx_(
+        this.htmlSheet,
+        utils.datacenterStartDateLabel
+      );
     const youshikiInputValues: string[][] = this.htmlItems.filter(
       (item, idx) => {
         const itemDate = new Date(item[datacenterStartDateColIdx]);
         return (
           (item[this.trialTypeColIdx] === specificClinicalStudyText &&
-            itemDate >= utils.limit_date) ||
+            itemDate >= this.startDate &&
+            itemDate <= this.endDate) ||
           idx === 0
         );
       }

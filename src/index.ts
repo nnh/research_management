@@ -3,9 +3,11 @@ import { generateForm3 } from "./generate-form3";
 import { getFromHtml } from "./youshiki-data";
 import { getPubmed } from "./pubmed";
 import { rewriteAttachment2, rewriteAttachment3 } from "./edit-attachment";
+import { generateFormAll } from "./generate-form-main";
 
 function onOpen() {
   const arr = [
+    { name: "様式第２、３、別添２、３作成", functionName: "generateFormAll" },
     { name: "様式第２、別添２作成", functionName: "generateForm2" },
     { name: "様式第３、別添３作成", functionName: "generateForm3" },
     { name: "別添２テキスト再作成", functionName: "rewriteAttachment2" },
@@ -26,3 +28,4 @@ global.getFromHtml = getFromHtml;
 global.getPubmed = getPubmed;
 global.rewriteAttachment2 = rewriteAttachment2;
 global.rewriteAttachment3 = rewriteAttachment3;
+global.generateFormAll = generateFormAll;

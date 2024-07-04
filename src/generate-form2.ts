@@ -3,6 +3,7 @@ import * as utils from "./utils";
 import * as youshikiData from "./youshiki-data";
 import * as generateForm from "./generate-form-utils";
 import * as pbmd from "./pubmed";
+import { rewriteAttachment2 } from "./edit-attachment";
 
 function generateForm2_1_(form2: generateForm.GenerateForm2_1) {
   const youshiki2_1_2: string[][] = form2.getYoushikiInputValues();
@@ -102,6 +103,7 @@ export function generateForm2() {
   new ssUtils.GetSheet_().targetSheetsClearContents_(sheetNames);
   youshikiData.getFromHtml();
   pbmd.getPubmed();
+  rewriteAttachment2();
   generateForm2_1_(
     new generateForm.GenerateForm2_1([
       utils.attachment_2_1_1,
