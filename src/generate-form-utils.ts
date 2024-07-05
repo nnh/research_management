@@ -189,6 +189,10 @@ class GenerateForm {
     );
     return outputValues;
   }
+  setUnderlineText(sheetname: string, colIdx: number) {
+    const setUnderline = new SetUnderline(sheetname);
+    setUnderline.setUnderlineMain(colIdx);
+  }
 }
 export class GenerateForm2_1 extends GenerateForm {
   attachmentColnames: string[];
@@ -405,5 +409,83 @@ class GetColIdx {
     );
     const outputColIndexes: number[] = this.editOutputColIdxies_(temp);
     return outputColIndexes;
+  }
+}
+class SetUnderline {
+  sheet: GoogleAppsScript.Spreadsheet.Sheet;
+  constructor(sheetname: string) {
+    this.sheet = new ssUtils.GetSheet_().getSheetByName_(sheetname);
+  }
+  private getUnderLineTargetString_(inputText: string): string {
+    const splitTextArray1: string[] = inputText.split("。また「");
+    if (splitTextArray1.length === 1) {
+      return "";
+    }
+    const removeText: RegExp =
+      /」という一定の有害事象を伴う侵襲的な介入を行う。$/;
+    const splitTextArray2: string = splitTextArray1[1].replace(removeText, "");
+    return splitTextArray2;
+  }
+  private setUnderlineText_(
+    targetRange: GoogleAppsScript.Spreadsheet.Range,
+    targetStringArray: string[]
+  ): void {
+    const richText: GoogleAppsScript.Spreadsheet.RichTextValue | null =
+      targetRange.getRichTextValue();
+    if (richText === null) {
+      return;
+    }
+    const text: string = richText.getText();
+    if (text === "") {
+      return;
+    }
+    // 下線を引く部分のインデックスを指定
+    const underlineRanges: {
+      start: number;
+      end: number;
+    }[] = targetStringArray.map((targetString) => {
+      if (text.indexOf(targetString) === utils.errorIndex) {
+        return { start: utils.errorIndex, end: utils.errorIndex };
+      }
+      const res: { start: number; end: number } = {
+        start: text.indexOf(targetString),
+        end: text.indexOf(targetString) + targetString.length,
+      };
+      return res;
+    });
+    const targetUnderlineRanges: {
+      start: number;
+      end: number;
+    }[] = underlineRanges.filter((obj) => obj.start !== utils.errorIndex);
+    // 各部分にスタイルを適用
+    targetUnderlineRanges.forEach((range: { start: number; end: number }) => {
+      // TextStyleBuilder を使用してスタイルを設定
+      const textStyle: GoogleAppsScript.Spreadsheet.TextStyle =
+        SpreadsheetApp.newTextStyle().setUnderline(true).build();
+
+      // RichTextValueBuilder を使用してスタイルを部分的に適用
+      const richTextValueBuilder: GoogleAppsScript.Spreadsheet.RichTextValueBuilder =
+        SpreadsheetApp.newRichTextValue().setText(text);
+      richTextValueBuilder.setTextStyle(range.start, range.end, textStyle);
+      // リッチテキスト値をビルド
+      const richTextValue: GoogleAppsScript.Spreadsheet.RichTextValue =
+        richTextValueBuilder.build();
+      // セルにリッチテキスト値を設定
+      targetRange.setRichTextValue(richTextValue);
+    });
+  }
+  setUnderlineMain(colIdx: number): void {
+    const startRow: number = 2;
+    const lastRow: number = this.sheet.getLastRow();
+    const colNumber: number = colIdx + 1;
+    for (let row = startRow; row <= lastRow; row++) {
+      const targetRange: GoogleAppsScript.Spreadsheet.Range =
+        this.sheet.getRange(row, colNumber);
+      const targetString: string = this.getUnderLineTargetString_(
+        targetRange.getValue()
+      );
+      const targetStringArray: string[] = [targetString];
+      this.setUnderlineText_(targetRange, targetStringArray);
+    }
   }
 }

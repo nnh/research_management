@@ -17,7 +17,7 @@ function onOpen() {
     { name: "様式第３、別添３作成", functionName: "generateForm3" },
   ];
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  spreadsheet.addMenu("事前作業", arr1);
+  spreadsheet.addMenu("事前処理", arr1);
   spreadsheet.addMenu("様式作成", arr2);
 }
 
