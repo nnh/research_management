@@ -281,35 +281,30 @@ export class GenerateForm2_2 extends GenerateForm {
     const htmlJrctUminNoList: Set<string> = new Set(
       this.htmlItems.map((item) => item[this.idColIdx])
     );
-    const dummyArray: string[] = Array(
-      this.htmlItems[utils.headerRowIndex].length
-    ).fill("");
-    const targetPubmedValues: string[][] = pubmedItems.map((item) => {
-      if (item[pubmedItemsIdColIdx] !== "") {
-        return item;
-      }
-      let res = [...item];
-      res[pubmedItemsIdColIdx] = item[pubmedPmidColIdx];
-      return res;
+    const targetPubmedValues: string[][] = pubmedItems.map((pubmedItem) => {
+      const ctrNo: string =
+        pubmedItem[pubmedItemsIdColIdx] === ""
+          ? "none"
+          : pubmedItem[pubmedItemsIdColIdx];
+      return [...pubmedItem, ctrNo!];
     });
+    const ctrNoIdx = targetPubmedValues[0].length - 1;
     const targetHtmlValues: string[][] = targetPubmedValues.map(
       (pubmedItem) => {
-        if (htmlJrctUminNoList.has(pubmedItem[pubmedItemsIdColIdx])) {
+        const ctrNo: string = pubmedItem[ctrNoIdx];
+        if (htmlJrctUminNoList.has(ctrNo)) {
           const htmlRows: string[][] = this.htmlItems.filter(
-            (htmlItem) =>
-              htmlItem[this.idColIdx] === pubmedItem[pubmedItemsIdColIdx]
+            (htmlItem) => htmlItem[this.idColIdx] === ctrNo
           );
           return htmlRows[0];
         }
-        let res = [...dummyArray];
-        res[this.idColIdx] = pubmedItem[pubmedItemsIdColIdx];
-        return res;
+        throw new Error(`No data found for ${ctrNo}`);
       }
     );
     const temp: string[][] = targetPubmedValues.map((pubmedItem) => {
+      const ctrNo: string = pubmedItem[ctrNoIdx];
       const htmlRow: string[][] = targetHtmlValues.filter(
-        (htmlItem) =>
-          htmlItem[this.idColIdx] === pubmedItem[pubmedItemsIdColIdx]
+        (htmlItem) => htmlItem[this.idColIdx] === ctrNo
       );
       const outputHtmlValues: string[] = htmlRow[0]
         .map((value, idx) =>
