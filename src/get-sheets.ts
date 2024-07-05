@@ -179,13 +179,7 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
         "特定領域に係る特定臨床研究であることの説明",
         null,
       ],
-      [
-        "attachment_2_2",
-        utils.attachment_2_2,
-        null,
-        null,
-        "特定臨床研究の実施に伴い発表した論文であることの説明",
-      ],
+      ["attachment_2_2", utils.attachment_2_2, null, null, utils.abstractLabel],
       [
         "attachment_3",
         utils.attachment_3,
@@ -201,6 +195,13 @@ export class GetHtmlSheetAddColumn_ extends GetHtmlSheet_ {
         null,
       ],
       ["protocolId", utils.protocolIdLabel, null, null, null],
+      [
+        "attachment_2_2_2",
+        utils.attachment_2_2_2,
+        null,
+        null,
+        "特定臨床研究の実施に伴い発表した論文であることの説明",
+      ],
     ];
     return columnsList;
   }

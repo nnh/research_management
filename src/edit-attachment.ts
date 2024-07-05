@@ -64,7 +64,7 @@ class EditHtmlSheetAttachment2 extends EditHtmlSheetAttachment {
         : overAge;
     const attachment_2_1_1: string = `本試験の対象は${diseaseString}である。また「${intervention}」という一定の有害事象を伴う侵襲的な介入を行う。`;
     const attachment_2_1_2: string = `本試験の対象は${diseaseString}である。また年齢基準は${ageMax}であり、主として未成年を対象とした試験である。この研究成果はより良い治療法のエビデンスを提供するという形で小児領域の患者に還元される。`;
-    const attachment_2_2: string = `年齢基準は${ageMax}であり、主として未成年を対象とした試験である。`;
+    const attachment_2_2: string = `${attachment_2_1_1}年齢基準は${ageMax}であり、主として未成年を対象とした試験である。`;
     return [attachment_2_1_1, attachment_2_1_2, attachment_2_2];
   }
 }

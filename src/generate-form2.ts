@@ -69,8 +69,8 @@ function generateForm2_2() {
     utils.seqColName,
     utils.trialNameLabel,
     utils.idLabel,
-    utils.attachment_2_1_1,
     utils.attachment_2_2,
+    utils.attachment_2_2_2,
   ];
   const inputValuesAttachment2_2 = form2.editInputAttachment(
     inputValuesYoushiki2_2,
@@ -84,7 +84,7 @@ function generateForm2_2() {
   );
   // 下線のセット
   const underlineColIdx: number = outputColNamesAttachment2_2.indexOf(
-    utils.attachment_2_1_1
+    utils.attachment_2_2
   );
   if (underlineColIdx !== utils.errorIndex) {
     form2.setUnderlineText(utils.attachment_2_2, underlineColIdx);

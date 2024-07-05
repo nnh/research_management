@@ -250,6 +250,10 @@ export class GenerateForm2_2 extends GenerateForm {
     this.inputColnames = this.htmlItems[utils.headerRowIndex];
   }
   mergePubmedAndHtml_(): string[][] {
+    const pubmedTypeColIdx: number = this.getColIdxByColNameSheet_(
+      this.pubmed.colnamesMap.get("type")!,
+      this.pubmed.outputSheet
+    );
     const pubmedItems: string[][] = this.pubmed.getPubmedSheetValues();
     const pubmedGetColIdx = new GetColIdx(pubmedItems[utils.headerRowIndex]);
     const outputPubmedColIndexes: number[] = pubmedGetColIdx.byExcludeColumns_([
@@ -318,7 +322,18 @@ export class GenerateForm2_2 extends GenerateForm {
         .filter((value): value is string => value !== null) as string[];
       return [...outputPubmedValues, ...outputHtmlValues];
     });
-    const youshikiValues: string[][] = temp.map((item, idx) => [
+    const attachment2_2_Map: Map<string, string> = new Map([
+      [utils.pubmedTypeMainText, "試験の主たる結果の報告に関する論文"],
+      [utils.pubmedTypeSubText, "試験のサブグループ解析に関する論文"],
+      [utils.pubmedTypeProtocolText, "進行中試験の試験デザインに関する論文"],
+    ]);
+    const setAttachment2_2: string[][] = temp.map((item, idx) => {
+      const type: string = item[pubmedTypeColIdx];
+      const youshiki2_2: string =
+        idx === 0 ? utils.attachment_2_2_2 : attachment2_2_Map.get(type)!;
+      return [...item, youshiki2_2];
+    });
+    const youshikiValues: string[][] = setAttachment2_2.map((item, idx) => [
       idx === 0 ? utils.seqColName : String(idx),
       ...item,
     ]);
@@ -417,7 +432,7 @@ class SetUnderline {
       return "";
     }
     const removeText: RegExp =
-      /」という一定の有害事象を伴う侵襲的な介入を行う。$/;
+      /」という一定の有害事象を伴う侵襲的な介入を行う。.*$/;
     const splitTextArray2: string = splitTextArray1[1].replace(removeText, "");
     return splitTextArray2;
   }
@@ -479,8 +494,10 @@ class SetUnderline {
       const targetString: string = this.getUnderLineTargetString_(
         targetRange.getValue()
       );
-      const targetStringArray: string[] = [targetString];
-      this.setUnderlineText_(targetRange, targetStringArray);
+      if (targetString !== "") {
+        const targetStringArray: string[] = [targetString];
+        this.setUnderlineText_(targetRange, targetStringArray);
+      }
     }
   }
 }

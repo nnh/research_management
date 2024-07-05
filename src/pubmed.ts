@@ -194,9 +194,9 @@ export class GetPubmedData {
 
 export function getPubmed() {
   const typeMap: Map<string, string> = new Map([
-    ["主", "主解析論文"],
-    ["副", "サブ解析論文"],
-    ["プ", "プロトコール論文"],
+    ["主", utils.pubmedTypeMainText],
+    ["副", utils.pubmedTypeSubText],
+    ["プ", utils.pubmedTypeProtocolText],
   ]);
   const targetPublicationIndexMap: Map<string, number> = new Map([
     ["type", 4],
