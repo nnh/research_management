@@ -17,6 +17,7 @@ kUminRNoLabel <- "UMIN受付番号"
 kNameOfPi <- "責任研究者/Name of lead principal investigator"
 kUminIdLabel <- kIdLabel
 kRecptNo <- "R[0-9]{9}"
+kInterventionsPattern <- "介入([2-9]|10)/Interventions/Control_([2-9]|10)"
 # ------ functions ------
 GetTargetTagText <- function(elem, targetTag) {
   if (length(elem) == 0) {
@@ -119,6 +120,11 @@ GetUminInfo <- function(uminRNo) {
       outputHeaderAndBodies[[i]]["bodies"] <- outputHeaderAndBodies[[i]]["bodies"] %>% map_vec(~ str_c(., collapse = ""))
     } else if (header == "介入1/Interventions/Control_1") {
       interactionText <- EditJpItemName(bodies)
+    } else if (str_detect(header, kInterventionsPattern)) {
+      temp_interactionText <- EditJpItemName(bodies)
+      if (temp_interactionText != "") {
+        interactionText <- interactionText %>% str_c("\r",  temp_interactionText)
+      }
     } else if (header == "試験のフェーズ/Developmental phase") {
       header <- "試験のフェーズ"
     } else if (header == "対象疾患名/Condition") {
@@ -215,4 +221,6 @@ if (length(targetUminNoList) > 0) {
     return(temp)
   })
   AddOutputSheet(df_uminList)
+} else {
+  print("UMIN:0件")
 }

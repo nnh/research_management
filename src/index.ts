@@ -4,9 +4,12 @@ import { getFromHtml } from "./youshiki-data";
 import { getPubmed } from "./pubmed";
 import { rewriteAttachment2, rewriteAttachment3 } from "./edit-attachment";
 import { generateFormAll } from "./generate-form-main";
+import { getTargetCtrNo } from "./get-ctr";
+import { execTest } from "./test";
 
 function onOpen() {
   const arr1 = [
+    { name: "CTR番号取得", functionName: "getTargetCtrNo" },
     { name: "CTR情報取得", functionName: "getFromHtml" },
     { name: "別添２テキスト再作成", functionName: "rewriteAttachment2" },
     { name: "別添３テキスト再作成", functionName: "rewriteAttachment3" },
@@ -33,3 +36,5 @@ global.getPubmed = getPubmed;
 global.rewriteAttachment2 = rewriteAttachment2;
 global.rewriteAttachment3 = rewriteAttachment3;
 global.generateFormAll = generateFormAll;
+global.getTargetCtrNo = getTargetCtrNo;
+global.execTest = execTest;
