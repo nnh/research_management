@@ -2,7 +2,7 @@
 #' description
 #' @file getUmin.R
 #' @author Mariko Ohtsuka
-#' @date 2024.7.1
+#' @date 2024.7.8
 rm(list=ls())
 # ------ libraries ------
 library(here)
@@ -86,7 +86,7 @@ GetUminInfo <- function(uminRNo) {
   sei <- temp %>% html_node("tr:nth-child(3)") %>% html_node("td:nth-child(2)") %>% html_text()
   mei <- temp %>% html_node("tr:nth-child(1)") %>% html_node("td:nth-child(2)") %>% html_text()
   nameOfPi <- str_c(sei, "　", mei) %>% str_remove("　$")
-  headerAndBodies[[i]]["header"] <- nameOfPi
+  headerAndBodies[[i]]["bodies"] <- nameOfPi
   # 見出しの整理
   outputHeaderAndBodies <- headerAndBodies
   intervention <- "なし"
