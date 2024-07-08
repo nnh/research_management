@@ -23,12 +23,12 @@ export class GetPubmedData {
       [utils.pmidLabel, utils.pmidLabel],
     ]);
     this.colnames = [
-      this.colnamesMap.get("title") || "",
-      this.colnamesMap.get("authorName") || "",
-      this.colnamesMap.get("authorFacilities") || "",
-      this.colnamesMap.get("role") || "",
-      this.colnamesMap.get("vancouver") || "",
-      this.colnamesMap.get("type") || "",
+      this.colnamesMap.get("title")!,
+      this.colnamesMap.get("authorName")!,
+      this.colnamesMap.get("authorFacilities")!,
+      this.colnamesMap.get("role")!,
+      this.colnamesMap.get("vancouver")!,
+      this.colnamesMap.get("type")!,
       utils.idLabel,
       utils.pmidLabel,
     ];
@@ -155,9 +155,14 @@ export class GetPubmedData {
       const authorName: string = targetAuthor
         .map((author) => author[authorNameIndex])
         .join(", ");
-      const authorFacilities: string = Array.from(
+      const authorFacilitiesArray: string[] = Array.from(
         new Set(targetAuthor.map((author) => author[authorFacilityIndex]))
-      ).join(", ");
+      );
+      const authorFacilities: string = authorFacilitiesArray.some((facility) =>
+        /Nagoya Medical Center/i.test(facility)
+      )
+        ? "National Hospital Organization Nagoya Medical Center"
+        : "";
       articleData.set("authorName", authorName);
       articleData.set("authorFacilities", authorFacilities);
       const journal: GoogleAppsScript.XML_Service.Element =
@@ -192,46 +197,57 @@ export class GetPubmedData {
   }
 }
 
-export function getPubmed() {
-  const typeMap: Map<string, string> = new Map([
-    ["主", utils.pubmedTypeMainText],
-    ["副", utils.pubmedTypeSubText],
-    ["プ", utils.pubmedTypeProtocolText],
-  ]);
-  const targetPublicationIndexMap: Map<string, number> = new Map([
-    ["type", 4],
-    ["umin", 7],
-    ["jrct", 8],
-    ["protocolId", 9],
-    [utils.pmidLabel, 12],
-  ]);
-  const pmidColIdx: number =
-    targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex;
-  const jrctColIdx: number =
-    targetPublicationIndexMap.get("jrct") || utils.errorIndex;
-  const uminColIdx: number =
-    targetPublicationIndexMap.get("umin") || utils.errorIndex;
-  const typeColIdx: number =
-    targetPublicationIndexMap.get("type") || utils.errorIndex;
+class GetPubmedInput {
+  typeMap: Map<string, string>;
+  targetPublicationIndexMap: Map<string, number>;
 
-  const publicationRawValues: string[][] = getSheets.getPublicationValues_();
-  // PubMed IDが空白ならば対象外とする
-  const targetValues: string[][] = publicationRawValues.filter((row) =>
-    /^[0-9]{8}$/.test(
-      row[targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex]
-    )
-  );
-  const targetPubmedIds: string[] = targetValues.map((row) =>
-    String(
-      row[targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex]
-    )
-  );
+  constructor() {
+    this.typeMap = new Map([
+      ["主", utils.pubmedTypeMainText],
+      ["副", utils.pubmedTypeSubText],
+      ["プ", utils.pubmedTypeProtocolText],
+    ]);
+    this.targetPublicationIndexMap = new Map([
+      ["type", 4],
+      ["umin", 7],
+      ["jrct", 8],
+      ["protocolId", 9],
+      [utils.pmidLabel, 12],
+    ]);
+  }
+  getValues(): string[][] {
+    const publicationRawValues: string[][] = getSheets.getPublicationValues_();
+    // PubMed IDが空白ならば対象外とする
+    const targetValues: string[][] = publicationRawValues.filter((row) =>
+      /^[0-9]{8}$/.test(
+        row[this.targetPublicationIndexMap.get(utils.pmidLabel)!]
+      )
+    );
+    return targetValues;
+  }
+  getTargetPubmedIds(inputValues: string[][]): string[] {
+    return inputValues.map((row) =>
+      String(row[this.targetPublicationIndexMap.get(utils.pmidLabel)!])
+    );
+  }
+}
+
+export function getPubmed(): void {
+  const pbmdInput: GetPubmedInput = new GetPubmedInput();
+  const targetValues: string[][] = pbmdInput.getValues();
+  const targetPubmedIds: string[] = pbmdInput.getTargetPubmedIds(targetValues);
   const pbmd: GetPubmedData = new GetPubmedData();
   const outputColIndexes: Map<string, number> = pbmd.getOutputColIndexes_();
   const pmid: string = pbmd.getTargetPmids_(targetPubmedIds);
   if (pmid === "") {
     return;
   }
+  const pmidColIdx: number = pbmdInput.targetPublicationIndexMap.get(
+    utils.pmidLabel
+  )!;
+  const jrctColIdx: number = pbmdInput.targetPublicationIndexMap.get("jrct")!;
+  const uminColIdx: number = pbmdInput.targetPublicationIndexMap.get("umin")!;
+  const typeColIdx: number = pbmdInput.targetPublicationIndexMap.get("type")!;
   const pubmedDataList: Map<string, string>[] = pbmd.getPubmedData_(pmid);
   const outputValues: string[][] = pubmedDataList.map((pubmedData) => {
     const row: string[] = Array(outputColIndexes.size).fill("");
@@ -254,10 +270,10 @@ export function getPubmed() {
             ? targetRow[0][uminColIdx]
             : "";
         row[outputColIndexes.get(utils.idLabel)!] = uminJrctId;
-        row[outputColIndexes.get("type")!] = typeMap.has(
+        row[outputColIndexes.get("type")!] = pbmdInput.typeMap.has(
           targetRow[0][typeColIdx]
         )
-          ? typeMap.get(targetRow[0][typeColIdx])!
+          ? pbmdInput.typeMap.get(targetRow[0][typeColIdx])!
           : "その他";
       }
     });
@@ -268,6 +284,11 @@ export function getPubmed() {
   }
   const outputStartRow: number = pbmd.outputSheet.getLastRow() + 1;
   pbmd.outputSheet
-    .getRange(outputStartRow, 1, outputValues.length, outputValues[0].length)
+    .getRange(
+      outputStartRow,
+      utils.colNumberA,
+      outputValues.length,
+      outputValues[utils.headerRowIndex].length
+    )
     .setValues(outputValues);
 }
