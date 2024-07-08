@@ -2,6 +2,7 @@ import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 import * as pbmd from "./pubmed";
+import { util } from "chai";
 
 export class GetTargetDate {
   startDatePropertyKey: string;
@@ -111,14 +112,17 @@ class GenerateForm {
       outputSheetName,
       outputColnames
     );
-    outputSheet
-      .getRange(
-        2,
-        1,
+    const outputRange: GoogleAppsScript.Spreadsheet.Range =
+      outputSheet.getRange(
+        utils.bodyRowNumber,
+        utils.colNumberA,
         outputBody.length,
         outputBody[utils.headerRowIndex].length
-      )
-      .setValues(outputBody);
+      );
+
+    outputRange.setValues(outputBody);
+    outputRange.setHorizontalAlignment("left");
+    outputRange.setVerticalAlignment("top");
   }
   protected getInputColIndexes(): number[] {
     const inputColIndexes: number[] = this.inputColnames.map((colname) =>

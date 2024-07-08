@@ -61,6 +61,7 @@ export const outputYoushiki3SheetNames: Map<string, string> = new Map([
 
 export const jrctUminColnames: string[] = ["Label", "Value", "jrctNo"];
 export const headerRowIndex: number = 0;
+export const bodyRowNumber: number = 2;
 export const colNumberA: number = 1;
 // datacenterシートの列番号
 export const itemsProtocolIdIdx: number = 0;

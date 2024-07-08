@@ -98,8 +98,12 @@ export class GetSheet_ {
     const outputBody: string[][] = outputValues.filter(
       (_, idx) => idx !== utils.headerRowIndex
     );
-    sheet
-      .getRange(2, 1, outputBody.length, outputBody[0].length)
-      .setValues(outputBody);
+    const targetRange: GoogleAppsScript.Spreadsheet.Range = sheet.getRange(
+      utils.bodyRowNumber,
+      utils.colNumberA,
+      outputBody.length,
+      outputBody[utils.headerRowIndex].length
+    );
+    targetRange.setValues(outputBody);
   }
 }
