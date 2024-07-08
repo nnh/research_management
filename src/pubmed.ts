@@ -2,31 +2,13 @@ import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 
-export class GetPubmedData {
-  hospitalName: RegExp;
-  outputHospitalName: string;
-  outputSheetName: string;
-  colnames: string[];
-  outputSheet: GoogleAppsScript.Spreadsheet.Sheet;
-  outputSheetPmidIndex: number;
+export class GetPubmedDataCommon {
   colnamesMap: Map<string, string>;
+  colnames: string[];
+  outputSheetName: string;
+  outputSheet: GoogleAppsScript.Spreadsheet.Sheet;
   constructor() {
-    this.hospitalName = /Nagoya Medical Center/i;
-    this.outputHospitalName =
-      "National Hospital Organization Nagoya Medical Center";
-    this.outputSheetName = new ssUtils.GetSheet_().getSheetNameFromProperties_(
-      "pubmed_sheet_name"
-    );
-    this.colnamesMap = new Map([
-      ["title", utils.titlePubmedLabel],
-      ["authorName", "発表者氏名"],
-      ["authorFacilities", "発表者の所属"],
-      ["role", "役割"],
-      ["vancouver", "雑誌名・出版年月等"],
-      ["type", "論文種別"],
-      [utils.idLabel, utils.idLabel],
-      [utils.pmidLabel, utils.pmidLabel],
-    ]);
+    this.colnamesMap = this.getColnamesMap();
     this.colnames = [
       this.colnamesMap.get("title")!,
       this.colnamesMap.get("authorName")!,
@@ -37,17 +19,41 @@ export class GetPubmedData {
       utils.idLabel,
       utils.pmidLabel,
     ];
-    this.outputSheetPmidIndex = this.colnames.indexOf(utils.pmidLabel);
+    this.outputSheetName = new ssUtils.GetSheet_().getSheetNameFromProperties_(
+      "pubmed_sheet_name"
+    );
     this.outputSheet = new ssUtils.GetSheet_().addSheet_(
       this.outputSheetName,
       this.colnames
     );
   }
   getColnamesMap(): Map<string, string> {
-    return this.colnamesMap;
+    return new Map([
+      ["title", utils.titlePubmedLabel],
+      ["authorName", "発表者氏名"],
+      ["authorFacilities", "発表者の所属"],
+      ["role", "役割"],
+      ["vancouver", "雑誌名・出版年月等"],
+      ["type", "論文種別"],
+      [utils.idLabel, utils.idLabel],
+      [utils.pmidLabel, utils.pmidLabel],
+    ]);
   }
   getPubmedSheetValues(): string[][] {
     return this.outputSheet.getDataRange().getValues();
+  }
+}
+
+class GetPubmedData extends GetPubmedDataCommon {
+  hospitalName: RegExp;
+  outputHospitalName: string;
+  outputSheetPmidIndex: number;
+  constructor() {
+    super();
+    this.hospitalName = /Nagoya Medical Center/i;
+    this.outputHospitalName =
+      "National Hospital Organization Nagoya Medical Center";
+    this.outputSheetPmidIndex = this.colnames.indexOf(utils.pmidLabel);
   }
   getOutputColIndexes_(): Map<string, number> {
     const outputColIndexes: Map<string, number> = new Map();

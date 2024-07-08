@@ -2,7 +2,6 @@ import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 import * as pbmd from "./pubmed";
-import { util } from "chai";
 
 export class GetTargetDate {
   startDatePropertyKey: string;
@@ -247,10 +246,10 @@ export class GenerateForm2_1 extends GenerateForm {
   }
 }
 export class GenerateForm2_2 extends GenerateForm {
-  pubmed: pbmd.GetPubmedData;
+  pubmed: pbmd.GetPubmedDataCommon;
   constructor() {
     super();
-    this.pubmed = new pbmd.GetPubmedData();
+    this.pubmed = new pbmd.GetPubmedDataCommon();
     this.inputColnames = this.htmlItems[utils.headerRowIndex];
   }
   mergePubmedAndHtml_(): string[][] {

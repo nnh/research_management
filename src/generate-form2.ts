@@ -89,7 +89,7 @@ function generateForm2_2() {
   if (underlineColIdx !== utils.errorIndex) {
     form2.setUnderlineText(utils.attachment_2_2, underlineColIdx);
   }
-  const pubmed = new pbmd.GetPubmedData();
+  const pubmed = new pbmd.GetPubmedDataCommon();
   const colnamesMap: Map<string, string> = pubmed.getColnamesMap();
   const youshiki2_2Colnames = new Map([
     [utils.seqColName, utils.seqColName],
