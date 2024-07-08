@@ -3,12 +3,17 @@ import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 
 export class GetPubmedData {
+  hospitalName: RegExp;
+  outputHospitalName: string;
   outputSheetName: string;
   colnames: string[];
   outputSheet: GoogleAppsScript.Spreadsheet.Sheet;
   outputSheetPmidIndex: number;
   colnamesMap: Map<string, string>;
   constructor() {
+    this.hospitalName = /Nagoya Medical Center/i;
+    this.outputHospitalName =
+      "National Hospital Organization Nagoya Medical Center";
     this.outputSheetName = new ssUtils.GetSheet_().getSheetNameFromProperties_(
       "pubmed_sheet_name"
     );
@@ -138,31 +143,30 @@ export class GetPubmedData {
         } catch (error) {
           affiliationList = "dummy";
         }
-        const facilities: string = /Nagoya Medical Center/.test(affiliationList)
-          ? affiliationList
-          : "";
+        const facilities: string =
+          idx === 0 || this.hospitalName.test(affiliationList)
+            ? affiliationList
+            : "";
 
         return [name, facilities];
       });
+      const firstAuthor: string[] = authorList
+        .filter((_, idx) => idx === 0)
+        .flat();
       const authorNameIndex: number = 0;
       const authorFacilityIndex: number = 1;
-      const role: string =
-        authorList[0][authorFacilityIndex] !== "" ? "1" : "3";
-      articleData.set("role", role);
-      const targetAuthor: string[][] = authorList.filter(
-        (author) => author[authorFacilityIndex] !== ""
-      );
-      const authorName: string = targetAuthor
-        .map((author) => author[authorNameIndex])
-        .join(", ");
-      const authorFacilitiesArray: string[] = Array.from(
-        new Set(targetAuthor.map((author) => author[authorFacilityIndex]))
-      );
-      const authorFacilities: string = authorFacilitiesArray.some((facility) =>
-        /Nagoya Medical Center/i.test(facility)
+      const role: string = this.hospitalName.test(
+        firstAuthor[authorFacilityIndex]
       )
-        ? "National Hospital Organization Nagoya Medical Center"
+        ? "1"
+        : "3";
+      articleData.set("role", role);
+      const authorFacilities: string = authorList.some(([_, facility]) =>
+        this.hospitalName.test(facility)
+      )
+        ? this.outputHospitalName
         : "";
+      const authorName: string = `${firstAuthor[authorNameIndex]}, ${firstAuthor[authorFacilityIndex]}`;
       articleData.set("authorName", authorName);
       articleData.set("authorFacilities", authorFacilities);
       const journal: GoogleAppsScript.XML_Service.Element =
