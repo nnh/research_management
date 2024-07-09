@@ -44,7 +44,7 @@ export class GetPubmedDataCommon {
   }
 }
 
-class GetPubmedData extends GetPubmedDataCommon {
+export class GetPubmedData extends GetPubmedDataCommon {
   hospitalName: RegExp;
   outputHospitalName: string;
   outputSheetPmidIndex: number;
