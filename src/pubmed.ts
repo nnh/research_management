@@ -172,7 +172,7 @@ class GetPubmedData extends GetPubmedDataCommon {
       )
         ? this.outputHospitalName
         : "";
-      const authorName: string = `${firstAuthor[authorNameIndex]}, ${firstAuthor[authorFacilityIndex]}`;
+      const authorName: string = firstAuthor[authorNameIndex];
       articleData.set("authorName", authorName);
       articleData.set("authorFacilities", authorFacilities);
       const journal: GoogleAppsScript.XML_Service.Element =
