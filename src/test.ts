@@ -1,5 +1,4 @@
 import * as utils from "./utils";
-import * as ssUtils from "./ss-utils";
 import * as pubmed from "./pubmed";
 // 1.targetCTR
 export function execTest() {
@@ -198,12 +197,12 @@ class TestTargetPublication extends TestScript {
             : colname1 === "2_発表者の所属" && checkValues[i][colidx2] !== "3"
             ? value1
             : checkValues[i][colidx2];
+        let color: string = "green";
         if (value1 !== value2) {
-          const color: string =
-            checkValues[i][colidx2] === "" ? "yellow" : "red";
-          wkSheet.getRange(rowNum, col1Num).setBackground(color);
-          wkSheet.getRange(rowNum, col2Num).setBackground(color);
+          color = checkValues[i][colidx2] === "" ? "yellow" : "red";
         }
+        wkSheet.getRange(rowNum, col1Num).setBackground(color);
+        wkSheet.getRange(rowNum, col2Num).setBackground(color);
       }
       wkSheet
         .getRange(checkInputLastRow + 1, col2Num)
@@ -306,6 +305,11 @@ class TestGetPubmed extends TestScript {
     outputSheet
       .getRange(outputValues.length + 1, 1)
       .setValue(`*** check : ${new Date()}`);
+    for (let i = 1; i <= outputValues.length; i++) {
+      const color: string =
+        outputSheet.getRange(i, 3).getValue() === "OK" ? "green" : "red";
+      outputSheet.getRange(i, 1, 1, 3).setBackground(color);
+    }
   }
 }
 class TestFromHtml extends TestScript {
@@ -386,9 +390,17 @@ class TestFromHtml extends TestScript {
           checkBody,
         ];
       });
-    checkSheet.clearContents();
+    checkSheet.clear();
     checkSheet
       .getRange(1, 1, checkValues.length, checkValues[0].length)
       .setValues(checkValues);
+    for (let i = 2; i <= checkValues.length; i++) {
+      const color: string =
+        checkSheet.getRange(i, 5).getValue() === "OK" ||
+        checkSheet.getRange(i, 6).getValue() === "OK"
+          ? "green"
+          : "red";
+      checkSheet.getRange(i, 5, 1, 2).setBackground(color);
+    }
   }
 }
