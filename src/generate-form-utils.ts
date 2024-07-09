@@ -12,6 +12,7 @@ class GenerateForm {
   htmlSheet: GoogleAppsScript.Spreadsheet.Sheet;
   htmlItems: string[][];
   trialTypeColIdx: number;
+  phaseColIdx: number;
   idColIdx: number;
   constructor() {
     this.inputColnames = this.getInputColumnsCommon();
@@ -23,6 +24,7 @@ class GenerateForm {
     this.trialTypeColIdx = this.getColIdxByColName_(
       utils.getProperty_("trial_type_label")
     );
+    this.phaseColIdx = this.getColIdxByColName_(utils.phaseLabel);
     this.idColIdx = this.getColIdxByColName_(utils.idLabel);
     const targetDate: GetTargetDate = new GetTargetDate();
     this.startDate = targetDate.getDate(targetDate.startDatePropertyKey);
@@ -41,10 +43,22 @@ class GenerateForm {
   private getColIdxByColName_(colName: string): number {
     return this.getColIdxByColNameSheet_(colName, this.htmlSheet);
   }
+  protected replacePhase_(value: string): string {
+    const phaseMap: Map<string, string> = new Map([
+      ["第Ⅰ相/Phase I", "1"],
+      ["第Ⅱ相/Phase II", "2"],
+    ]);
+    const res: string = phaseMap.has(value) ? phaseMap.get(value)! : value;
+    return res;
+  }
   getOutputValues_(values: string[][]): string[][] {
     const res = values.map((item, rowIdx) =>
       this.inputColIndexes.map((idx) =>
-        idx === utils.highValue ? String(rowIdx) : `'${item[idx]}`
+        idx === utils.highValue
+          ? String(rowIdx)
+          : idx === this.phaseColIdx
+          ? this.replacePhase_(item[idx])
+          : `'${item[idx]}`
       )
     );
     return res;
@@ -246,7 +260,6 @@ export class GenerateForm2_2 extends GenerateForm {
     const htmlGetColIdx = new GetColIdx(this.inputColnames);
     const outputHtmlColIndexes: number[] =
       htmlGetColIdx.byIncludeColumns_(inputHtmlColnames);
-    // jRCT番号、UMIN番号が空白ならば暫定でPMIDを入れる
     const htmlJrctUminNoList: Set<string> = new Set(
       this.htmlItems.map((item) => item[this.idColIdx])
     );
@@ -298,7 +311,13 @@ export class GenerateForm2_2 extends GenerateForm {
         idx === 0 ? utils.attachment_2_2_2 : attachment2_2_Map.get(type)!;
       return [...item, youshiki2_2];
     });
-    const youshikiValues: string[][] = setAttachment2_2.map((item, idx) => [
+    this.phaseColIdx = setAttachment2_2[0].indexOf(utils.phaseLabel);
+    const setPhase: string[][] = setAttachment2_2.map((row) =>
+      row.map((item, idx) =>
+        idx === this.phaseColIdx ? this.replacePhase_(item) : item
+      )
+    );
+    const youshikiValues: string[][] = setPhase.map((item, idx) => [
       idx === 0 ? utils.seqColName : String(idx),
       ...item,
     ]);
