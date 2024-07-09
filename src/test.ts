@@ -1,7 +1,9 @@
 import * as utils from "./utils";
 import * as pubmed from "./pubmed";
-// 1.targetCTR
+
 export function execTest() {
+  new TestFromHtmlDatacenterInfo().execTest();
+  return;
   const fromHtml = new TestFromHtml();
   fromHtml.execTest("fromHTML_jRCTs041180101", "targetHtmlJrct");
   fromHtml.execTest("fromHTML_UMIN000002025", "targetHtmlUmin");
@@ -402,5 +404,80 @@ class TestFromHtml extends TestScript {
           : "red";
       checkSheet.getRange(i, 5, 1, 2).setBackground(color);
     }
+  }
+}
+
+class TestFromHtmlDatacenterInfo extends TestScript {
+  constructor() {
+    super();
+  }
+  private getTargetValues_(
+    targetSheet: GoogleAppsScript.Spreadsheet.Sheet,
+    targetColNames: Set<string>,
+    headerIdx: number
+  ): string[][] {
+    const inputValues: string[][] = targetSheet.getDataRange().getValues();
+    const targetColIdxies: number[] = inputValues[0]
+      .map((item, idx) => (targetColNames.has(item) ? idx : utils.errorIndex))
+      .filter((item) => item !== utils.errorIndex);
+    const targetValues: string[][] = inputValues.map((item) =>
+      targetColIdxies.map((idx) => item[idx])
+    );
+    const headers: string[] = targetValues[0];
+    const outputHeaders: string[] = this.editHeader_(headers, headerIdx);
+    const outputBodys: string[][] = targetValues.filter((_, idx) => idx !== 0);
+    const outputValues: string[][] = [outputHeaders, ...outputBodys];
+    return outputValues;
+  }
+  private editHeader_(header: string[], idx: number): string[] {
+    const res: string[] = header.map((item) => `${idx}_${item}`);
+    return res;
+  }
+  private getDcValues_(): string[][] {
+    const checkSheet: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getCheckSheet_("targetHtmlDc");
+    const datacenterTargetColNames: Set<string> = new Set([
+      "プロトコルID",
+      "試験名",
+      "PI",
+      "PI所属機関",
+      "研究種別",
+      "CTR",
+      "参加施設数",
+      "開始日（jRCT公開日）",
+      "疾病等分類",
+    ]);
+    const datacenterValues: string[][] = this.getTargetValues_(
+      this.datacenterSheet,
+      datacenterTargetColNames,
+      1
+    );
+    return datacenterValues;
+  }
+  private getHtmlValues_(): string[][] {
+    const fromHtmlTargetColNames: Set<string> = new Set([
+      "プロトコルID",
+      "研究名称",
+      "研究責任（代表）医師の氏名",
+      "研究責任（代表）医師の所属機関",
+      "研究の種別",
+      "臨床研究実施計画番号",
+      "参加施設数",
+      "研究管理：開始日",
+      "疾病等分類",
+    ]);
+    const fromHtmlSheet: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getWkSheetByName_(this.youshikiSs, "fromHtml");
+    const fromHtmlValues: string[][] = this.getTargetValues_(
+      fromHtmlSheet,
+      fromHtmlTargetColNames,
+      2
+    );
+    return fromHtmlValues;
+  }
+  execTest() {
+    const dcValues: string[][] = this.getDcValues_();
+    const htmlValues: string[][] = this.getHtmlValues_();
+    console.log(888);
   }
 }
