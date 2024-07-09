@@ -3,12 +3,12 @@ import * as ssUtils from "./ss-utils";
 import * as pubmed from "./pubmed";
 // 1.targetCTR
 export function execTest() {
+  const fromHtml = new TestFromHtml();
+  fromHtml.execTest("fromHTML_jRCTs041180101", "targetHtmlJrct");
+  fromHtml.execTest("fromHTML_UMIN000002025", "targetHtmlUmin");
+  new TestTargetCtr().execTest();
+  new TestTargetPublication().execTest();
   new TestGetPubmed().execTest();
-  return;
-  const test: TestScript = new TestScript();
-  test.checkPublication();
-  return;
-  test.checkTargetCtr();
 }
 
 class TestScript {
@@ -31,6 +31,19 @@ class TestScript {
     this.datacenterValues = this.datacenterSheet.getDataRange().getValues();
     this.youshikiSs = SpreadsheetApp.getActiveSpreadsheet();
   }
+  protected getInputValue_(title: string, body: string): string {
+    const ui = SpreadsheetApp.getUi();
+    const response: GoogleAppsScript.Base.PromptResponse = ui.prompt(
+      title,
+      body,
+      ui.ButtonSet.OK_CANCEL
+    );
+    if (response.getSelectedButton() !== ui.Button.OK) {
+      return "";
+    }
+    return response.getResponseText();
+  }
+
   protected getWkSheetByName_(
     ss: GoogleAppsScript.Spreadsheet.Spreadsheet,
     sheetName: string
@@ -52,6 +65,11 @@ class TestScript {
     wkSheet.clear();
     return wkSheet;
   }
+}
+class TestTargetPublication extends TestScript {
+  constructor() {
+    super();
+  }
   private publicationType_(type: string): string {
     const typeMap: Map<string, string> = new Map([
       ["主解析論文", "主"],
@@ -61,7 +79,7 @@ class TestScript {
     const res: string = typeMap.has(type) ? typeMap.get(type)! : type;
     return res;
   }
-  checkPublication() {
+  execTest() {
     const wkSheet: GoogleAppsScript.Spreadsheet.Sheet =
       this.getCheckSheet_("targetPublication");
     const nmcPublicationSsId: string = utils.getProperty_("ss_publication_id");
@@ -196,7 +214,12 @@ class TestScript {
       .getRange(checkInputLastRow, checkOutputStartCol, 1, 1)
       .setValue(new Date());
   }
-  checkTargetCtr() {
+}
+class TestTargetCtr extends TestScript {
+  constructor() {
+    super();
+  }
+  execTest() {
     const wkSheet: GoogleAppsScript.Spreadsheet.Sheet =
       this.getCheckSheet_("targetCTR");
     const startDateCol: string[][] = this.datacenterValues.map((item) => [
@@ -229,17 +252,8 @@ class TestGetPubmed extends TestScript {
   constructor() {
     super();
   }
-  private getInputValue(): string {
-    const ui = SpreadsheetApp.getUi();
-    const response: GoogleAppsScript.Base.PromptResponse = ui.prompt(
-      "test",
-      "PubMedIdを半角数字８桁で入力、空白の場合はデフォルトデータで検索",
-      ui.ButtonSet.OK_CANCEL
-    );
-    if (response.getSelectedButton() !== ui.Button.OK) {
-      return "";
-    }
-    return response.getResponseText();
+  protected getInputValue(): string {
+    return this.getInputValue_("test", "PubMedIdを半角数字８桁で入力");
   }
   private getPubmedData_(pmid: string): string[][] {
     const resMap: Map<string, string>[] =
@@ -292,5 +306,89 @@ class TestGetPubmed extends TestScript {
     outputSheet
       .getRange(outputValues.length + 1, 1)
       .setValue(`*** check : ${new Date()}`);
+  }
+}
+class TestFromHtml extends TestScript {
+  htmlSheet: GoogleAppsScript.Spreadsheet.Sheet;
+  htmlValues: string[][];
+  htmlCtrNoColIdx: number;
+  constructor() {
+    super();
+    this.htmlSheet = this.getWkSheetByName_(this.youshikiSs, "fromHtml");
+    this.htmlValues = this.htmlSheet.getDataRange().getValues();
+    this.htmlCtrNoColIdx = 5;
+  }
+  private filterHtmlValuesByCtrNo_(ctrNo: string): string[][] {
+    const values: string[][] = this.htmlValues.filter((item, idx) => {
+      if (idx === 0) {
+        return true;
+      }
+      if (item[this.htmlCtrNoColIdx].replace("'", "") === ctrNo) {
+        return true;
+      }
+      return false;
+    });
+    if (values.length !== 2) {
+      throw new Error(`No data for ${ctrNo}`);
+    }
+    const res: string[][] = this.transpose_(values);
+    return res;
+  }
+  private transpose_(array: string[][]): string[][] {
+    return array[0].map((_, i) => array.map((row) => row[i]));
+  }
+  execTest(compareSheetName: string, checkSheetName: string) {
+    const checkSheet: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getCheckSheet_(checkSheetName);
+    const compareSheet: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getWkSheetByName_(this.testSs, compareSheetName);
+    const compareValues: string[][] = compareSheet
+      .getRange(1, 1, 2, compareSheet.getLastColumn())
+      .getValues();
+    const compareTransposed: string[][] = this.transpose_(compareValues);
+    checkSheet
+      .getRange(2, 1, compareTransposed.length, compareTransposed[0].length)
+      .setValues(compareTransposed);
+    const ctrNo: string = compareValues[1][this.htmlCtrNoColIdx];
+    const htmlValues: string[][] = this.filterHtmlValuesByCtrNo_(ctrNo);
+    checkSheet
+      .getRange(2, 3, htmlValues.length, htmlValues[0].length)
+      .setValues(htmlValues);
+    checkSheet
+      .getRange(1, 1, 1, 6)
+      .setValues([
+        [
+          "compareHeader",
+          "compareBody",
+          "htmlHeader",
+          "htmlBody",
+          `***checkHeader${new Date()}`,
+          `***checkBody${new Date()}`,
+        ],
+      ]);
+    SpreadsheetApp.flush();
+    const checkValues: string[][] = checkSheet
+      .getDataRange()
+      .getValues()
+      .map((values, idx) => {
+        if (idx === 0) {
+          return values;
+        }
+        const checkHeader: string = values[0] === values[2] ? "OK" : "NG";
+        const checkBody: string =
+          String(values[1]) === String(values[3]) ? "OK" : "NG";
+        return [
+          values[0],
+          values[1],
+          values[2],
+          values[3],
+          checkHeader,
+          checkBody,
+        ];
+      });
+    checkSheet.clearContents();
+    checkSheet
+      .getRange(1, 1, checkValues.length, checkValues[0].length)
+      .setValues(checkValues);
   }
 }
