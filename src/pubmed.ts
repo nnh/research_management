@@ -167,13 +167,12 @@ class GetPubmedData extends GetPubmedDataCommon {
         ? "1"
         : "3";
       articleData.set("role", role);
-      const authorFacilities: string = authorList.some(([_, facility]) =>
-        this.hospitalName.test(facility)
+      const authorFacilities: string = this.hospitalName.test(
+        firstAuthor[authorFacilityIndex]
       )
         ? this.outputHospitalName
-        : "";
-      const authorName: string = firstAuthor[authorNameIndex];
-      articleData.set("authorName", authorName);
+        : firstAuthor[authorFacilityIndex].replace(/Department of .+?, /, "");
+      articleData.set("authorName", firstAuthor[authorNameIndex]);
       articleData.set("authorFacilities", authorFacilities);
       const journal: GoogleAppsScript.XML_Service.Element =
         articleInfo.getChild("Journal");
