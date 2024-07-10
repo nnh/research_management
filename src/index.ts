@@ -5,6 +5,7 @@ import { getPubmed } from "./pubmed";
 import { rewriteAttachment2, rewriteAttachment3 } from "./edit-attachment";
 import { generateFormAll } from "./generate-form-main";
 import { getTargetCtrNo } from "./get-ctr";
+import { generateAbstract } from "./generate-abstract";
 import { execTest } from "./test";
 
 function onOpen() {
@@ -38,3 +39,4 @@ global.rewriteAttachment3 = rewriteAttachment3;
 global.generateFormAll = generateFormAll;
 global.getTargetCtrNo = getTargetCtrNo;
 global.execTest = execTest;
+global.generateAbstract = generateAbstract;

@@ -81,3 +81,23 @@ export function getProperty_(key: string): string {
   }
   return value;
 }
+export function copyDocumentToFolder(
+  sourceDocId: string,
+  targetFolderId: string
+): GoogleAppsScript.Drive.File {
+  const sourceDoc: GoogleAppsScript.Drive.File =
+    DriveApp.getFileById(sourceDocId);
+  if (sourceDoc == null) {
+    throw new Error(`sourceDocId is invalid: ${sourceDocId}`);
+  }
+  const targetFolder: GoogleAppsScript.Drive.Folder =
+    DriveApp.getFolderById(targetFolderId);
+  if (targetFolder == null) {
+    throw new Error(`targetFolderId is invalid: ${targetFolderId}`);
+  }
+  const newDoc: GoogleAppsScript.Drive.File = sourceDoc.makeCopy();
+  targetFolder.addFile(newDoc);
+  sourceDoc.getParents().next().removeFile(newDoc);
+
+  return newDoc;
+}

@@ -18,6 +18,7 @@ export class GetPubmedDataCommon {
       this.colnamesMap.get("type")!,
       utils.idLabel,
       utils.pmidLabel,
+      this.colnamesMap.get("abstract")!,
     ];
     this.outputSheetName = new ssUtils.GetSheet_().getSheetNameFromProperties_(
       "pubmed_sheet_name"
@@ -37,6 +38,7 @@ export class GetPubmedDataCommon {
       ["type", "論文種別"],
       [utils.idLabel, utils.idLabel],
       [utils.pmidLabel, utils.pmidLabel],
+      ["abstract", "abstract"],
     ]);
   }
   getPubmedSheetValues(): string[][] {
