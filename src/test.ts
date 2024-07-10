@@ -3,9 +3,11 @@ import * as pubmed from "./pubmed";
 import * as ssUtils from "./ss-utils";
 
 export function execTest() {
-  //  new TestPubmedTitleNamePub().compareValues();
-  new TestPubmedTitleNamePub().execTest();
+  console.log(777);
+  new TestGetPubmed().getPubmedData();
   return;
+  //  new TestPubmedTitleNamePub().compareValues();
+  // new TestPubmedTitleNamePub().execTest();
   new TestTargetPublication().execTest();
   //    new TestGetPubmed().getPubmedData();
   return;
