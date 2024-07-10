@@ -2,6 +2,8 @@ import * as utils from "./utils";
 import * as pubmed from "./pubmed";
 
 export function execTest() {
+  new TestGetPubmed().getPubmedData();
+  return;
   new TestFromHtmlDatacenterInfo().execTest();
   return;
   const fromHtml = new TestFromHtml();

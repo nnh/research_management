@@ -119,14 +119,23 @@ export class GetPubmedData extends GetPubmedDataCommon {
       // Extracting abstract
       const abstract: GoogleAppsScript.XML_Service.Element =
         articleInfo.getChild("Abstract");
-      let abstractText: string = "";
+      let tempAbstract: string = "";
       if (abstract) {
         const abstractTexts: GoogleAppsScript.XML_Service.Element[] =
           abstract.getChildren("AbstractText");
-        abstractTexts.forEach((text) => {
-          abstractText += text.getText() + " ";
-        });
+        const tempAbstractTexts: string = abstractTexts
+          .map((elem) => {
+            const label: GoogleAppsScript.XML_Service.Attribute =
+              elem.getAttribute("Label");
+            const res: string = label
+              ? `${label.getValue()}: ${elem.getText()}`
+              : elem.getText();
+            return res;
+          })
+          .join("\n");
+        tempAbstract = tempAbstractTexts;
       }
+      const abstractText: string = abstract ? tempAbstract : "";
       articleData.set("abstract", abstractText);
 
       // Extracting authors
