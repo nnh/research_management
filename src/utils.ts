@@ -28,6 +28,7 @@ export const ageLabel: string = "小児／成人";
 export const diseaseCategoryLabel: string = "疾病等分類";
 export const facilityLabel: string = "実施施設数";
 export const phaseLabel: string = "試験のフェーズ";
+export const youshiki2_2_2: string = "様式第2-2(2)";
 export const attachment_2_1_1: string = "別添2-1(1)";
 export const attachment_2_1_2: string = "別添2-1(2)";
 export const attachment_2_2: string = "別添2-2";
@@ -48,7 +49,7 @@ export const pubmedTypeProtocolText: string = "プロトコール論文";
 
 export const outputYoushiki2SheetNames: Map<string, string> = new Map([
   ["youshiki2_1_2", "様式第2-1(2)"],
-  ["youshiki2_2_2", "様式第2-2(2)"],
+  ["youshiki2_2_2", youshiki2_2_2],
   ["attachment2_1_1", attachment_2_1_1],
   ["attachment2_1_2", attachment_2_1_2],
   ["attachment2_2", attachment_2_2],

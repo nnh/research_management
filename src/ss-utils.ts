@@ -9,11 +9,40 @@ export class GetSheet_ {
       this.ss = this.getSpreadSheetById_(targetSsId);
     }
   }
+  getValuesByTargetColNames_(
+    sheet: GoogleAppsScript.Spreadsheet.Sheet,
+    targetColNames: string[]
+  ): string[][] {
+    const targetColIdx: number[] = this.getColIdxByColNames_(
+      sheet,
+      targetColNames
+    );
+    const inputValues: string[][] = sheet.getDataRange().getValues();
+    const res: string[][] = inputValues.map((row) =>
+      targetColIdx.map((idx) => row[idx])
+    );
+    return res;
+  }
+  getColIdxByColNames_(
+    sheet: GoogleAppsScript.Spreadsheet.Sheet,
+    targetColNames: string[]
+  ): number[] {
+    const inputValues: string[][] = sheet.getDataRange().getValues();
+    const headerRow: string[] = inputValues[utils.headerRowIndex];
+    const res: number[] = targetColNames.map((targetColName: string) => {
+      const idx: number = headerRow.indexOf(targetColName);
+      if (idx === utils.errorIndex) {
+        throw new Error(`targetColName is invalid: ${targetColName}`);
+      }
+      return idx;
+    });
+    return res;
+  }
   getColIdx_(
     sheet: GoogleAppsScript.Spreadsheet.Sheet,
     targetLabel: string
   ): number {
-    const colnames = sheet.getDataRange().getValues()[0];
+    const colnames = sheet.getDataRange().getValues()[utils.headerRowIndex];
     const colIdx = colnames.indexOf(targetLabel);
     return colIdx;
   }

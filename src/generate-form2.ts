@@ -4,6 +4,7 @@ import * as youshikiData from "./youshiki-data";
 import * as generateForm from "./generate-form-utils";
 import * as pbmd from "./pubmed";
 import { rewriteAttachment2 } from "./edit-attachment";
+import * as generateAbstract from "./generate-abstract";
 
 function generateForm2_1_(form2: generateForm.GenerateForm2_1) {
   const youshiki2_1_2: string[][] = form2.getYoushikiInputValues();
@@ -113,6 +114,8 @@ function generateForm2_2() {
     inputValuesYoushiki2_2,
     youshiki2_2Colnames
   );
+  SpreadsheetApp.flush();
+  generateAbstract.generateAbstract();
 }
 
 export function generateForm2() {
