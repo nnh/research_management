@@ -28,7 +28,7 @@ function onOpen() {
 declare const global: {
   [x: string]: any;
 };
-
+global.execTest = execTest;
 global.onOpen = onOpen;
 global.generateForm2 = generateForm2;
 global.generateForm3 = generateForm3;
@@ -38,5 +38,4 @@ global.rewriteAttachment2 = rewriteAttachment2;
 global.rewriteAttachment3 = rewriteAttachment3;
 global.generateFormAll = generateFormAll;
 global.getTargetCtrNo = getTargetCtrNo;
-global.execTest = execTest;
 global.generateAbstract = generateAbstract;

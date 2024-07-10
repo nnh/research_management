@@ -54,7 +54,7 @@ export class GetPubmedData extends GetPubmedDataCommon {
     super();
     this.hospitalName = /Nagoya Medical Center/i;
     this.outputHospitalName =
-      "National Hospital Organization Nagoya Medical Center";
+      "National Hospital Organization Nagoya Medical Center.";
     this.outputSheetPmidIndex = this.colnames.indexOf(utils.pmidLabel);
   }
   getOutputColIndexes_(): Map<string, number> {
@@ -151,12 +151,33 @@ export class GetPubmedData extends GetPubmedDataCommon {
           : "";
         const name: string = `${lastName} ${initials}`;
         let affiliationList: string;
+        console.log(555);
         try {
-          const affiliationInfo: GoogleAppsScript.XML_Service.Element =
-            author.getChild("AffiliationInfo");
-          const affiliation: GoogleAppsScript.XML_Service.Element[] =
-            affiliationInfo.getChildren("Affiliation");
-          affiliationList = affiliation.map((aff) => aff.getText()).join(", ");
+          const affiliationInfoArray: GoogleAppsScript.XML_Service.Element[] =
+            author.getChildren("AffiliationInfo");
+          const affiliationInfo: string[] = affiliationInfoArray.map(
+            (affiliationInfo) => {
+              const affiliationArray: GoogleAppsScript.XML_Service.Element[] =
+                affiliationInfo.getChildren("Affiliation");
+              const affiliationList = affiliationArray
+                .map((aff) => {
+                  const facilityName: string = aff.getText();
+                  const facilityNameRemoveDept: string = facilityName.replace(
+                    /Department of .+?, /,
+                    ""
+                  );
+                  const facilityNameReplaceNmc: string = this.hospitalName.test(
+                    facilityNameRemoveDept
+                  )
+                    ? this.outputHospitalName
+                    : facilityNameRemoveDept;
+                  return facilityNameReplaceNmc;
+                })
+                .join(", ");
+              return affiliationList;
+            }
+          );
+          affiliationList = Array.from(new Set(affiliationInfo)).join(", ");
         } catch (error) {
           affiliationList = "dummy";
         }
@@ -178,13 +199,8 @@ export class GetPubmedData extends GetPubmedDataCommon {
         ? "1"
         : "3";
       articleData.set("role", role);
-      const authorFacilities: string = this.hospitalName.test(
-        firstAuthor[authorFacilityIndex]
-      )
-        ? this.outputHospitalName
-        : firstAuthor[authorFacilityIndex].replace(/Department of .+?, /, "");
       articleData.set("authorName", firstAuthor[authorNameIndex]);
-      articleData.set("authorFacilities", authorFacilities);
+      articleData.set("authorFacilities", firstAuthor[authorFacilityIndex]);
       const journal: GoogleAppsScript.XML_Service.Element =
         articleInfo.getChild("Journal");
       const journalTitle: string = journal.getChild("ISOAbbreviation")

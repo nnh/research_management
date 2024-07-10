@@ -1,8 +1,13 @@
 import * as utils from "./utils";
 import * as pubmed from "./pubmed";
+import * as ssUtils from "./ss-utils";
 
 export function execTest() {
-  new TestGetPubmed().getPubmedData();
+  //  new TestPubmedTitleNamePub().compareValues();
+  new TestPubmedTitleNamePub().execTest();
+  return;
+  new TestTargetPublication().execTest();
+  //    new TestGetPubmed().getPubmedData();
   return;
   new TestFromHtmlDatacenterInfo().execTest();
   return;
@@ -69,9 +74,169 @@ class TestScript {
     return wkSheet;
   }
 }
-class TestTargetPublication extends TestScript {
+class TestPubmed extends TestScript {
+  pubmedSheet: GoogleAppsScript.Spreadsheet.Sheet;
+  pubmedValues: string[][];
+  pubmedColIdxMap: Map<string, string>;
   constructor() {
     super();
+    this.pubmedSheet = this.getWkSheetByName_(this.youshikiSs, "pubmed");
+    this.pubmedValues = this.pubmedSheet.getDataRange().getValues();
+    this.pubmedColIdxMap = new pubmed.GetPubmedDataCommon().getColnamesMap();
+  }
+}
+class TestPubmedTitleNamePub extends TestPubmed {
+  pubmedTargetColNames: string[];
+  checkSheetName: string;
+  constructor() {
+    super();
+    this.pubmedTargetColNames = [
+      this.pubmedColIdxMap.get("PMID")!,
+      this.pubmedColIdxMap.get("title")!,
+      this.pubmedColIdxMap.get("authorName")!,
+      this.pubmedColIdxMap.get("vancouver")!,
+    ];
+    this.checkSheetName = "checkPubmedTitleNamePub";
+  }
+  private writePubmedValues_(
+    checkSheet: GoogleAppsScript.Spreadsheet.Sheet
+  ): string[][] {
+    const inputValues = new ssUtils.GetSheet_().getValuesByTargetColNames_(
+      this.pubmedSheet,
+      this.pubmedTargetColNames
+    );
+    checkSheet
+      .getRange(1, 1, inputValues.length, inputValues[0].length)
+      .setValues(inputValues);
+    return inputValues;
+  }
+  private getContentText_(html: string, targetRegex: RegExp): string {
+    const check = targetRegex.exec(html);
+    return check !== null ? check[1] : "";
+  }
+
+  private scrapingPubmedTitleNamePub_ = (pubmedId: string): string[] => {
+    if (!/[0-9]{8}/.test(pubmedId)) {
+      throw new Error("Invalid pubmedId");
+    }
+    const url: string = `https://pubmed.ncbi.nlm.nih.gov/${pubmedId}`;
+    try {
+      const response: GoogleAppsScript.URL_Fetch.HTTPResponse =
+        UrlFetchApp.fetch(url);
+      Utilities.sleep(1000);
+      const html: string = response.getContentText();
+      const publisher: string = this.getContentText_(
+        html,
+        /<meta name="citation_publisher" content="([^"]*)"/i
+      );
+      const publisherDate: string = this.getContentText_(
+        html,
+        /<meta name="citation_date" content="([^"]*)"/i
+      );
+      const firstAuthor: string = this.getContentText_(
+        html,
+        /<meta name="citation_authors" content="([^;]*)/
+      );
+      const title: string = this.getContentText_(
+        html,
+        /<meta name="citation_title" content="([^"]*)"/i
+      );
+      const publisherDateDate: Date =
+        publisherDate !== "" ? new Date(publisherDate) : new Date(1900, 0, 1);
+      const publisherYear: number = publisherDateDate.getFullYear();
+      const publisherMonth: string = publisherDateDate.toLocaleDateString(
+        "en-us",
+        { month: "short" }
+      );
+      const publisherInfo: string = `${publisher}. ${publisherYear} ${publisherMonth};`;
+      return [pubmedId, `${title}.`, firstAuthor, publisherInfo];
+    } catch (e) {
+      console.log(e);
+      return ["!!!fetch error!!!", "", "", ""];
+    }
+  };
+  writeCheckData_(): void {
+    const checkSheet: GoogleAppsScript.Spreadsheet.Sheet = this.getCheckSheet_(
+      this.checkSheetName
+    );
+    const inputValues: string[][] = this.writePubmedValues_(checkSheet);
+    SpreadsheetApp.flush();
+    const inputPubmedIdIdx: number = new ssUtils.GetSheet_().getColIdx_(
+      checkSheet,
+      this.pubmedColIdxMap.get("PMID")!
+    );
+    const targetPubmedIds: string[] = inputValues.map((item) =>
+      String(item[inputPubmedIdIdx])
+    );
+    const header = ["PMID", "title", "firstAuthor", "publisherInfo"];
+    const outputValues: string[][] = targetPubmedIds.map((pmid, idx) =>
+      idx === 0 ? header : this.scrapingPubmedTitleNamePub_(pmid)
+    );
+    const outputStartCol: number = inputValues[utils.headerRowIndex].length + 1;
+    checkSheet
+      .getRange(
+        1,
+        outputStartCol,
+        outputValues.length,
+        outputValues[utils.headerRowIndex].length
+      )
+      .setValues(outputValues);
+    SpreadsheetApp.flush();
+    this.compareValues();
+  }
+  private replaceText_(text: string): string {
+    return text.replace(new RegExp("&#x27;", "g"), "'");
+  }
+  compareValues() {
+    const checkSheet: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getWkSheetByName_(this.testSs, this.checkSheetName);
+    const inputValues: string[][] = checkSheet.getDataRange().getValues();
+    const outputColNumber: number = 9;
+    const header: string[] = ["check1", "check2", "check3", "check4"];
+    const outputValues: string[][] = inputValues.map((row, idx) => {
+      if (idx === 0) {
+        return header;
+      }
+      const res: string[] = [];
+      for (let i = 0; i <= 3; i++) {
+        const checkText: string =
+          i === 1 ? this.replaceText_(row[i + 4]) : row[i + 4];
+        res[i] = row[i] === checkText ? "OK" : "NG";
+      }
+      return res;
+    });
+    checkSheet
+      .getRange(1, outputColNumber, outputValues.length, outputValues[0].length)
+      .setValues(outputValues);
+  }
+  execTest() {
+    this.writeCheckData_();
+  }
+}
+class TestTargetPublication extends TestPubmed {
+  inputNMCPublicationColIdxMap: Map<string, number>;
+  outputNMCPublicationColIdxMap: Map<string, number>;
+  constructor() {
+    super();
+    this.inputNMCPublicationColIdxMap = new Map([
+      ["yearMonth", 0],
+      ["publicationType", 4],
+      ["crtNo", 8],
+      ["jRCT", 8],
+      ["UMIN", 7],
+      ["protocolId", 9],
+      ["pubmedId", 14],
+      ["author", 15],
+      ["title", 16],
+    ]);
+    this.outputNMCPublicationColIdxMap = new Map();
+    let i: number = 0;
+    this.inputNMCPublicationColIdxMap.forEach((_, key) => {
+      if (key !== "jRCT" && key !== "UMIN") {
+        this.outputNMCPublicationColIdxMap.set(key, i);
+        i++;
+      }
+    });
   }
   private publicationType_(type: string): string {
     const typeMap: Map<string, string> = new Map([
@@ -82,9 +247,7 @@ class TestTargetPublication extends TestScript {
     const res: string = typeMap.has(type) ? typeMap.get(type)! : type;
     return res;
   }
-  execTest() {
-    const wkSheet: GoogleAppsScript.Spreadsheet.Sheet =
-      this.getCheckSheet_("targetPublication");
+  private getNmcpublicationValues_(): string[][] {
     const nmcPublicationSsId: string = utils.getProperty_("ss_publication_id");
     const nmcPublicationSs: GoogleAppsScript.Spreadsheet.Spreadsheet =
       SpreadsheetApp.openById(nmcPublicationSsId);
@@ -95,39 +258,46 @@ class TestTargetPublication extends TestScript {
       .getValues();
     // NMC Publicationの出版年月、論文種別、jRCTまたはUMIN番号、プロトコルID、PubMedId、著者、タイトル
     const inputAllValues: string[][] = nmcPublicationValues.map((item) => [
-      item[0],
-      item[4],
-      item[8] !== "" ? item[8] : item[7],
-      item[9],
-      item[12],
-      item[14],
-      item[15],
+      item[this.inputNMCPublicationColIdxMap.get("yearMonth")!],
+      item[this.inputNMCPublicationColIdxMap.get("publicationType")!],
+      item[this.inputNMCPublicationColIdxMap.get("jRCT")!] !== ""
+        ? item[this.inputNMCPublicationColIdxMap.get("jRCT")!]
+        : item[this.inputNMCPublicationColIdxMap.get("UMIN")!],
+      item[this.inputNMCPublicationColIdxMap.get("protocolId")!],
+      item[this.inputNMCPublicationColIdxMap.get("pubmedId")!],
+      item[this.inputNMCPublicationColIdxMap.get("author")!],
+      item[this.inputNMCPublicationColIdxMap.get("title")!],
     ]);
-    wkSheet
+    return inputAllValues;
+  }
+  private writeNmcpubValues_(
+    inputValues: string[][],
+    outputSheet: GoogleAppsScript.Spreadsheet.Sheet
+  ): string[] {
+    outputSheet
       .getRange(
         1,
         1,
-        inputAllValues.length,
-        inputAllValues[utils.headerRowIndex].length
+        inputValues.length,
+        inputValues[utils.headerRowIndex].length
       )
-      .setValues(inputAllValues);
-    // 同一名称になるので見出しを再設定する
-    const header1: string[] = inputAllValues[utils.headerRowIndex].map(
+      .setValues(inputValues);
+    // pubmedシート側と同一名称になるので見出しを再設定する
+    const header1: string[] = inputValues[utils.headerRowIndex].map(
       (item) => `1_${item}`
     );
-    wkSheet.getRange(1, 1, 1, header1.length).setValues([header1]);
-    wkSheet.getRange(1, 3).setValue("1_CTR");
-
-    const pubmedSheet: GoogleAppsScript.Spreadsheet.Sheet =
-      this.getWkSheetByName_(this.youshikiSs, "pubmed");
-    const pubmedValues: string[][] = pubmedSheet.getDataRange().getValues();
+    outputSheet.getRange(1, 1, 1, header1.length).setValues([header1]);
+    outputSheet.getRange(1, 3).setValue("1_CTR");
+    return header1;
+  }
+  private getPubmedOutputValues_(nmcPublicationValues: string[][]) {
     const dummy: string[] = Array(
-      pubmedValues[utils.headerRowIndex].length
+      this.pubmedValues[utils.headerRowIndex].length
     ).fill([""]);
-    const pubmedOutputValues: string[][] = inputAllValues.map(
+    const pubmedOutputValues: string[][] = nmcPublicationValues.map(
       (inputValue, idx) => {
         if (idx === 0) {
-          return pubmedValues[utils.headerRowIndex];
+          return this.pubmedValues[utils.headerRowIndex];
         }
         const value1: number = !isNaN(Number(inputValue[4]))
           ? Number(inputValue[4])
@@ -136,33 +306,50 @@ class TestTargetPublication extends TestScript {
           return dummy;
         }
         // PubMed Idをキーにして比較、一致する行がない場合はダミーを返す
-        const targetRow: string[][] = pubmedValues.filter((pubmedValue) => {
-          const value2: number = !isNaN(Number(pubmedValue[7]))
-            ? Number(pubmedValue[7])
-            : utils.errorIndex;
-          return value1 === value2;
-        });
+        const targetRow: string[][] = this.pubmedValues.filter(
+          (pubmedValue) => {
+            const value2: number = !isNaN(Number(pubmedValue[7]))
+              ? Number(pubmedValue[7])
+              : utils.errorIndex;
+            return value1 === value2;
+          }
+        );
         if (targetRow.length === 0) {
           return dummy;
         }
         return targetRow[0];
       }
     );
-    wkSheet
-      .getRange(
-        1,
-        header1.length + 1,
-        pubmedOutputValues.length,
-        pubmedOutputValues[0].length
-      )
-      .setValues(pubmedOutputValues);
+    return pubmedOutputValues;
+  }
+  private writePubmedValues_(
+    inputValues: string[][],
+    outputSheet: GoogleAppsScript.Spreadsheet.Sheet,
+    startCol: number
+  ): string[] {
+    outputSheet
+      .getRange(1, startCol, inputValues.length, inputValues[0].length)
+      .setValues(inputValues);
     // 見出しを再設定する
-    const header2: string[] = pubmedOutputValues[utils.headerRowIndex].map(
+    const header2: string[] = inputValues[utils.headerRowIndex].map(
       (item) => `2_${item}`
     );
-    wkSheet
-      .getRange(1, header1.length + 1, 1, header2.length)
-      .setValues([header2]);
+    outputSheet.getRange(1, startCol, 1, header2.length).setValues([header2]);
+    return header2;
+  }
+  execTest() {
+    const wkSheet: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getCheckSheet_("targetPublication");
+    const inputAllValues: string[][] = this.getNmcpublicationValues_();
+    const header1: string[] = this.writeNmcpubValues_(inputAllValues, wkSheet);
+    const pubmedOutputValues: string[][] =
+      this.getPubmedOutputValues_(inputAllValues);
+    const header2: string[] = this.writePubmedValues_(
+      pubmedOutputValues,
+      wkSheet,
+      header1.length + 1
+    );
+
     SpreadsheetApp.flush();
     // NMC PublicationのA列が空白になったら処理終了する
     let checkInputLastRow: number = utils.errorIndex;
