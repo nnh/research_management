@@ -1,6 +1,7 @@
 import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
+import { remove } from "../../../../node_modules/cheerio/lib/api/manipulation";
 
 export class GetPubmedDataCommon {
   colnamesMap: Map<string, string>;
@@ -54,7 +55,7 @@ export class GetPubmedData extends GetPubmedDataCommon {
     super();
     this.hospitalName = /Nagoya Medical Center/i;
     this.outputHospitalName =
-      "National Hospital Organization Nagoya Medical Center.";
+      "National Hospital Organization Nagoya Medical Center";
     this.outputSheetPmidIndex = this.colnames.indexOf(utils.pmidLabel);
   }
   getOutputColIndexes_(): Map<string, number> {
@@ -143,6 +144,7 @@ export class GetPubmedData extends GetPubmedDataCommon {
         .getChild("AuthorList")
         .getChildren("Author");
       const authorList: string[][] = authors.map((author, idx) => {
+        const authorIndex: number = idx;
         const lastName: string = author.getChild("LastName")
           ? author.getChild("LastName").getText()
           : "";
@@ -159,17 +161,17 @@ export class GetPubmedData extends GetPubmedDataCommon {
               const affiliationArray: GoogleAppsScript.XML_Service.Element[] =
                 affiliationInfo.getChildren("Affiliation");
               const affiliationList = affiliationArray
-                .map((aff) => {
+                .map((aff, idx) => {
                   const facilityName: string = aff.getText();
-                  const facilityNameRemoveDept: string = facilityName.replace(
-                    /Department of .+?, /,
-                    ""
-                  );
+                  const removedText: string =
+                    authorIndex !== 0
+                      ? facilityName
+                      : this.replaceFacilityName_(facilityName);
                   const facilityNameReplaceNmc: string = this.hospitalName.test(
-                    facilityNameRemoveDept
+                    removedText
                   )
                     ? this.outputHospitalName
-                    : facilityNameRemoveDept;
+                    : removedText;
                   return facilityNameReplaceNmc;
                 })
                 .join(", ");
@@ -229,6 +231,32 @@ export class GetPubmedData extends GetPubmedDataCommon {
       return articleData;
     });
     return result;
+  }
+  private removeText_(text: string, removeTextList: RegExp[]): string {
+    return removeTextList.reduce(
+      (removedText, removeText) => removedText.replace(removeText, ""),
+      text
+    );
+  }
+  private replaceFacilityName_(facilityText: string): string {
+    const removeTextList: RegExp[] = [
+      / [a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\./,
+      / Electronic\saddress:\s?/i,
+    ];
+    const removedText: string = this.removeText_(facilityText, removeTextList);
+    const facilityTextArray: string[] = removedText.split(/,\s|;\s/);
+    const removeMatchTextList: RegExp[] = [
+      /^Department\sof\s[A-Z].+$/,
+      /^[A-Z][a-z]+\.?$/,
+      /^[0-9-]+$/,
+    ];
+    const removedTextArray: string[] = facilityTextArray.map((facilityText) =>
+      this.removeText_(facilityText, removeMatchTextList)
+    );
+    const res: string = removedTextArray
+      .filter((removeText) => removeText !== "")
+      .join(", ");
+    return res;
   }
 }
 
