@@ -128,8 +128,8 @@ export class GetPubmedData extends GetPubmedDataCommon {
             const label: GoogleAppsScript.XML_Service.Attribute =
               elem.getAttribute("Label");
             const res: string = label
-              ? `${label.getValue()}: ${elem.getText()}`
-              : elem.getText();
+              ? `${label.getValue()}: ${elem.getValue()}`
+              : elem.getValue();
             return res;
           })
           .join("\n");
@@ -151,7 +151,6 @@ export class GetPubmedData extends GetPubmedDataCommon {
           : "";
         const name: string = `${lastName} ${initials}`;
         let affiliationList: string;
-        console.log(555);
         try {
           const affiliationInfoArray: GoogleAppsScript.XML_Service.Element[] =
             author.getChildren("AffiliationInfo");
