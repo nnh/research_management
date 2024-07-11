@@ -4,6 +4,7 @@ import * as youshikiData from "./youshiki-data";
 import * as generateForm from "./generate-form-utils";
 import * as pbmd from "./pubmed";
 import { rewriteAttachment2 } from "./edit-attachment";
+import * as generateAbstract from "./generate-abstract";
 
 function generateForm2_1_(form2: generateForm.GenerateForm2_1) {
   const youshiki2_1_2: string[][] = form2.getYoushikiInputValues();
@@ -89,7 +90,7 @@ function generateForm2_2() {
   if (underlineColIdx !== utils.errorIndex) {
     form2.setUnderlineText(utils.attachment_2_2, underlineColIdx);
   }
-  const pubmed = new pbmd.GetPubmedData();
+  const pubmed = new pbmd.GetPubmedDataCommon();
   const colnamesMap: Map<string, string> = pubmed.getColnamesMap();
   const youshiki2_2Colnames = new Map([
     [utils.seqColName, utils.seqColName],
@@ -113,6 +114,8 @@ function generateForm2_2() {
     inputValuesYoushiki2_2,
     youshiki2_2Colnames
   );
+  SpreadsheetApp.flush();
+  generateAbstract.generateAbstract();
 }
 
 export function generateForm2() {

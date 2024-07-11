@@ -2,7 +2,7 @@
 #' description
 #' @file getUmin.R
 #' @author Mariko Ohtsuka
-#' @date 2024.7.1
+#' @date 2024.7.8
 rm(list=ls())
 # ------ libraries ------
 library(here)
@@ -17,6 +17,7 @@ kUminRNoLabel <- "UMIN受付番号"
 kNameOfPi <- "責任研究者/Name of lead principal investigator"
 kUminIdLabel <- kIdLabel
 kRecptNo <- "R[0-9]{9}"
+kInterventionsPattern <- "介入([2-9]|10)/Interventions/Control_([2-9]|10)"
 # ------ functions ------
 GetTargetTagText <- function(elem, targetTag) {
   if (length(elem) == 0) {
@@ -86,7 +87,7 @@ GetUminInfo <- function(uminRNo) {
   sei <- temp %>% html_node("tr:nth-child(3)") %>% html_node("td:nth-child(2)") %>% html_text()
   mei <- temp %>% html_node("tr:nth-child(1)") %>% html_node("td:nth-child(2)") %>% html_text()
   nameOfPi <- str_c(sei, "　", mei) %>% str_remove("　$")
-  headerAndBodies[[i]]["header"] <- nameOfPi
+  headerAndBodies[[i]]["bodies"] <- nameOfPi
   # 見出しの整理
   outputHeaderAndBodies <- headerAndBodies
   intervention <- "なし"
@@ -119,6 +120,11 @@ GetUminInfo <- function(uminRNo) {
       outputHeaderAndBodies[[i]]["bodies"] <- outputHeaderAndBodies[[i]]["bodies"] %>% map_vec(~ str_c(., collapse = ""))
     } else if (header == "介入1/Interventions/Control_1") {
       interactionText <- EditJpItemName(bodies)
+    } else if (str_detect(header, kInterventionsPattern)) {
+      temp_interactionText <- EditJpItemName(bodies)
+      if (temp_interactionText != "") {
+        interactionText <- interactionText %>% str_c("\r",  temp_interactionText)
+      }
     } else if (header == "試験のフェーズ/Developmental phase") {
       header <- "試験のフェーズ"
     } else if (header == "対象疾患名/Condition") {
@@ -215,4 +221,6 @@ if (length(targetUminNoList) > 0) {
     return(temp)
   })
   AddOutputSheet(df_uminList)
+} else {
+  print("UMIN:0件")
 }

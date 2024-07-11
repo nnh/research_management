@@ -2,7 +2,7 @@
 #' description
 #' @file getJrct.R
 #' @author Mariko Ohtsuka
-#' @date 2024.06.25
+#' @date 2024.07.08
 # ------ libraries ------
 source(here("r_src", "scraping_common.R"), encoding="utf-8")
 # ------ constants ------
@@ -58,6 +58,8 @@ if (length(targetJrctNoList) > 0) {
     jrctList[[i]] <- temp
   }
   names(jrctList) <- targetJrctNoList
+  df_jrctList <- bind_rows(jrctList)
+  AddOutputSheet(df_jrctList)
+} else {
+  print("jRCT:0件")
 }
-df_jrctList <- bind_rows(jrctList)
-AddOutputSheet(df_jrctList)

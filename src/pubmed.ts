@@ -2,17 +2,34 @@ import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
 
-export class GetPubmedData {
-  outputSheetName: string;
-  colnames: string[];
-  outputSheet: GoogleAppsScript.Spreadsheet.Sheet;
-  outputSheetPmidIndex: number;
+export class GetPubmedDataCommon {
   colnamesMap: Map<string, string>;
+  colnames: string[];
+  outputSheetName: string;
+  outputSheet: GoogleAppsScript.Spreadsheet.Sheet;
   constructor() {
+    this.colnamesMap = this.getColnamesMap();
+    this.colnames = [
+      this.colnamesMap.get("title")!,
+      this.colnamesMap.get("authorName")!,
+      this.colnamesMap.get("authorFacilities")!,
+      this.colnamesMap.get("role")!,
+      this.colnamesMap.get("vancouver")!,
+      this.colnamesMap.get("type")!,
+      utils.idLabel,
+      utils.pmidLabel,
+      this.colnamesMap.get("abstract")!,
+    ];
     this.outputSheetName = new ssUtils.GetSheet_().getSheetNameFromProperties_(
       "pubmed_sheet_name"
     );
-    this.colnamesMap = new Map([
+    this.outputSheet = new ssUtils.GetSheet_().addSheet_(
+      this.outputSheetName,
+      this.colnames
+    );
+  }
+  getColnamesMap(): Map<string, string> {
+    return new Map([
       ["title", utils.titlePubmedLabel],
       ["authorName", "発表者氏名"],
       ["authorFacilities", "発表者の所属"],
@@ -21,28 +38,24 @@ export class GetPubmedData {
       ["type", "論文種別"],
       [utils.idLabel, utils.idLabel],
       [utils.pmidLabel, utils.pmidLabel],
+      ["abstract", "abstract"],
     ]);
-    this.colnames = [
-      this.colnamesMap.get("title") || "",
-      this.colnamesMap.get("authorName") || "",
-      this.colnamesMap.get("authorFacilities") || "",
-      this.colnamesMap.get("role") || "",
-      this.colnamesMap.get("vancouver") || "",
-      this.colnamesMap.get("type") || "",
-      utils.idLabel,
-      utils.pmidLabel,
-    ];
-    this.outputSheetPmidIndex = this.colnames.indexOf(utils.pmidLabel);
-    this.outputSheet = new ssUtils.GetSheet_().addSheet_(
-      this.outputSheetName,
-      this.colnames
-    );
-  }
-  getColnamesMap(): Map<string, string> {
-    return this.colnamesMap;
   }
   getPubmedSheetValues(): string[][] {
     return this.outputSheet.getDataRange().getValues();
+  }
+}
+
+export class GetPubmedData extends GetPubmedDataCommon {
+  hospitalName: RegExp;
+  outputHospitalName: string;
+  outputSheetPmidIndex: number;
+  constructor() {
+    super();
+    this.hospitalName = /Nagoya Medical Center/i;
+    this.outputHospitalName =
+      "National Hospital Organization Nagoya Medical Center";
+    this.outputSheetPmidIndex = this.colnames.indexOf(utils.pmidLabel);
   }
   getOutputColIndexes_(): Map<string, number> {
     const outputColIndexes: Map<string, number> = new Map();
@@ -106,14 +119,23 @@ export class GetPubmedData {
       // Extracting abstract
       const abstract: GoogleAppsScript.XML_Service.Element =
         articleInfo.getChild("Abstract");
-      let abstractText: string = "";
+      let tempAbstract: string = "";
       if (abstract) {
         const abstractTexts: GoogleAppsScript.XML_Service.Element[] =
           abstract.getChildren("AbstractText");
-        abstractTexts.forEach((text) => {
-          abstractText += text.getText() + " ";
-        });
+        const tempAbstractTexts: string = abstractTexts
+          .map((elem) => {
+            const label: GoogleAppsScript.XML_Service.Attribute =
+              elem.getAttribute("Label");
+            const res: string = label
+              ? `${label.getValue()}: ${elem.getValue()}`
+              : elem.getValue();
+            return res;
+          })
+          .join("\n");
+        tempAbstract = tempAbstractTexts;
       }
+      const abstractText: string = abstract ? tempAbstract : "";
       articleData.set("abstract", abstractText);
 
       // Extracting authors
@@ -121,6 +143,7 @@ export class GetPubmedData {
         .getChild("AuthorList")
         .getChildren("Author");
       const authorList: string[][] = authors.map((author, idx) => {
+        const authorIndex: number = idx;
         const lastName: string = author.getChild("LastName")
           ? author.getChild("LastName").getText()
           : "";
@@ -130,36 +153,54 @@ export class GetPubmedData {
         const name: string = `${lastName} ${initials}`;
         let affiliationList: string;
         try {
-          const affiliationInfo: GoogleAppsScript.XML_Service.Element =
-            author.getChild("AffiliationInfo");
-          const affiliation: GoogleAppsScript.XML_Service.Element[] =
-            affiliationInfo.getChildren("Affiliation");
-          affiliationList = affiliation.map((aff) => aff.getText()).join(", ");
+          const affiliationInfoArray: GoogleAppsScript.XML_Service.Element[] =
+            author.getChildren("AffiliationInfo");
+          const affiliationInfo: string[] = affiliationInfoArray.map(
+            (affiliationInfo) => {
+              const affiliationArray: GoogleAppsScript.XML_Service.Element[] =
+                affiliationInfo.getChildren("Affiliation");
+              const affiliationList = affiliationArray
+                .map((aff, idx) => {
+                  const facilityName: string = aff.getText();
+                  const removedText: string =
+                    authorIndex !== 0
+                      ? facilityName
+                      : this.replaceFacilityName_(facilityName);
+                  const facilityNameReplaceNmc: string = this.hospitalName.test(
+                    removedText
+                  )
+                    ? this.outputHospitalName
+                    : removedText;
+                  return facilityNameReplaceNmc;
+                })
+                .join(", ");
+              return affiliationList;
+            }
+          );
+          affiliationList = Array.from(new Set(affiliationInfo)).join(", ");
         } catch (error) {
           affiliationList = "dummy";
         }
-        const facilities: string = /Nagoya Medical Center/.test(affiliationList)
-          ? affiliationList
-          : "";
+        const facilities: string =
+          idx === 0 || this.hospitalName.test(affiliationList)
+            ? affiliationList
+            : "";
 
         return [name, facilities];
       });
+      const firstAuthor: string[] = authorList
+        .filter((_, idx) => idx === 0)
+        .flat();
       const authorNameIndex: number = 0;
       const authorFacilityIndex: number = 1;
-      const role: string =
-        authorList[0][authorFacilityIndex] !== "" ? "1" : "3";
+      const role: string = this.hospitalName.test(
+        firstAuthor[authorFacilityIndex]
+      )
+        ? "1"
+        : "3";
       articleData.set("role", role);
-      const targetAuthor: string[][] = authorList.filter(
-        (author) => author[authorFacilityIndex] !== ""
-      );
-      const authorName: string = targetAuthor
-        .map((author) => author[authorNameIndex])
-        .join(", ");
-      const authorFacilities: string = Array.from(
-        new Set(targetAuthor.map((author) => author[authorFacilityIndex]))
-      ).join(", ");
-      articleData.set("authorName", authorName);
-      articleData.set("authorFacilities", authorFacilities);
+      articleData.set("authorName", firstAuthor[authorNameIndex]);
+      articleData.set("authorFacilities", firstAuthor[authorFacilityIndex]);
       const journal: GoogleAppsScript.XML_Service.Element =
         articleInfo.getChild("Journal");
       const journalTitle: string = journal.getChild("ISOAbbreviation")
@@ -190,49 +231,98 @@ export class GetPubmedData {
     });
     return result;
   }
+  private removeText_(text: string, removeTextList: RegExp[]): string {
+    return removeTextList.reduce(
+      (removedText, removeText) => removedText.replace(removeText, ""),
+      text
+    );
+  }
+  private replaceFacilityName_(facilityText: string): string {
+    const removeTextList: RegExp[] = [
+      / [a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\./,
+      / Electronic\saddress:\s?/i,
+    ];
+    const removedText: string = this.removeText_(facilityText, removeTextList);
+    const facilityTextArray: string[] = removedText.split(/,\s|;\s/);
+    const removeMatchTextList: RegExp[] = [
+      /^Department\sof\s[A-Z].+$/,
+      /^[A-Z][a-z]+\.?$/,
+      /^[0-9-]+$/,
+    ];
+    const removedTextArray: string[] = facilityTextArray.map((facilityText) =>
+      this.removeText_(facilityText, removeMatchTextList)
+    );
+    const res: string = removedTextArray
+      .filter((removeText) => removeText !== "")
+      .join(", ");
+    return res;
+  }
 }
 
-export function getPubmed() {
-  const typeMap: Map<string, string> = new Map([
-    ["主", utils.pubmedTypeMainText],
-    ["副", utils.pubmedTypeSubText],
-    ["プ", utils.pubmedTypeProtocolText],
-  ]);
-  const targetPublicationIndexMap: Map<string, number> = new Map([
-    ["type", 4],
-    ["umin", 7],
-    ["jrct", 8],
-    ["protocolId", 9],
-    [utils.pmidLabel, 12],
-  ]);
-  const pmidColIdx: number =
-    targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex;
-  const jrctColIdx: number =
-    targetPublicationIndexMap.get("jrct") || utils.errorIndex;
-  const uminColIdx: number =
-    targetPublicationIndexMap.get("umin") || utils.errorIndex;
-  const typeColIdx: number =
-    targetPublicationIndexMap.get("type") || utils.errorIndex;
+class GetPubmedInput {
+  typeMap: Map<string, string>;
+  targetPublicationIndexMap: Map<string, number>;
 
-  const publicationRawValues: string[][] = getSheets.getPublicationValues_();
-  // PubMed IDが空白ならば対象外とする
-  const targetValues: string[][] = publicationRawValues.filter((row) =>
-    /^[0-9]{8}$/.test(
-      row[targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex]
-    )
-  );
-  const targetPubmedIds: string[] = targetValues.map((row) =>
-    String(
-      row[targetPublicationIndexMap.get(utils.pmidLabel) || utils.errorIndex]
-    )
-  );
+  constructor() {
+    this.typeMap = new Map([
+      ["主", utils.pubmedTypeMainText],
+      ["副", utils.pubmedTypeSubText],
+      ["プ", utils.pubmedTypeProtocolText],
+    ]);
+    this.targetPublicationIndexMap = new Map([
+      ["type", 4],
+      ["umin", 7],
+      ["jrct", 8],
+      ["protocolId", 9],
+      [utils.pmidLabel, 12],
+    ]);
+  }
+  getValues(): string[][] {
+    const publicationRawValues: string[][] = getSheets.getPublicationValues_();
+    // PubMed IDが空白ならば対象外とする
+    const targetValues: string[][] = publicationRawValues.filter((row) =>
+      /^[0-9]{8}$/.test(
+        row[this.targetPublicationIndexMap.get(utils.pmidLabel)!]
+      )
+    );
+    return targetValues;
+  }
+  getTargetPubmedIds(inputValues: string[][]): string[] {
+    return inputValues.map((row) =>
+      String(row[this.targetPublicationIndexMap.get(utils.pmidLabel)!])
+    );
+  }
+}
+
+export function getPubMedDataByPmidList(
+  pmid: string
+): Map<string, string>[] | null {
   const pbmd: GetPubmedData = new GetPubmedData();
-  const outputColIndexes: Map<string, number> = pbmd.getOutputColIndexes_();
-  const pmid: string = pbmd.getTargetPmids_(targetPubmedIds);
   if (pmid === "") {
-    return;
+    return null;
   }
   const pubmedDataList: Map<string, string>[] = pbmd.getPubmedData_(pmid);
+  return pubmedDataList;
+}
+
+export function getPubmed(): void {
+  const pbmdInput: GetPubmedInput = new GetPubmedInput();
+  const targetValues: string[][] = pbmdInput.getValues();
+  const targetPubmedIds: string[] = pbmdInput.getTargetPubmedIds(targetValues);
+  const pbmd: GetPubmedData = new GetPubmedData();
+  const pmid: string = pbmd.getTargetPmids_(targetPubmedIds);
+  const outputColIndexes: Map<string, number> = pbmd.getOutputColIndexes_();
+  const pubmedDataList: Map<string, string>[] | null =
+    getPubMedDataByPmidList(pmid);
+  if (pubmedDataList === null) {
+    return;
+  }
+  const pmidColIdx: number = pbmdInput.targetPublicationIndexMap.get(
+    utils.pmidLabel
+  )!;
+  const jrctColIdx: number = pbmdInput.targetPublicationIndexMap.get("jrct")!;
+  const uminColIdx: number = pbmdInput.targetPublicationIndexMap.get("umin")!;
+  const typeColIdx: number = pbmdInput.targetPublicationIndexMap.get("type")!;
   const outputValues: string[][] = pubmedDataList.map((pubmedData) => {
     const row: string[] = Array(outputColIndexes.size).fill("");
     pubmedData.forEach((value, key) => {
@@ -254,10 +344,10 @@ export function getPubmed() {
             ? targetRow[0][uminColIdx]
             : "";
         row[outputColIndexes.get(utils.idLabel)!] = uminJrctId;
-        row[outputColIndexes.get("type")!] = typeMap.has(
+        row[outputColIndexes.get("type")!] = pbmdInput.typeMap.has(
           targetRow[0][typeColIdx]
         )
-          ? typeMap.get(targetRow[0][typeColIdx])!
+          ? pbmdInput.typeMap.get(targetRow[0][typeColIdx])!
           : "その他";
       }
     });
@@ -268,6 +358,11 @@ export function getPubmed() {
   }
   const outputStartRow: number = pbmd.outputSheet.getLastRow() + 1;
   pbmd.outputSheet
-    .getRange(outputStartRow, 1, outputValues.length, outputValues[0].length)
+    .getRange(
+      outputStartRow,
+      utils.colNumberA,
+      outputValues.length,
+      outputValues[utils.headerRowIndex].length
+    )
     .setValues(outputValues);
 }
