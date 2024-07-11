@@ -1,7 +1,6 @@
 import * as ssUtils from "./ss-utils";
 import * as utils from "./utils";
 import * as getSheets from "./get-sheets";
-import { remove } from "../../../../node_modules/cheerio/lib/api/manipulation";
 
 export class GetPubmedDataCommon {
   colnamesMap: Map<string, string>;
@@ -295,14 +294,27 @@ class GetPubmedInput {
   }
 }
 
+export function getPubMedDataByPmidList(
+  pmid: string
+): Map<string, string>[] | null {
+  const pbmd: GetPubmedData = new GetPubmedData();
+  if (pmid === "") {
+    return null;
+  }
+  const pubmedDataList: Map<string, string>[] = pbmd.getPubmedData_(pmid);
+  return pubmedDataList;
+}
+
 export function getPubmed(): void {
   const pbmdInput: GetPubmedInput = new GetPubmedInput();
   const targetValues: string[][] = pbmdInput.getValues();
   const targetPubmedIds: string[] = pbmdInput.getTargetPubmedIds(targetValues);
   const pbmd: GetPubmedData = new GetPubmedData();
-  const outputColIndexes: Map<string, number> = pbmd.getOutputColIndexes_();
   const pmid: string = pbmd.getTargetPmids_(targetPubmedIds);
-  if (pmid === "") {
+  const outputColIndexes: Map<string, number> = pbmd.getOutputColIndexes_();
+  const pubmedDataList: Map<string, string>[] | null =
+    getPubMedDataByPmidList(pmid);
+  if (pubmedDataList === null) {
     return;
   }
   const pmidColIdx: number = pbmdInput.targetPublicationIndexMap.get(
@@ -311,7 +323,6 @@ export function getPubmed(): void {
   const jrctColIdx: number = pbmdInput.targetPublicationIndexMap.get("jrct")!;
   const uminColIdx: number = pbmdInput.targetPublicationIndexMap.get("umin")!;
   const typeColIdx: number = pbmdInput.targetPublicationIndexMap.get("type")!;
-  const pubmedDataList: Map<string, string>[] = pbmd.getPubmedData_(pmid);
   const outputValues: string[][] = pubmedDataList.map((pubmedData) => {
     const row: string[] = Array(outputColIndexes.size).fill("");
     pubmedData.forEach((value, key) => {
