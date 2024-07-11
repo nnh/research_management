@@ -3,7 +3,7 @@ google apps script for research management
 
 ## 概要
 
-Google Drive内に存在するスプレッドシート「研究管理システム」のgoogle apps scriptを管理するリポジトリです。
+中核申請資料作成用のプログラムを管理するリポジトリです。
 
 ## 開発
 
@@ -17,11 +17,6 @@ yarn start
 
 ## テスト
 
-一部 GAS に依存しないJSのコードにはテストが記述してある
-
-```
-yarn test
-```
 
 ## 本番へのデプロイ
 
