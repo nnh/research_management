@@ -1,17 +1,17 @@
 import * as testPubmed from "./test-pubmed";
+import * as testDc from "./test-dc";
 
 export function execTest() {
-  execTestPubmed();
+  new testDc.TestDatacenter().execTest();
   /*** pubmed infomation ***/
+  //  execTestPubmed();
   return;
 }
 function execTestPubmed(): void {
-  /*
   new testPubmed.WritePubmed().getPubmed();
   new testPubmed.FetchPubmed().getPubmed();
   new testPubmed.WriteTestData().writeAbstract();
   new testPubmed.WriteTestData().writeFacility();
-  */
   new testPubmed.CheckValues().execCheck();
 }
 /*
