@@ -184,8 +184,11 @@ export class CheckValues extends TestPubmed {
     super();
     this.targetSheet = this.getWkSheetByName_(this.testSs, this.checkSheetName);
   }
-  getOkNgValues(value1: string, value2: string): string {
+  private getOkNgValues(value1: string, value2: string): string {
     return String(value1) === String(value2) ? "OK" : "NG";
+  }
+  private cleaningFetchValue(value: string) {
+    return value.replace(new RegExp("&#x27;", "gm"), "'");
   }
   execCheck(): void {
     const outputStartColNum: number = this.facilityColIdx + 1;
@@ -229,7 +232,7 @@ export class CheckValues extends TestPubmed {
           : "3";
         const checkValue2: string =
           idx2.get(item) !== utils.errorIndex
-            ? row[idx2.get(item)!]
+            ? this.cleaningFetchValue(row[idx2.get(item)!])
             : checkRole;
         return this.getOkNgValues(checkValue1, checkValue2);
       });

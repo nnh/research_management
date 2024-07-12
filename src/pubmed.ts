@@ -113,7 +113,7 @@ export class GetPubmedData extends GetPubmedDataCommon {
       // Extracting article title
       const articleTitle: string = articleInfo
         .getChild("ArticleTitle")
-        .getText();
+        .getValue();
       articleData.set("title", articleTitle);
 
       // Extracting abstract

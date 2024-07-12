@@ -6,12 +6,13 @@ export function execTest() {
   return;
 }
 function execTestPubmed(): void {
-  new testPubmed.CheckValues().execCheck();
-  return;
+  /*
   new testPubmed.WritePubmed().getPubmed();
   new testPubmed.FetchPubmed().getPubmed();
   new testPubmed.WriteTestData().writeAbstract();
   new testPubmed.WriteTestData().writeFacility();
+  */
+  new testPubmed.CheckValues().execCheck();
 }
 /*
 class TestTargetCtr extends TestScript {
