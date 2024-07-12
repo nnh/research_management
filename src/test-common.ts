@@ -80,4 +80,8 @@ export class TestScript {
     rules.push(rule2);
     targetSheet.setConditionalFormatRules(rules);
   }
+  setCheckDate(sheet: GoogleAppsScript.Spreadsheet.Sheet): void {
+    SpreadsheetApp.flush();
+    sheet.getRange(1, sheet.getLastColumn() + 1).setValue(new Date());
+  }
 }

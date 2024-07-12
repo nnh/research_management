@@ -187,8 +187,13 @@ export class CheckValues extends TestPubmed {
   private getOkNgValues(value1: string, value2: string): string {
     return String(value1) === String(value2) ? "OK" : "NG";
   }
-  private cleaningFetchValue(value: string) {
-    return value.replace(new RegExp("&#x27;", "gm"), "'");
+  private cleaningAbstractValue(inputValue: string): string {
+    const value: string = this.cleaningFetchValue(inputValue);
+    const toLowerValue: string = value.toLowerCase();
+    return String(toLowerValue).replace(/\s/gm, "");
+  }
+  private cleaningFetchValue(value: string): string {
+    return String(value).replace(new RegExp("&#x27;", "gm"), "'");
   }
   execCheck(): void {
     const outputStartColNum: number = this.facilityColIdx + 1;
@@ -224,16 +229,21 @@ export class CheckValues extends TestPubmed {
         return targetItems.map((item) => `check_${item}`);
       }
       const res = targetItems.map((item) => {
-        const checkValue1: string = row[idx1.get(item)!];
+        const checkValue1: string =
+          item === "abstract"
+            ? this.cleaningAbstractValue(row[idx1.get(item)!])
+            : row[idx1.get(item)!];
         const checkRole: string = new pubmed.GetPubmedData().hospitalName.test(
           row[facilityIdx]
         )
           ? "1"
           : "3";
         const checkValue2: string =
-          idx2.get(item) !== utils.errorIndex
-            ? this.cleaningFetchValue(row[idx2.get(item)!])
-            : checkRole;
+          item === "role"
+            ? checkRole
+            : item === "abstract"
+            ? this.cleaningAbstractValue(row[idx2.get(item)!])
+            : this.cleaningFetchValue(row[idx2.get(item)!]);
         return this.getOkNgValues(checkValue1, checkValue2);
       });
       return res;
@@ -247,6 +257,7 @@ export class CheckValues extends TestPubmed {
       );
     outputRange.setValues(outputValues);
     this.setConditionalFormatting(this.targetSheet, outputRange);
+    this.setCheckDate(this.targetSheet);
   }
 }
 
@@ -465,9 +476,5 @@ class TestTargetPublication extends TestPubmed {
         .getRange(checkInputLastRow + 1, col2Num)
         .setValue("*** CHECK-END ***");
     });
-
-    wkSheet
-      .getRange(checkInputLastRow, checkOutputStartCol, 1, 1)
-      .setValue(new Date());
   }
 }
