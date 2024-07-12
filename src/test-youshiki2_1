@@ -1,0 +1,9 @@
+import * as utils from "./utils";
+import * as testCommon from "./test-common";
+import * as testDc from "./test-dc";
+
+class testYoushiki2_1 extends testCommon.TestScript {
+  constructor() {
+    super();
+  }
+}

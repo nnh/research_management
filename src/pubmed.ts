@@ -113,7 +113,7 @@ export class GetPubmedData extends GetPubmedDataCommon {
       // Extracting article title
       const articleTitle: string = articleInfo
         .getChild("ArticleTitle")
-        .getText();
+        .getValue();
       articleData.set("title", articleTitle);
 
       // Extracting abstract
@@ -310,8 +310,7 @@ export function getPubmed(): void {
   const targetValues: string[][] = pbmdInput.getValues();
   const targetPubmedIds: string[] = pbmdInput.getTargetPubmedIds(targetValues);
   const pbmd: GetPubmedData = new GetPubmedData();
-  const pmid: string = pbmd.getTargetPmids_(targetPubmedIds);
-  const outputColIndexes: Map<string, number> = pbmd.getOutputColIndexes_();
+  const pmid: string = Array.from(new Set(targetPubmedIds)).join(", ");
   const pubmedDataList: Map<string, string>[] | null =
     getPubMedDataByPmidList(pmid);
   if (pubmedDataList === null) {
@@ -323,46 +322,47 @@ export function getPubmed(): void {
   const jrctColIdx: number = pbmdInput.targetPublicationIndexMap.get("jrct")!;
   const uminColIdx: number = pbmdInput.targetPublicationIndexMap.get("umin")!;
   const typeColIdx: number = pbmdInput.targetPublicationIndexMap.get("type")!;
-  const outputValues: string[][] = pubmedDataList.map((pubmedData) => {
-    const row: string[] = Array(outputColIndexes.size).fill("");
-    pubmedData.forEach((value, key) => {
-      const colIdx: number = outputColIndexes.get(key) ?? utils.errorIndex;
-      if (colIdx > utils.errorIndex) {
-        row[colIdx] = value;
-      }
-      // pubmedIdからjRCT番号を取得する
-      if (key === utils.pmidLabel) {
-        const targetRow: string[][] = targetValues.filter(
-          (row) => String(row[pmidColIdx]) === value
-        );
-        const uminJrctId: string =
-          targetRow.length === 0
-            ? ""
-            : targetRow[0][jrctColIdx] !== ""
-            ? targetRow[0][jrctColIdx]
-            : targetRow[0][uminColIdx] !== ""
-            ? targetRow[0][uminColIdx]
-            : "";
-        row[outputColIndexes.get(utils.idLabel)!] = uminJrctId;
-        row[outputColIndexes.get("type")!] = pbmdInput.typeMap.has(
-          targetRow[0][typeColIdx]
-        )
-          ? pbmdInput.typeMap.get(targetRow[0][typeColIdx])!
-          : "その他";
-      }
-    });
-    return row;
+
+  const outputValues: string[][] = targetValues.map((nmcPublicationRow) => {
+    const pubmedData: Map<string, string> = pubmedDataList.find(
+      (pubmedData) =>
+        pubmedData.get(utils.pmidLabel) ===
+        String(nmcPublicationRow[pmidColIdx])
+    )!;
+    const res: string[] = [
+      pubmedData.get("title")!,
+      pubmedData.get("authorName")!,
+      pubmedData.get("authorFacilities")!,
+      pubmedData.get("role")!,
+      pubmedData.get("vancouver")!,
+      pbmdInput.typeMap.has(nmcPublicationRow[typeColIdx])
+        ? pbmdInput.typeMap.get(nmcPublicationRow[typeColIdx])!
+        : "その他",
+      nmcPublicationRow[jrctColIdx] !== ""
+        ? nmcPublicationRow[jrctColIdx]
+        : nmcPublicationRow[uminColIdx],
+      nmcPublicationRow[pmidColIdx],
+      pubmedData.get("abstract")!,
+    ];
+    return res;
   });
   if (outputValues.length === 0) {
     return;
   }
-  const outputStartRow: number = pbmd.outputSheet.getLastRow() + 1;
-  pbmd.outputSheet
-    .getRange(
-      outputStartRow,
+  const outputRange: GoogleAppsScript.Spreadsheet.Range =
+    pbmd.outputSheet.getRange(
+      utils.bodyRowNumber,
       utils.colNumberA,
       outputValues.length,
       outputValues[utils.headerRowIndex].length
+    );
+  pbmd.outputSheet
+    .getRange(
+      utils.bodyRowNumber,
+      utils.colNumberA,
+      pbmd.outputSheet.getLastRow(),
+      pbmd.outputSheet.getLastColumn()
     )
-    .setValues(outputValues);
+    .clearContent();
+  outputRange.setValues(outputValues);
 }
