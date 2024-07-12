@@ -22,37 +22,37 @@ export class TestPubmed extends testCommon.TestScript {
     this.pubmedValues = this.pubmedSheet.getDataRange().getValues();
     this.pubmedColIdxMap = new pubmed.GetPubmedDataCommon().getColnamesMap();
     this.testPmidArray = [
-      "38513239",
-      "38888368",
-      "38910000",
-      "34192312",
-      "35879192",
-      "33730843",
-      "38508620",
-      "38267673",
-      "38054691",
-      "37806448",
-      "37926712",
-      "38112205",
-      "37358749",
-      "37102302",
-      "36871086",
-      "36996387",
-      "36891758",
-      "37167992",
-      "36448876",
-      "36332007",
-      "35796397",
-      "35635686",
-      "35809896",
-      "35403816",
-      "35258855",
-      "35008106",
-      "34879431",
-      "35040598",
-      "34421094",
-      "34500465",
       "33589754",
+      "34500465",
+      "34421094",
+      "35040598",
+      "34879431",
+      "35008106",
+      "35258855",
+      "35403816",
+      "35809896",
+      "35635686",
+      "35796397",
+      "36332007",
+      "36448876",
+      "37167992",
+      "36891758",
+      "36996387",
+      "36871086",
+      "37102302",
+      "37358749",
+      "38112205",
+      "37926712",
+      "37806448",
+      "38054691",
+      "38267673",
+      "38508620",
+      "33730843",
+      "35879192",
+      "34192312",
+      "38910000",
+      "38888368",
+      "38513239",
     ];
     this.testPmidList = this.testPmidArray.join(",");
     this.checkSheetName = "checkPubMed";
@@ -178,7 +178,76 @@ export class FetchPubmed extends TestPubmed {
   };
 }
 
-export class writeTestData extends TestPubmed {
+export class CheckValues extends TestPubmed {
+  targetSheet: GoogleAppsScript.Spreadsheet.Sheet;
+  constructor() {
+    super();
+    this.targetSheet = this.getWkSheetByName_(this.testSs, this.checkSheetName);
+  }
+  getOkNgValues(value1: string, value2: string): string {
+    return String(value1) === String(value2) ? "OK" : "NG";
+  }
+  execCheck(): void {
+    const outputStartColNum: number = this.facilityColIdx + 1;
+    this.targetSheet
+      .getRange(
+        1,
+        outputStartColNum,
+        this.targetSheet.getLastRow(),
+        this.targetSheet.getLastColumn()
+      )
+      .clear();
+    const inputValues: string[][] = this.targetSheet
+      .getRange(1, 1, this.targetSheet.getLastRow(), this.facilityColIdx)
+      .getValues();
+    const facilityIdx: number = 5;
+    const itemAndColIdx: (string | number)[][] = [
+      ["title", 1, 8],
+      ["abstract", 2, this.abstractDataCol - 1],
+      ["role", 3, utils.errorIndex],
+      ["authorName", 4, 9],
+      ["facility", facilityIdx, this.facilityColIdx - 1],
+      ["publishedInfo", 6, 10],
+    ];
+    const targetItems: string[] = itemAndColIdx.map((item) => String(item[0]));
+    const idx1: Map<string, number> = new Map();
+    const idx2: Map<string, number> = new Map();
+    itemAndColIdx.forEach((item) => {
+      idx1.set(String(item[0]), Number(item[1]));
+      idx2.set(String(item[0]), Number(item[2]));
+    });
+    const outputValues: string[][] = inputValues.map((row, idx) => {
+      if (idx === 0) {
+        return targetItems.map((item) => `check_${item}`);
+      }
+      const res = targetItems.map((item) => {
+        const checkValue1: string = row[idx1.get(item)!];
+        const checkRole: string = new pubmed.GetPubmedData().hospitalName.test(
+          row[facilityIdx]
+        )
+          ? "1"
+          : "3";
+        const checkValue2: string =
+          idx2.get(item) !== utils.errorIndex
+            ? row[idx2.get(item)!]
+            : checkRole;
+        return this.getOkNgValues(checkValue1, checkValue2);
+      });
+      return res;
+    });
+    const outputRange: GoogleAppsScript.Spreadsheet.Range =
+      this.targetSheet.getRange(
+        1,
+        outputStartColNum,
+        outputValues.length,
+        outputValues[0].length
+      );
+    outputRange.setValues(outputValues);
+    this.setConditionalFormatting(this.targetSheet, outputRange);
+  }
+}
+
+export class WriteTestData extends TestPubmed {
   outputSheet: GoogleAppsScript.Spreadsheet.Sheet;
   constructor() {
     super();

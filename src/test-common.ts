@@ -53,4 +53,31 @@ export class TestScript {
     wkSheet.clear();
     return wkSheet;
   }
+  protected setConditionalFormatting(
+    targetSheet: GoogleAppsScript.Spreadsheet.Sheet,
+    targetRange: GoogleAppsScript.Spreadsheet.Range
+  ): void {
+    // 既存のルールをクリア
+    targetRange.clearFormat();
+
+    // 条件1: セルの値が "OK" の場合、緑色にする
+    const rule1 = SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo("OK")
+      .setBackground("#00FF00") // 緑色
+      .setRanges([targetRange])
+      .build();
+
+    // 条件2: セルの値が "NG"の場合、赤色にする
+    const rule2 = SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo("NG")
+      .setBackground("#FF0000") // 赤色
+      .setRanges([targetRange])
+      .build();
+
+    // ルールを設定
+    const rules = targetSheet.getConditionalFormatRules();
+    rules.push(rule1);
+    rules.push(rule2);
+    targetSheet.setConditionalFormatRules(rules);
+  }
 }

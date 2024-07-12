@@ -1,14 +1,17 @@
 import * as testPubmed from "./test-pubmed";
 
 export function execTest() {
+  execTestPubmed();
   /*** pubmed infomation ***/
   return;
 }
 function execTestPubmed(): void {
+  new testPubmed.CheckValues().execCheck();
+  return;
   new testPubmed.WritePubmed().getPubmed();
   new testPubmed.FetchPubmed().getPubmed();
-  new testPubmed.writeTestData().writeAbstract();
-  new testPubmed.writeTestData().writeFacility();
+  new testPubmed.WriteTestData().writeAbstract();
+  new testPubmed.WriteTestData().writeFacility();
 }
 /*
 class TestTargetCtr extends TestScript {
