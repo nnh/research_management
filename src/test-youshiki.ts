@@ -46,7 +46,7 @@ export class TestYoushiki extends testCommon.TestScript {
     for (let row = 0; row < checkLastRow; row++) {
       const tempArray = new Array(inputValues[utils.headerRowIndex].length);
       for (let col = 0; col < inputValues[utils.headerRowIndex].length; col++) {
-        if (inputValues[row][col] !== compareValues[row][col]) {
+        if (String(inputValues[row][col]) !== String(compareValues[row][col])) {
           tempArray[col] = "NG";
         } else {
           tempArray[col] = "OK";
@@ -108,7 +108,40 @@ export class TestYoushiki extends testCommon.TestScript {
       outputBettenSheet2
     );
   }
+  execTestYoushiki2_2(): void {}
+  execTestYoushiki3(): void {
+    const outputYoushikiSheet: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getCheckSheet_("checkYoushiki3");
+    const outputBettenSheet1: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getCheckSheet_("checkBetten3");
+    const compareYoushikiSheet: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getWkSheetByName_(this.testSs, "youshiki3");
+    const compareBettenSheet1: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getWkSheetByName_(this.testSs, "betten3");
+    const inputYoushikiSheet: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getWkSheetByName_(
+        this.youshikiSs,
+        utils.outputYoushiki3SheetNames.get("youshiki3_1")!
+      );
+    const inputBettenSheet1: GoogleAppsScript.Spreadsheet.Sheet =
+      this.getWkSheetByName_(
+        this.youshikiSs,
+        utils.outputYoushiki3SheetNames.get("attachment3")!
+      );
+    this.compareValues(
+      inputYoushikiSheet,
+      compareYoushikiSheet,
+      outputYoushikiSheet
+    );
+    this.compareValues(
+      inputBettenSheet1,
+      compareBettenSheet1,
+      outputBettenSheet1
+    );
+  }
   execTest() {
+    this.execTestYoushiki3();
+    return;
     this.execTestYoushiki2_1();
   }
 }
