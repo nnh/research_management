@@ -8,6 +8,8 @@ export class TestScript {
   datacenterSheet: GoogleAppsScript.Spreadsheet.Sheet;
   datacenterValues: string[][];
   youshikiSs: GoogleAppsScript.Spreadsheet.Spreadsheet;
+  startDate: Date;
+  endDate: Date;
   constructor() {
     this.testSsId = utils.getProperty_("ss_for_test_id");
     this.testSs = SpreadsheetApp.openById(this.testSsId);
@@ -19,6 +21,8 @@ export class TestScript {
     );
     this.datacenterValues = this.datacenterSheet.getDataRange().getValues();
     this.youshikiSs = SpreadsheetApp.getActiveSpreadsheet();
+    this.startDate = new Date("2021-09-01");
+    this.endDate = new Date("2024-11-30");
   }
   protected getInputValue_(title: string, body: string): string {
     const ui = SpreadsheetApp.getUi();

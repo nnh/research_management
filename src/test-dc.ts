@@ -4,13 +4,9 @@ import * as testCommon from "./test-common";
 export class TestDatacenter extends testCommon.TestScript {
   inputColIdxMap: Map<string, number>;
   outputColIdxMap: Map<string, number>;
-  startDate: Date;
-  endDate: Date;
   targetCtrNoList: Set<string>;
   constructor() {
     super();
-    this.startDate = new Date("2021-09-01");
-    this.endDate = new Date("2024-11-30");
     this.targetCtrNoList = new Set([
       "jRCTs061220060",
       "jRCTs041210154",

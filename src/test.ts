@@ -1,8 +1,10 @@
 import * as testPubmed from "./test-pubmed";
 import * as testDc from "./test-dc";
+import * as testYoushiki from "./test-youshiki";
 
 export function execTest() {
-  new testDc.TestDatacenter().execTest();
+  new testYoushiki.TestYoushiki().execTest();
+  //new testDc.TestDatacenter().execTest();
   /*** pubmed infomation ***/
   //  execTestPubmed();
   return;
